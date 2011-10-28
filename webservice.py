@@ -1,14 +1,11 @@
 #!/usr/bin/env python
+import bonjour
 import os
 import sys
+import thread
 from bottle import get, post, put, delete, request, run, static_file
 
-if len(sys.argv) < 2: # No path given
-  rootdir = os.path.dirname(sys.argv[0])
-  print "No directory path was passed, defaulting to "+rootdir
-else:  
-  rootdir = os.path.join(os.path.dirname(sys.argv[0]), sys.argv[1])
-print "Root directory has been set to "+rootdir
+rootdir = ""
 
 # Allows interface to see assets in the designated folder at path
 # Returns a json showing files and folders at path with access URLs
@@ -36,14 +33,17 @@ def list_assets(path=''):
 def send_asset(path):
   return static_file(path, root=rootdir)
 
-@get('/note/:path')
+@get('/notes/:path')
 def send_notes(path):
   return 'ok'
   
-@post('/note/:path')
-def receive_note(path):
+@post('/notes/:path')
+def receive_notes(path):
   return 'ok'
 
+def spinup(host, port, dir):
+  global rootdir
+  rootdir = os.path.join(os.path.dirname(sys.argv[0]), dir)
+  print "Root directory has been set to "+rootdir
+  run(host=host, port=port)
   
-
-run(host='localhost', port=8080)
