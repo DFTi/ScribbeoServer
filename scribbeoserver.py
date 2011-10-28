@@ -5,18 +5,17 @@ import thread
 import sys
 import os
 
-if len(sys.argv) == 2:
-  rootdir = os.path.join(os.path.dirname(sys.argv[0]), sys.argv[1])
-  if not os.path.exists(rootdir):
-    print 'Path does not exist'
-    exit()
-elif len(sys.argv) == 1:
-  rootdir = './dir'
-else:
-  print 'what?'
-  exit()
-
-
+def get_rootdir_from_args():
+  for arg in sys.argv:
+    if os.path.exists(arg) and os.path.isdir(arg):
+      print "Directory passed in: "+arg
+      rootdir = arg
+      print "Setting "+arg+" as the Scribbeo root directory."
+      break
+    else:
+      rootdir = None
+  return rootdir
+  
 def get_ip_and_port(testPort=0):
   s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
   s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) 
@@ -37,7 +36,14 @@ def get_ip_and_two_ports(testPort=0):
   except:
     return get_ip_and_two_ports()
 
-ip, bonjour_port, web_port = get_ip_and_two_ports()
-
-thread.start_new_thread(bonjour.register, (bonjour_port, ))
-webservice.spinup(ip, web_port, rootdir)
+def spinup():
+  rootdir = get_rootdir_from_args()
+  if rootdir is None:
+    print "Pass a valid folder path as an argument to continue. Quitting."
+    return
+  else:
+    ip, bonjour_port, web_port = get_ip_and_two_ports()
+    thread.start_new_thread(bonjour.register, (bonjour_port, ))
+    webservice.spinup(ip, web_port, rootdir)
+    
+spinup()
