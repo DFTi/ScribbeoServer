@@ -43,7 +43,7 @@ def receive_notes(path):
 
 def spinup(host, port, dir):
   global rootdir
-  rootdir = os.path.join(os.path.dirname(sys.argv[0]), dir)
+  rootdir = dir
   print "Root directory has been set to "+rootdir
   run(host=host, port=port)
   

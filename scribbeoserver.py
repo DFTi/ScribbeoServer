@@ -3,8 +3,19 @@ import bonjour
 import socket
 import thread
 import sys
+import os
 
-rootdir = sys.argv[1];
+if len(sys.argv) == 2:
+  rootdir = os.path.join(os.path.dirname(sys.argv[0]), sys.argv[1])
+  if not os.path.exists(rootdir):
+    print 'Path does not exist'
+    exit()
+elif len(sys.argv) == 1:
+  rootdir = './dir'
+else:
+  print 'what?'
+  exit()
+
 
 def get_ip_and_port(testPort=0):
   s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
