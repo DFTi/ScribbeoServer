@@ -15,7 +15,7 @@ def get_ip_and_port(testPort=0):
   s.close()
   return ip, port
 
-def get_two_ports(testPort=0):
+def get_ip_and_two_ports(testPort=0):
   print "Determining IP and locating 2 adjecent open ports."
   try:
     ip, port_one = get_ip_and_port(testPort)
@@ -24,9 +24,9 @@ def get_two_ports(testPort=0):
     print "Available ports: "+str(port_one)+", "+str(port_two)
     return (ip, port_one, port_two)
   except:
-    return get_two_ports()
+    return get_ip_and_two_ports()
 
-ip, bonjour_port, web_port = get_two_ports()
+ip, bonjour_port, web_port = get_ip_and_two_ports()
 
 thread.start_new_thread(bonjour.register, (bonjour_port, ))
 webservice.spinup(ip, web_port, rootdir)
