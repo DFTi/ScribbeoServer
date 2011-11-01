@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """ Scribbeo(TM) Server -- Written by Keyvan Fatehi, DigitalFilm Tree, 2011 """
 
 import os
@@ -83,15 +84,20 @@ class Server(object):
         This is succeptible to arbitrary file upload/filling,
         but this server is intended to be run on a trusted LAN.
     """
-    path = os.path.join(rootdir, 'Notes', name)
+    note_dir = os.path.join(rootdir, 'Notes')
+    path = os.path.join(note_dir, name)
     if cherrypy.request.method == 'GET':
       if os.path.exists(path) and not os.path.isdir(path):
+        cherrypy.response.headers['Content-Type'] = 'application/x-gzip'
         return cherrypy.lib.static.serve_file(path)
       else:
         return 'Note not found.'
     elif cherrypy.request.method == 'POST':
+      if not os.path.exists(note_dir):
+          os.makedirs(note_dir)
+      archive = cherrypy.request.body.read()
       file = open(path, 'w')
-      file.write(cherrypy.request.body.read())
+      file.write(archive)
       file.close()
       return 'Saved'
     else:
@@ -104,7 +110,7 @@ class Server(object):
     if os.path.exists(path) and not os.path.isdir(path):
       return cherrypy.lib.static.serve_file(path)
     else:
-      return path+' does not exist'
+      return ''
   @cherrypy.expose
   @cherrypy.tools.json_out()
   def list(self, *arg):
