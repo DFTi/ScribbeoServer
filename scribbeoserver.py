@@ -44,6 +44,8 @@ def spinup():
   else:
     ip, bonjour_port, web_port = get_ip_and_two_ports()
     thread.start_new_thread(bonjour.register, (bonjour_port, ))
+    # I suppose we could also launch the timecode script in another thread too
+    # But I don't believe that one is cross-plat
     webservice.spinup(ip, web_port, rootdir)
     
 spinup()
