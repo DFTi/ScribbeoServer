@@ -1,4 +1,5 @@
 import sys
+import webbrowser
 import server
 from easygui import *
 
@@ -19,7 +20,8 @@ def has_bonjour():
     return True
   except Exception:
     msg = "Please install bonjour from http://www.apple.com/support/bonjour/"
-    msgbox(msg, "Bonjour Missing", "Quit")
+    msgbox(msg, "Bonjour Missing", "Go there now!")
+    webbrowser.open('http://www.apple.com/support/bonjour/')
     return False
 
 def start_and_block(dir):
