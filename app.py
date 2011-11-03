@@ -2,7 +2,7 @@ import sys
 import server
 from easygui import *
 
-def get_dir():
+def get_dir_by_dialog():
   dir = diropenbox("Please choose a folder", "Scribbeo Server")
   if dir == None:
     None
@@ -13,7 +13,7 @@ def get_dir():
     else:
       None
 
-def check_bonjour():
+def has_bonjour():
   try:
     import pybonjour
     return True
@@ -22,18 +22,25 @@ def check_bonjour():
     msgbox(msg, "Bonjour Missing", "Quit")
     return False
 
-def enter_background_mode():
-  while 1:
-    if ccbox("Scribbeo Server is running. Would you like to quit?"):
-      sys.exit()
+def start_and_block(dir):
+  server.launch(dir) # Start the server on an alternate thread.
+  msg = "Scribbeo Server is now running!\nYou may minimize "
+  msg += "this window and use Scribbeo on your networked iDevices"
+  msgbox(msg, ok_button="Quit") # And block this thread.
+
+def get_dir():
+  dir = server.get_rootdir_from_args() # Drag and drop support
+  if dir:
+    return dir
+  else:
+    return get_dir_by_dialog()
 
 def main():
-  if check_bonjour():
+  if not has_bonjour():
+    sys.exit(0)
+  else:
     dir = get_dir()
     if dir:
-      server.launch(dir)
-      enter_background_mode()
-  else:
-    sys.exit(0)
-    
+      start_and_block(dir)
+
 main()
