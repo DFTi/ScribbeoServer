@@ -6,7 +6,11 @@ import sys
 import thread
 import socket
 import select
-import pybonjour
+try:
+  import pybonjour
+except Exception:
+  print "Please install bonjour from http://www.apple.com/support/bonjour/"
+  sys.exit(1)
 import cherrypy
 
 hidden_names = {
@@ -19,11 +23,11 @@ hidden_exts = {
 
 ### Bonjour ###
 def register_callback(sdRef, flags, errorCode, name, regtype, domain):
-    if errorCode == pybonjour.kDNSServiceErr_NoError:
-        print 'Registered Bonjour service:'
-        print '  name    =', name
-        print '  regtype =', regtype
-        print '  domain  =', domain
+  if errorCode == pybonjour.kDNSServiceErr_NoError:
+    print 'Registered Bonjour service:'
+    print '  name    =', name
+    print '  regtype =', regtype
+    print '  domain  =', domain
 
 def bonjour_register(port):
   name    = 'videotree'
@@ -53,7 +57,11 @@ def get_rootdir_from_args():
       break
     else:
       rootdir = None
-  return rootdir
+  if rootdir == None:
+    print "Please set the directory you wish to serve."
+    return False
+  else:
+    return rootdir
   
 def get_ip_and_port(testPort=0):
   s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -146,21 +154,29 @@ def start_server(port):
       'server.socket_port': port
     }
   }
+  cherrypy.engine.timeout_monitor.unsubscribe()
+  cherrypy.engine.autoreload.unsubscribe()
   cherrypy.quickstart(Server(), '/', conf)    
     
 ### Main Function ###
-def main():
+def main(dir=None):
   global rootdir
-  rootdir = get_rootdir_from_args()
+  if dir == None:
+    rootdir = get_rootdir_from_args()
+  else:
+    rootdir = dir
   if rootdir is None:
     print "Pass a valid folder path as an argument to continue. Quitting."
   else:
     ip, port = get_ip_and_port()
-    thread.start_new_thread(bonjour_register, (8080, ))
+    thread.start_new_thread(bonjour_register, (8080,))
     # I suppose we could also launch the timecode script in another thread too
     # But I don't believe that one is cross-plat
     start_server(8080)
   return 0
+  
+def launch(dir):
+  thread.start_new_thread(main, (dir,))
     
 if __name__ == '__main__':
   status = main()
