@@ -82,6 +82,8 @@ def unsafe_dirpath(*arg):
 def aditc(path):
   if path == None:
     return '00:00:00:00'
+  if sys.platform == 'win32':
+    return '00:00:00:00'
   script_dir = os.path.dirname(os.path.realpath(__file__))
   aditc = os.path.join(script_dir, 'aditc')
   proc = subprocess.Popen([aditc, path], stdout=subprocess.PIPE)
@@ -100,19 +102,6 @@ class Server(object):
   @cherrypy.expose
   def index(self):
     return '<center>Welcome to Scribbeo Server!</center>'
-  @cherrypy.expose
-  def tc(self, *arg): 
-    if unsafe_dirpath(*arg):
-      return aditc(None)
-    path = os.path.join(rootdir, *arg)
-    if os.path.exists(path) and not os.path.isdir(path):
-      if sys.platform == 'win32':
-        return aditc(None) # FIXME : Aditc doesnt work on windows.
-      else:
-        timecode = aditc(path)
-    else:
-      return aditc(None)
-    return timecode
   @cherrypy.expose
   def note(self, name=''):
     """ Upload and download notes
@@ -174,7 +163,7 @@ class Server(object):
       else:
         entry['asset_url'] = '/asset/'+relpath
         entry['note_url'] = '/note/'+relpath
-        entry['timecode_url'] = '/tc/'+relpath
+        entry['timecode'] = aditc(os.path.join(dirpath, filename))
         entries['files'].append(entry)
     return entries
 
