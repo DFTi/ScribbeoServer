@@ -220,7 +220,9 @@ def main(dir=None, port=None):
   if set_rootdir(dir):
     if port==None:
       ip, port = get_ip_and_port()
-    Thread(target=bonjour_register, args=(port, ))
+    bonjourd = Thread(target=bonjour_register, args=(port, ))
+    bonjourd.daemon = True
+    bonjourd.start()
     start_cherrypy(port) # Block on cherrypy thread, we're running from console
   return 0
       
