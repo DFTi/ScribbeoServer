@@ -3,7 +3,8 @@
 
 import os
 import sys
-import thread
+import subprocess
+from threading import Thread
 import socket
 import select
 try:
@@ -12,6 +13,7 @@ except Exception:
   print "Please install bonjour from http://www.apple.com/support/bonjour/"
   sys.exit(1)
 import cherrypy
+import re
 
 hidden_names = {
   ".DS_Store":True,
@@ -76,12 +78,41 @@ def unsafe_dirpath(*arg):
   for piece in arg:
     if piece == '..':
       return True
-
+      
+def aditc(path):
+  if path == None:
+    return '00:00:00:00'
+  script_dir = os.path.dirname(os.path.realpath(__file__))
+  aditc = os.path.join(script_dir, 'aditc')
+  proc = subprocess.Popen([aditc, path], stdout=subprocess.PIPE)
+  proc.wait()
+  for line in proc.stdout:
+    timecode = line.rstrip()
+    break
+  pattern = re.compile("..:..:..:..")
+  if pattern.match(timecode):
+    return timecode[:11]
+  else:
+    return '00:00:00:00'
+  
 ### CherryPy Server ###
 class Server(object):
   @cherrypy.expose
   def index(self):
     return '<center>Welcome to Scribbeo Server!</center>'
+  @cherrypy.expose
+  def tc(self, *arg): 
+    if unsafe_dirpath(*arg):
+      return aditc(None)
+    path = os.path.join(rootdir, *arg)
+    if os.path.exists(path) and not os.path.isdir(path):
+      if sys.platform == 'win32':
+        return aditc(None) # FIXME : Aditc doesnt work on windows.
+      else:
+        timecode = aditc(path)
+    else:
+      return aditc(None)
+    return timecode
   @cherrypy.expose
   def note(self, name=''):
     """ Upload and download notes
@@ -143,11 +174,12 @@ class Server(object):
       else:
         entry['asset_url'] = '/asset/'+relpath
         entry['note_url'] = '/note/'+relpath
+        entry['timecode_url'] = '/tc/'+relpath
         entries['files'].append(entry)
     return entries
 
-### Server Starter ###
-def start_server(port):
+### Web Server Configure & Start ###
+def start_cherrypy(port):
   conf = {
     'global': {
       'server.socket_host': '0.0.0.0',
@@ -157,27 +189,41 @@ def start_server(port):
   cherrypy.engine.timeout_monitor.unsubscribe()
   cherrypy.engine.autoreload.unsubscribe()
   cherrypy.quickstart(Server(), '/', conf)    
-    
-### Main Function ###
-def main(dir=None):
+
+### Launch our daemons in a new thread ###
+def launch(dir, port=None):
+  if set_rootdir(dir):
+    if port==None:
+      ip, port = get_ip_and_port()
+    threads = {
+      "bonjour":Thread(target=bonjour_register, args=(port, )),
+      "cherrypy":Thread(target=start_cherrypy, args=(port, ))
+    }
+    for key in threads:
+      threads[key].daemon = True # Auto-SIGTERM when main thread terminates
+      threads[key].start()
+    return threads
+  else:
+    return False # No root dir.
+
+def set_rootdir(dir):
   global rootdir
   if dir == None:
     rootdir = get_rootdir_from_args()
   else:
     rootdir = dir
-  if rootdir is None:
-    print "Pass a valid folder path as an argument to continue. Quitting."
-  else:
-    ip, port = get_ip_and_port()
-    thread.start_new_thread(bonjour_register, (8080,))
-    # I suppose we could also launch the timecode script in another thread too
-    # But I don't believe that one is cross-plat
-    start_server(8080)
-  return 0
+  return rootdir
   
-def launch(dir):
-  thread.start_new_thread(main, (dir,))
-    
+
+### Main Function ###
+def main(dir=None, port=8080):
+  if set_rootdir(dir):
+    if port==None:
+      ip, port = get_ip_and_port()
+    Thread(target=bonjour_register, args=(port, ))
+    start_cherrypy(port) # Block on cherrypy thread, we're running from console
+  return 0
+      
 if __name__ == '__main__':
   status = main()
   sys.exit(status)
