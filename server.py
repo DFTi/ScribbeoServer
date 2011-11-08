@@ -216,7 +216,7 @@ def set_rootdir(dir):
   
 
 ### Main Function ###
-def main(dir=None, port=None):
+def main(dir=None, port=8080):
   if set_rootdir(dir):
     if port==None:
       ip, port = get_ip_and_port()
