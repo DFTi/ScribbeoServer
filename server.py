@@ -91,9 +91,12 @@ def aditc(path):
   for line in proc.stdout:
     timecode = line.rstrip()
     break
-  pattern = re.compile("..:..:..:..")
-  if pattern.match(timecode):
+  ndftc = re.compile("..:..:..:..")
+  dftc = re.compile("..:..:..;..")
+  if ndftc.match(timecode):
     return timecode[:11]
+  elif dftc.match(timecode):
+    return timecode[:11].replace(';', ':')
   else:
     return '00:00:00:00'
   
@@ -155,7 +158,7 @@ class Server(object):
       if ext in hidden_exts:
         continue
       entry = {'name':filename, 'ext':ext[1:]}
-      relpath = os.path.join(subdirpath, filename)
+      relpath = os.path.join(subdirpath, filename) # .replace(' ', '%20')
       # Check if this is a file or a directory:
       if os.path.isdir(os.path.join(dirpath, filename)):
         entry['list_url'] = '/list/'+relpath
