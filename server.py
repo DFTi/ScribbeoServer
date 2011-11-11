@@ -209,13 +209,23 @@ def set_rootdir(dir):
 
 ### Main Function ###
 def main(dir=None, port=None):
-  if set_rootdir(dir):
-    if port==None:
-      ip, port = get_ip_and_port()
-    bonjourd = Thread(target=bonjour_register, args=(port, ))
-    bonjourd.daemon = True
-    bonjourd.start()
-    start_cherrypy(port) # Block on cherrypy thread, we're running from console
+  if len(sys.argv) > 2: # Scriptname, Directory, Port
+    port = int(sys.argv[2])
+    if port < 65535 and port > 0:
+      pass
+    else:
+      port = None
+  if port == None:
+    print "Setting random port automatically"
+    ip, port = get_ip_and_port()
+  if not set_rootdir(dir):
+    print "Could not set root directory"
+    return 1
+  print "Starting services on port: "+str(port)
+  bonjourd = Thread(target=bonjour_register, args=(port, ))
+  bonjourd.daemon = True
+  bonjourd.start()
+  start_cherrypy(port) # Block on cherrypy thread, we're running from console
   return 0
       
 if __name__ == '__main__':
