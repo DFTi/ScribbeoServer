@@ -4,7 +4,7 @@
 import os
 import sys
 import subprocess
-from threading import Thread
+import threading
 import socket
 import select
 try:
@@ -188,8 +188,8 @@ def launch(dir, port=None):
     if port==None:
       ip, port = get_ip_and_port()
     threads = {
-      "bonjour":Thread(target=bonjour_register, args=(port, )),
-      "cherrypy":Thread(target=start_cherrypy, args=(port, ))
+      "bonjour":threading.Thread(target=bonjour_register, args=(port, )),
+      "cherrypy":threading.Thread(target=start_cherrypy, args=(port, ))
     }
     for key in threads:
       threads[key].daemon = True # Auto-SIGTERM when main thread terminates
@@ -205,7 +205,6 @@ def set_rootdir(dir):
   else:
     rootdir = dir
   return rootdir
-  
 
 ### Main Function ###
 def main(dir=None, port=None):
@@ -222,7 +221,7 @@ def main(dir=None, port=None):
     print "Could not set root directory"
     return 1
   print "Starting services on port: "+str(port)
-  bonjourd = Thread(target=bonjour_register, args=(port, ))
+  bonjourd = threading.Thread(target=bonjour_register, args=(port, ))
   bonjourd.daemon = True
   bonjourd.start()
   start_cherrypy(port) # Block on cherrypy thread, we're running from console
@@ -231,5 +230,8 @@ def main(dir=None, port=None):
 if __name__ == '__main__':
   status = main()
   sys.exit(status)
+  
+def foobar():
+  print "ah yes we loaded it and ran a method"
 
 #Test
