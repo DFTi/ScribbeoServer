@@ -7,13 +7,12 @@ import subprocess
 import threading
 import socket
 import select
+import webserver
 try:
   import pybonjour
 except Exception:
   print "Please install bonjour from http://www.apple.com/support/bonjour/"
   sys.exit(1)
-import cherrypy
-import re
 
 hidden_names = {
   ".DS_Store":True,
@@ -74,102 +73,6 @@ def get_ip_and_port(testPort=0):
   s.close()
   return ip, port
 
-def unsafe_dirpath(*arg):
-  for piece in arg:
-    if piece == '..':
-      return True
-      
-def aditc(path):
-  if path == None:
-    return '00:00:00:00'
-  if sys.platform == 'win32':
-    return '00:00:00:00'
-  script_dir = os.path.dirname(os.path.realpath(__file__))
-  aditc = os.path.join(script_dir, 'aditc')
-  proc = subprocess.Popen([aditc, path], stdout=subprocess.PIPE)
-  proc.wait()
-  for line in proc.stdout:
-    timecode = line.rstrip()
-    break
-  ndftc = re.compile("..:..:..:..")
-  dftc = re.compile("..:..:..;..")
-  if ndftc.match(timecode):
-    return timecode[:11]
-  elif dftc.match(timecode):
-    return timecode[:11].replace(';', ':')
-  else:
-    return '00:00:00:00'
-  
-### CherryPy Server ###
-class Server(object):
-  @cherrypy.expose
-  def index(self):
-    return '<center>Welcome to Scribbeo Server!</center>'
-  @cherrypy.expose
-  def note(self, name=''):
-    """ Upload and download notes
-        Uploading:    Post request to /notes/name_of_archive
-                      Writes to {rootdir}/Notes/name_of_archive
-        Downloading:  Get request to /notes/name_of_archive
-                      Sends {rootdir}/Notes/name_of_archive
-        This is succeptible to arbitrary file upload/filling,
-        but this server is intended to be run on a trusted LAN.
-    """
-    note_dir = os.path.join(rootdir, 'Notes')
-    path = os.path.join(note_dir, name)
-    if cherrypy.request.method == 'GET':
-      if os.path.exists(path) and not os.path.isdir(path):
-        cherrypy.response.headers['Content-Type'] = 'application/x-gzip'
-        return cherrypy.lib.static.serve_file(path)
-      else:
-        return 'Note not found.'
-    elif cherrypy.request.method == 'POST':
-      if not os.path.exists(note_dir):
-          os.makedirs(note_dir)
-      archive = cherrypy.request.body.read()
-      file = open(path, 'w')
-      file.write(archive)
-      file.close()
-      return 'Saved'
-    else:
-      return 'Invalid request.'
-  @cherrypy.expose
-  def asset(self, *arg):
-    if unsafe_dirpath(*arg):
-      return 'Invalid URL'
-    path = os.path.join(rootdir, *arg)
-    if os.path.exists(path) and not os.path.isdir(path):
-      return cherrypy.lib.static.serve_file(path)
-    else:
-      return ''
-  @cherrypy.expose
-  @cherrypy.tools.json_out()
-  def list(self, *arg):
-    if unsafe_dirpath(*arg):
-      return 'Invalid URL'
-    dirpath = os.path.join(rootdir, *arg)
-    subdirpath = os.path.join(*arg) if len(arg)>0 else ''
-    # Start making the dictionary of content
-    entries = {'files':[], 'folders':[]}
-    for filename in os.listdir(dirpath):
-      name, ext = os.path.splitext(filename)
-      if filename in hidden_names:
-        continue
-      if ext in hidden_exts:
-        continue
-      entry = {'name':filename, 'ext':ext[1:]}
-      relpath = os.path.join(subdirpath, filename) # .replace(' ', '%20')
-      # Check if this is a file or a directory:
-      if os.path.isdir(os.path.join(dirpath, filename)):
-        entry['list_url'] = '/list/'+relpath
-        entries['folders'].append(entry)
-      else:
-        entry['asset_url'] = '/asset/'+relpath
-        entry['note_url'] = '/note/'+relpath
-        entry['timecode'] = aditc(os.path.join(dirpath, filename))
-        entries['files'].append(entry)
-    return entries
-
 ### Web Server Configure & Start ###
 def start_cherrypy(port):
   conf = {
@@ -178,9 +81,10 @@ def start_cherrypy(port):
       'server.socket_port': port
     }
   }
-  cherrypy.engine.timeout_monitor.unsubscribe()
-  cherrypy.engine.autoreload.unsubscribe()
-  cherrypy.quickstart(Server(), '/', conf)    
+  webserver.set_rootdir(rootdir)
+  webserver.cherrypy.engine.timeout_monitor.unsubscribe()
+  webserver.cherrypy.engine.autoreload.unsubscribe()
+  webserver.cherrypy.quickstart(webserver.Routes(), '/', conf)    
 
 ### Launch our daemons in a new thread ###
 def launch(dir, port=None):
