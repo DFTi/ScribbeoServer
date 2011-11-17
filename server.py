@@ -14,14 +14,6 @@ except Exception:
   print "Please install bonjour from http://www.apple.com/support/bonjour/"
   sys.exit(1)
 
-hidden_names = {
-  ".DS_Store":True,
-  "Notes":True
-}
-hidden_exts = {
-  ".tc":True
-}
-
 ### Bonjour ###
 def register_callback(sdRef, flags, errorCode, name, regtype, domain):
   if errorCode == pybonjour.kDNSServiceErr_NoError:
