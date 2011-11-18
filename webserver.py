@@ -40,6 +40,7 @@ def aditc(path):
     timecode = line.rstrip()
     break
   ndftc = re.compile("..:..:..:..")
+  # \d{2}:\d{2}:\d{2}:\d{2}
   dftc = re.compile("..:..:..;..")
   if ndftc.match(timecode):
     return timecode[:11]
