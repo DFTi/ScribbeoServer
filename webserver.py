@@ -9,7 +9,8 @@ hidden_names = {
   "Notes":True
 }
 hidden_exts = {
-  ".tc":True
+  ".tc":True,
+  ".bash_history":True
 }
 
 def set_rootdir(dir):
