@@ -15,6 +15,11 @@ except Exception:
   sys.exit(1)
 
 ### Bonjour ###
+def async_start_bonjour(port):
+  bonjourd = threading.Thread(target=bonjour_register, args=(port, ))
+  bonjourd.daemon = True
+  bonjourd.start()
+  
 def register_callback(sdRef, flags, errorCode, name, regtype, domain):
   if errorCode == pybonjour.kDNSServiceErr_NoError:
     print 'Registered Bonjour service:'
@@ -66,16 +71,17 @@ def get_ip_and_port(testPort=0):
   return ip, port
 
 ### Web Server Configure & Start ###
-def start_cherrypy(port):
+def start_cherrypy(ip, port):
   conf = {
     'global': {
+      'server.the_ip': ip, # Just to know. Still bind to 0.0.0.0
       'server.socket_host': '0.0.0.0',
       'server.socket_port': port
     }
   }
   webserver.set_rootdir(rootdir)
-  webserver.cherrypy.engine.timeout_monitor.unsubscribe()
-  webserver.cherrypy.engine.autoreload.unsubscribe()
+  #webserver.cherrypy.engine.timeout_monitor.unsubscribe()
+  #webserver.cherrypy.engine.autoreload.unsubscribe()
   webserver.cherrypy.quickstart(webserver.Routes(), '/', conf)    
 
 ### Launch our daemons in a new thread ###
@@ -107,7 +113,7 @@ def main(dir=None, port=None):
   if len(sys.argv) > 2: # Scriptname, Directory, Port
     port = int(sys.argv[2])
     if port < 65535 and port > 0:
-      pass
+      ip, temp = get_ip_and_port() # I just need the IP
     else:
       port = None
   if port == None:
@@ -117,17 +123,10 @@ def main(dir=None, port=None):
     print "Could not set root directory"
     return 1
   print "Starting services on port: "+str(port)
-  bonjourd = threading.Thread(target=bonjour_register, args=(port, ))
-  bonjourd.daemon = True
-  bonjourd.start()
-  start_cherrypy(port) # Block on cherrypy thread, we're running from console
+  async_start_bonjour(port)
+  start_cherrypy(ip, port) # Block on cherrypy thread, we're running from console
   return 0
       
 if __name__ == '__main__':
   status = main()
   sys.exit(status)
-  
-def foobar():
-  print "ah yes we loaded it and ran a method"
-
-#Test

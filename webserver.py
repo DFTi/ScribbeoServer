@@ -1,8 +1,8 @@
 import os
 import sys
-import re
 import subprocess
 import cherrypy
+import aditc
 
 hidden_names = {
   ".DS_Store":True,
@@ -13,43 +13,24 @@ hidden_exts = {
   ".bash_history":True
 }
 
+def POST():
+  return cherrypy.request.method == 'POST'
+def POST():
+  return cherrypy.request.method == 'PUT'  
+def GET():
+  return cherrypy.request.method == 'GET'
+  
 def set_rootdir(dir):
   global rootdir
   rootdir = dir
   print "Serving out of "+rootdir
   
 ### Helpers ###
-def unsafe_dirpath(*arg):
+def check_dirpath(*arg):
   for piece in arg:
     if piece == '..':
-      return True
+      raise cherrypy.HTTPError("403 Unsafe directory path")
       
-def aditc(path):
-  zeros = '00:00:00:00'
-  if path == None:
-    return zeros
-  if sys.platform == 'win32':
-    return zeros
-  script_dir = os.path.dirname(os.path.realpath(__file__))
-  aditc = os.path.join(script_dir, 'aditc')
-  proc = subprocess.Popen([aditc, path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-  proc.wait()
-  for line in proc.stderr:
-    if len(line) > 0:
-      return zeros
-  for line in proc.stdout:
-    timecode = line.rstrip()
-    break
-  ndftc = re.compile("..:..:..:..")
-  # \d{2}:\d{2}:\d{2}:\d{2}
-  dftc = re.compile("..:..:..;..")
-  if ndftc.match(timecode):
-    return timecode[:11]
-  elif dftc.match(timecode):
-    return timecode[:11].replace(';', ':')
-  else:
-    return zeros
-
 # FIXME: 
 # Some routes, like notes & email are succeptible random filling,
 # In a future update, a secret-key should be used between app & server
@@ -89,7 +70,7 @@ class Routes(object):
       
   @cherrypy.expose
   def asset(self, *arg):
-    if unsafe_dirpath(*arg):
+    if check_dirpath(*arg):
       return 'Invalid URL'
     path = os.path.join(rootdir, *arg)
     if os.path.exists(path) and not os.path.isdir(path):
@@ -122,6 +103,16 @@ class Routes(object):
       return 'Saved'
     else:
       return 'Invalid request.'
+      
+  @cherrypy.expose
+  def rootdir(self, *arg):
+    check_dirpath(*arg)
+    dirpath = os.path.join(rootdir, *arg)
+    subdirpath = os.path.join(*arg) if len(arg)>0 else ''
+    if cherrypy.request.method == 'POST':
+      if not os.path.exists(note_dir):
+          os.makedirs(note_dir)
+      archive = cherrypy.request.body.read()
 
   # The next 3 routes are the same in functionality as
   # the 'email' route above. Pure file send/receive.
@@ -141,8 +132,7 @@ class Routes(object):
   @cherrypy.expose
   @cherrypy.tools.json_out()
   def list(self, *arg):
-    if unsafe_dirpath(*arg):
-      return 'Invalid URL'
+    check_dirpath(*arg)
     dirpath = os.path.join(rootdir, *arg)
     subdirpath = os.path.join(*arg) if len(arg)>0 else ''
     # Start making the dictionary of content
@@ -162,6 +152,34 @@ class Routes(object):
       else:
         entry['asset_url'] = '/asset/'+relpath
         entry['note_url'] = '/note/'+relpath
-        entry['timecode'] = aditc(os.path.join(dirpath, filename))
+        entry['timecode'] = aditc.get(os.path.join(dirpath, filename))
         entries['files'].append(entry)
     return entries
+    
+  @cherrypy.expose
+  @cherrypy.tools.json_out()
+  def api(self, *arg):
+    if arg[0] == 'config':
+      if GET():
+        config = {
+          'rootdir':rootdir,
+          'ip':cherrypy.server.the_ip,
+          'port':cherrypy.server.socket_port
+        }
+        return config
+      elif PUT():
+        print "Received new settings from GUI--Restarting..."
+        new_conf = cherrypy.request.body.read()
+        update_server(new_conf) #FIXME implement this
+      
+    #elif arg[0] == 'off':
+    #   return 'Turn server off'
+    # elif arg[0] ==
+      
+      
+      
+      
+      
+      
+      
+      
