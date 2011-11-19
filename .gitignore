@@ -1,6 +1,5 @@
-RubyRedux/*
+.clips
 *.app/
 .DS_Store
 dir/*
-bottle/
 *.pyc
