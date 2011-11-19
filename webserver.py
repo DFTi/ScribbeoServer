@@ -13,6 +13,8 @@ hidden_exts = {
   ".bash_history":True
 }
 
+
+
 def POST():
   return cherrypy.request.method == 'POST'
 def POST():
@@ -172,14 +174,23 @@ class Routes(object):
         new_conf = cherrypy.request.body.read()
         update_server(new_conf) #FIXME implement this
       
-    #elif arg[0] == 'off':
-    #   return 'Turn server off'
-    # elif arg[0] ==
       
       
       
       
       
       
-      
-      
+def serve(app_instance=None):
+  global app
+  app = app_instance
+  cherry_config = {
+    'global': {
+      'server.system_ip': app.config["ip"], # Just to know the system IP.
+      'server.socket_host': '0.0.0.0', # Bind on all interfaces in this version.
+      'server.socket_port': app.config["port"]
+    }
+  }
+  webserver.set_rootdir(app.config["rootdir"])
+  #webserver.cherrypy.engine.timeout_monitor.unsubscribe()
+  #webserver.cherrypy.engine.autoreload.unsubscribe()
+  webserver.cherrypy.quickstart(webserver.Routes(), '/', conf)

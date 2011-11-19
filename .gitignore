@@ -1,4 +1,4 @@
-.clips
+clips/*
 *.app/
 .DS_Store
 dir/*
