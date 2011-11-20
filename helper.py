@@ -2,6 +2,14 @@ import os
 import sys
 import socket
 
+def pid_alive(pid): 
+  try:
+    os.kill(pid, 0) # Send null signal to the PID
+    return True
+  except OSError:
+    return False
+  return None
+
 def get_ip_port(testPort=0):
   s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
   s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) 
@@ -34,7 +42,6 @@ def validate_config(config):
   config['ip'] = get_ip_port()[0]
   config['port'] = validate_port(config["port"])
   config['rootdir'] = validate_directory(config["rootdir"])
-  # if taskmaster store grep line or w/e
   return config
     
 def make_config(argc, argv):
@@ -50,6 +57,6 @@ def make_config(argc, argv):
     "port":port,
     "ip":ip,
     "rootdir":rootdir,
-    "taskmaster":None
+    "guipid":None
   }
     
