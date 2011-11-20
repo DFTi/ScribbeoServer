@@ -12,7 +12,7 @@ def get_ip_port(testPort=0):
   return ip, port
 
 def validate_port(port):
-  if port < 65535 and port > 0:
+  if port and port < 65535 and port > 0:
     try:
       if get_ip_port(port):
         return port
@@ -24,18 +24,20 @@ def validate_port(port):
     return get_ip_port(port)[1]
 
 def validate_directory(path):
-  if os.path.exists(path) and os.path.isdir(path):
+  if path and os.path.exists(path) and os.path.isdir(path):
     return os.path.abspath(path)
   else:
     print "Invalid directory: "+path
     sys.exit(-1)
     
-def make_config(argc, argv, config=None):
-  if config
-    config['systme_ip'] = get_ip_port()[0]
-    config['port'] = validate_port(config["port"])
-    config['rootdir'] = validate_directory(config["rootdir"])
-    return config
+def validate_config(config):
+  config['ip'] = get_ip_port()[0]
+  config['port'] = validate_port(config["port"])
+  config['rootdir'] = validate_directory(config["rootdir"])
+  # if taskmaster store grep line or w/e
+  return config
+    
+def make_config(argc, argv):
   ip, port = get_ip_port()
   if argc == 3: # Scriptname, Directory, Port
     port = validate_port(int(argv[2]))
@@ -46,7 +48,8 @@ def make_config(argc, argv, config=None):
     sys.exit(-1)
   return {
     "port":port,
-    "system_ip":ip,
-    "rootdir":rootdir
+    "ip":ip,
+    "rootdir":rootdir,
+    "taskmaster":None
   }
     

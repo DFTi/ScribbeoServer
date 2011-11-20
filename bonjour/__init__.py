@@ -14,7 +14,7 @@ def register_callback(sdRef, flags, errorCode, name, regtype, domain):
     print '  regtype =', regtype
     print '  domain  =', domain
 
-def register(webserver):
+def register(port):
   name    = 'videotree'
   regtype = '_videoTree._tcp'
   port    = port
@@ -24,18 +24,19 @@ def register(webserver):
                                        callBack = register_callback)
   try:
     try:
-      while webserver.is_active:
+      while True:
+        print "foo"
         ready = select.select([sdRef], [], [])
         if sdRef in ready[0]:
           pybonjour.DNSServiceProcessResult(sdRef)
-      print "Bonjour no longer registered."
-      raise KeyboardInterrupt
     except KeyboardInterrupt:
       pass
   finally:
     sdRef.close()
     
-def async_register(port):
-  bonjourd = threading.Thread(target=register, args=(port, ))
+def register_and_poll(webserver):
+  bonjourd = threading.Thread(target=register, args=(webserver.port, ))
   bonjourd.daemon = True
   bonjourd.start()
+  while True:
+    print "polling for webserver... self killing bonjour thread's keeper if i cant find it..."
