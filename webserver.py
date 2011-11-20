@@ -1,5 +1,6 @@
 import os
 import sys
+import threading
 import subprocess
 import bonjour
 import cherrypy
@@ -13,8 +14,6 @@ hidden_exts = {
   ".tc":True,
   ".bash_history":True
 }
-
-
 
 def POST():
   return cherrypy.request.method == 'POST'
@@ -48,11 +47,18 @@ class Webserver(object):
     }
     cherrypy.engine.timeout_monitor.unsubscribe()
     cherrypy.engine.autoreload.unsubscribe()
-    self.routes = self.Routes()
-    self.routes.owner = self
+    self.router = self.Router()
+    self.router.owner = self
     self.alive = True
-    cherrypy.quickstart(self.routes, '/', conf)
-  class Routes(object):
+    self.start_bonjour_thread()
+    cherrypy.quickstart(self.router, '/', conf)
+    
+  def start_bonjour_thread(self):
+    self.bonjour_thread = threading.Thread(target=bonjour.register, args=(self.port, ))
+    self.bonjour_thread.daemon = True
+    self.bonjour_thread.start()  
+    
+  class Router(object):
     @cherrypy.expose
     def index(self):
       return '<center>Welcome to Scribbeo Server!</center>'
