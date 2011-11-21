@@ -8,11 +8,11 @@ import aditc
 
 hidden_names = {
   ".DS_Store":True,
+  ".bash_history":True,
   "Notes":True
 }
 hidden_exts = {
-  ".tc":True,
-  ".bash_history":True
+  ".tc":True
 }
 
 def POST():
