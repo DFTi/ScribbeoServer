@@ -22,11 +22,6 @@ def POST():
 def GET():
   return cherrypy.request.method == 'GET'
   
-def set_rootdir(dir):
-  global rootdir
-  rootdir = dir
-  print "Serving out of "+rootdir
-  
 ### Helpers ###
 def check_dirpath(*arg):
   for piece in arg:
@@ -47,7 +42,7 @@ class Webserver(object):
     }
     cherrypy.engine.timeout_monitor.unsubscribe()
     cherrypy.engine.autoreload.unsubscribe()
-    self.router = self.Router()
+    self.router = self.Router(self.rootdir)
     self.router.owner = self
     self.alive = True
     self.start_bonjour_thread()
@@ -59,6 +54,9 @@ class Webserver(object):
     self.bonjour_thread.start()  
     
   class Router(object):
+    def __init__(self, rootdir):
+      self.rootdir = rootdir
+      
     @cherrypy.expose
     def index(self):
       return '<center>Welcome to Scribbeo Server!</center>'
@@ -71,7 +69,7 @@ class Webserver(object):
           Downloading:  Get request to /notes/name_of_archive
                         Sends {rootdir}/Notes/name_of_archive
       """
-      note_dir = os.path.join(rootdir, 'Notes')
+      note_dir = os.path.join(self.rootdir, 'Notes')
       path = os.path.join(note_dir, name)
       if cherrypy.request.method == 'GET':
         if os.path.exists(path) and not os.path.isdir(path):
@@ -94,7 +92,7 @@ class Webserver(object):
     def asset(self, *arg):
       if check_dirpath(*arg):
         return 'Invalid URL'
-      path = os.path.join(rootdir, *arg)
+      path = os.path.join(self.rootdir, *arg)
       if os.path.exists(path) and not os.path.isdir(path):
         return cherrypy.lib.static.serve_file(path)
       else:
@@ -108,7 +106,7 @@ class Webserver(object):
           Downloading:  Get request to /email/whatever.html
                         Sends {rootdir}/Notes/whatever.html
       """
-      note_dir = os.path.join(rootdir, 'Notes')
+      note_dir = os.path.join(self.rootdir, 'Notes')
       path = os.path.join(note_dir, name)
       if cherrypy.request.method == 'GET':
         if os.path.exists(path) and not os.path.isdir(path):
@@ -126,16 +124,6 @@ class Webserver(object):
       else:
         return 'Invalid request.'
       
-    @cherrypy.expose
-    def rootdir(self, *arg):
-      check_dirpath(*arg)
-      dirpath = os.path.join(rootdir, *arg)
-      subdirpath = os.path.join(*arg) if len(arg)>0 else ''
-      if cherrypy.request.method == 'POST':
-        if not os.path.exists(note_dir):
-            os.makedirs(note_dir)
-        archive = cherrypy.request.body.read()
-
     # The next 3 routes are the same in functionality as
     # the 'email' route above. Pure file send/receive.
 
@@ -155,7 +143,7 @@ class Webserver(object):
     @cherrypy.tools.json_out()
     def list(self, *arg):
       check_dirpath(*arg)
-      dirpath = os.path.join(rootdir, *arg)
+      dirpath = os.path.join(self.rootdir, *arg)
       subdirpath = os.path.join(*arg) if len(arg)>0 else ''
       # Start making the dictionary of content
       entries = {'files':[], 'folders':[]}
