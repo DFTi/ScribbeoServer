@@ -5,6 +5,7 @@ import subprocess
 import bonjour
 import cherrypy
 import aditc
+import re
 
 hidden_names = {
   ".DS_Store":True,
@@ -56,6 +57,9 @@ class Webserver(object):
   class Router(object):
     def __init__(self, rootdir):
       self.rootdir = rootdir
+      self.notedir = os.path.join(rootdir, 'Notes')
+      if not os.path.exists(self.notedir):
+        os.makedirs(self.notedir)
       
     @cherrypy.expose
     def index(self):
@@ -69,8 +73,7 @@ class Webserver(object):
           Downloading:  Get request to /notes/name_of_archive
                         Sends {rootdir}/Notes/name_of_archive
       """
-      note_dir = os.path.join(self.rootdir, 'Notes')
-      path = os.path.join(note_dir, name)
+      path = os.path.join(self.notedir, name)
       if cherrypy.request.method == 'GET':
         if os.path.exists(path) and not os.path.isdir(path):
           cherrypy.response.headers['Content-Type'] = 'application/x-gzip'
@@ -78,8 +81,6 @@ class Webserver(object):
         else:
           return 'Note not found.'
       elif cherrypy.request.method == 'POST':
-        if not os.path.exists(note_dir):
-            os.makedirs(note_dir)
         archive = cherrypy.request.body.read()
         file = open(path, 'w')
         file.write(archive)
@@ -106,16 +107,13 @@ class Webserver(object):
           Downloading:  Get request to /email/whatever.html
                         Sends {rootdir}/Notes/whatever.html
       """
-      note_dir = os.path.join(self.rootdir, 'Notes')
-      path = os.path.join(note_dir, name)
+      path = os.path.join(self.notedir, name)
       if cherrypy.request.method == 'GET':
         if os.path.exists(path) and not os.path.isdir(path):
           return cherrypy.lib.static.serve_file(path)
         else:
           return 'Not found on this server.'
       elif cherrypy.request.method == 'POST':
-        if not os.path.exists(note_dir):
-            os.makedirs(note_dir)
         html = cherrypy.request.body.read()
         file = open(path, 'w')
         file.write(html)
@@ -142,6 +140,7 @@ class Webserver(object):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def list(self, *arg):
+      notedir_entries = os.listdir(self.notedir) # Gonna check this out for each file
       check_dirpath(*arg)
       dirpath = os.path.join(self.rootdir, *arg)
       subdirpath = os.path.join(*arg) if len(arg)>0 else ''
@@ -156,12 +155,21 @@ class Webserver(object):
         entry = {'name':filename, 'ext':ext[1:]}
         relpath = os.path.join(subdirpath, filename) # .replace(' ', '%20')
         # Check if this is a file or a directory:
-        if os.path.isdir(os.path.join(dirpath, filename)):
+        abspath = os.path.join(dirpath, filename)
+        if os.path.isdir(abspath):
+          # Folders
           entry['list_url'] = '/list/'+relpath
           entries['folders'].append(entry)
         else:
+          # Files
           entry['asset_url'] = '/asset/'+relpath
-          entry['note_url'] = '/note/'+relpath
+          # find out how many note archives we have for this file, + paths, and send
+          entry['notes'] = []
+          for file in notedir_entries:
+            pat = re.compile('\+asset(.*)'+filename+'(.*)')
+            if pat.match(file):
+              archive_url = os.path.join('/note/'+file)
+              entry['notes'].append(archive_url)
           entry['timecode'] = aditc.get(os.path.join(dirpath, filename))
           entries['files'].append(entry)
       return entries
@@ -176,12 +184,3 @@ class Webserver(object):
             "app_config":self.owner.app_config,
             "web_config":self.owner.web_config
           }
-        elif PUT():
-          print "Received new settings from GUI--Restarting..."
-          new_conf = cherrypy.request.body.read()
-          #cherrypy.server.is_alive == False # Anyone who's watching should shutdown now...
-          #self.# Join the watching threads so they may perish now
-          #update_server(new_conf) #FIXME implement this
-      
-
-
