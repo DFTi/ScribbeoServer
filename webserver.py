@@ -167,7 +167,6 @@ class Webserver(object):
       return entries
 
     @cherrypy.expose
-    @cherrypy.tools.json_out()
     def timecode(self, *arg): # Return timecode for asset
       notedir_entries = os.listdir(self.notedir)
       if arg[0] == 'asset':
