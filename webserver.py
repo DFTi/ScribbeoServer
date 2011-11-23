@@ -163,17 +163,22 @@ class Webserver(object):
         else:
           # Files
           entry['asset_url'] = '/asset/'+relpath
-          # find out how many note archives we have for this file, + paths, and send
-          entry['notes'] = []
-          for file in notedir_entries:
-            pat = re.compile('\+asset(.*)'+filename+'(.*)')
-            if pat.match(file):
-              archive_url = os.path.join('/note/'+file)
-              entry['notes'].append(archive_url)
-          entry['timecode'] = aditc.get(os.path.join(dirpath, filename))
           entries['files'].append(entry)
       return entries
 
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def timecode(self, *arg): # Return timecode for asset
+      notedir_entries = os.listdir(self.notedir)
+      if arg[0] == 'asset':
+        arg = arg[1:]
+      check_dirpath(*arg)
+      path = os.path.join(self.rootdir, *arg)
+      if os.path.exists(path) and not os.path.isdir(path):
+        return aditc.get(path)
+      else:
+        return '00:00:00:00'
+          
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def notes(self, *arg): # Return a JSON of notes' urls
