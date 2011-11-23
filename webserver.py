@@ -173,6 +173,26 @@ class Webserver(object):
           entry['timecode'] = aditc.get(os.path.join(dirpath, filename))
           entries['files'].append(entry)
       return entries
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def notes(self, *arg): # Return a JSON of notes' urls
+      notedir_entries = os.listdir(self.notedir)
+      if arg[0] == 'asset':
+        arg = arg[1:]
+      check_dirpath(*arg)
+      path = os.path.join(self.rootdir, *arg)
+      filename = arg[-1]
+      urls = []
+      if os.path.exists(path) and not os.path.isdir(path):
+        for file in notedir_entries:
+          pat = re.compile('\+asset(.*)'+filename+'(.*)')
+          if pat.match(file):
+            archive_url = os.path.join('/note/'+file)
+            urls.append(archive_url)
+      return urls
+    
+    
     
     @cherrypy.expose
     @cherrypy.tools.json_out()
