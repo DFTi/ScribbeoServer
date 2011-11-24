@@ -1,3 +1,4 @@
+import sys
 try:
   import pybonjour
 except Exception:
