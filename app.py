@@ -1,30 +1,53 @@
 #!/usr/bin/env python
 """ Scribbeo(TM) Server -- Written by Keyvan Fatehi, DigitalFilm Tree, 2011 """
-
+import os
 import sys
 import time
-import threading
+from threading import Thread
 import webserver
+import bonjour
 import helper
+
 
 class App(object):
   def __init__(self, config):
+    self.On = True
     self.config = helper.validate_config(config)
+
+  def start(self):
     self.start_web_thread()
-    self.block(self.config["guipid"])
+    self.start_bonjour_thread()
+    if self.config.has_key('guipid'):
+      self.block(self.config["guipid"])
+    else:
+      self.block()
     
   def start_web_thread(self):
-    self.web_thread = threading.Thread(target=webserver.Webserver, args=(self.config, ))
+    self.server = webserver.Webserver(self.config)
+    self.web_thread = Thread(target=self.server.start, args=())
     self.web_thread.daemon = True
     self.web_thread.start()
       
-  def block(self, pid):
+  def start_bonjour_thread(self):
+    bonjour.On = True
+    self.bonjour_thread = Thread(target=bonjour.register, args=(self.config['port'], ))
+    self.bonjour_thread.daemon = True
+    self.bonjour_thread.start()
+
+  def block(self, pid=None):
     if not pid:
       try:
-        while True:    
-          time.sleep(60)
+        while self.On:
+          time.sleep(1)
       finally:
-        sys.exit(0)
+        print "Stopping bonjour"
+        bonjour.On = False
+        self.bonjour_thread.join()
+
+        print "App should now turn off...."
+        raise KeyboardInterrupt
+        raise SystemExit
+        print "still there?"
     else:
       try:
         while helper.pid_alive(pid):
@@ -37,7 +60,7 @@ class App(object):
 def main(config=None):
   if not config:
     config = helper.make_config(len(sys.argv), sys.argv)
-  App(config)
+  App(config).start()
     
 if __name__ == '__main__':
   status = main()

@@ -1,3 +1,6 @@
+dist/
+build/
+settings.json
 clips/*
 *.app/
 .DS_Store

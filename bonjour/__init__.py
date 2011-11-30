@@ -7,8 +7,10 @@ except Exception:
 import select
 import time
 
-### Bonjour ###
-  
+On = True
+
+### Bonjour ### 
+
 def register_callback(sdRef, flags, errorCode, name, regtype, domain):
   if errorCode == pybonjour.kDNSServiceErr_NoError:
     print 'Registered Bonjour service:'
@@ -24,13 +26,15 @@ def register(port):
                                        regtype = regtype,
                                        port = port,
                                        callBack = register_callback)
+  
   try:
     try:
-      while True:
-        ready = select.select([sdRef], [], [])
+      while On:
+        ready = select.select([sdRef], [], [], 1)
         if sdRef in ready[0]:
           pybonjour.DNSServiceProcessResult(sdRef)
     except KeyboardInterrupt:
       pass
   finally:
+    print "Bonjour Shutting Down"
     sdRef.close()

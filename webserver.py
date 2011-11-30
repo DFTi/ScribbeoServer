@@ -2,7 +2,6 @@ import os
 import sys
 import threading
 import subprocess
-import bonjour
 import cherrypy
 import aditc
 import re
@@ -35,25 +34,22 @@ class Webserver(object):
     self.rootdir = config["rootdir"]
     self.port = config["port"]
     self.ip = config["ip"], # Just to know the system IP.
-    self.web_config = conf = {
+    print "CHERRYPY BOOTING ON PORT "+str(config["port"])
+    self.web_config = {
       'global': {
         'server.socket_host': '0.0.0.0', # Bind on all interfaces in this version.
-        'server.socket_port': config["port"]
+        'server.socket_port': self.port
       }
     }
+
+  def start(self):
     cherrypy.engine.timeout_monitor.unsubscribe()
     cherrypy.engine.autoreload.unsubscribe()
     self.router = self.Router(self.rootdir)
     self.router.owner = self
     self.alive = True
-    self.start_bonjour_thread()
-    cherrypy.quickstart(self.router, '/', conf)
-    
-  def start_bonjour_thread(self):
-    self.bonjour_thread = threading.Thread(target=bonjour.register, args=(self.port, ))
-    self.bonjour_thread.daemon = True
-    self.bonjour_thread.start()  
-    
+    cherrypy.quickstart(self.router, '/', self.web_config)
+
   class Router(object):
     def __init__(self, rootdir):
       self.rootdir = rootdir

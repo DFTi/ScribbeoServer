@@ -3,8 +3,9 @@ import sys
 import subprocess
 import re
 
+zeros = '00:00:00:00'
+
 def get(path):
-  zeros = '00:00:00:00'
   if path == None:
     return zeros
   if sys.platform == 'win32':
