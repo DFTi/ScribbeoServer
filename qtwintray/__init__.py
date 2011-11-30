@@ -8,11 +8,11 @@ import os
 import sys
 import threading
 import app
+import cherrypy
 
 class Window(QtGui.QDialog):
     def __init__(self):
         super(Window, self).__init__()
-
         self.serverOn = False
         self.loadConfigFile()
         # set up the enclosure for Status, Dir, Port, Start/stop btn
@@ -23,24 +23,20 @@ class Window(QtGui.QDialog):
         self.createTrayIcon()
         # Set the program window icon
         self.setIcon()
-
         self.startStopButton.clicked.connect(self.startStopServer)
         self.dirEditButton.clicked.connect(self.dirEditAction)
         self.trayIcon.activated.connect(self.iconActivated)
-
         mainLayout = QtGui.QVBoxLayout()
         mainLayout.addWidget(self.messageGroupBox)
         self.setLayout(mainLayout)
-
         self.trayIcon.show()
-
         self.setWindowTitle("Scribbeo Server")
         self.resize(400, 100)
 
     def kill_server(self):
         if self.serverOn:
             self.theApp.On = False
-            #self.server_app.webserver.cherrypy.process.bus.exit()
+            cherrypy.process.bus.exit()
             self.app_thread.join()
         print "Server is KILLED according to QTWinTray"
         self.serverOn = False
@@ -235,14 +231,11 @@ class Window(QtGui.QDialog):
 
 def main(server_app=None):
     app = QtGui.QApplication(sys.argv)
-
     if not QtGui.QSystemTrayIcon.isSystemTrayAvailable():
         QtGui.QMessageBox.critical(None, "Systray",
                 "I couldn't detect any system tray on this system.")
         sys.exit(1)
-
     QtGui.QApplication.setQuitOnLastWindowClosed(False)
-
     window = Window()
     window.show()
     sys.exit(app.exec_())
