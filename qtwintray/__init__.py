@@ -6,8 +6,7 @@ import json
 import socket
 import os 
 import sys
-import threading
-import app
+import subprocess
 
 class Window(QtGui.QDialog):
     def __init__(self):
@@ -34,18 +33,14 @@ class Window(QtGui.QDialog):
 
     def kill_server(self):
         if self.serverOn:
-            self.theApp.On = False
-            print "Turned theApp OFF -- please die, I'll join you now."
-            self.app_thread.join()
-        print "Server is KILLED according to QTWinTray"
+            self.app.terminate()
+            self.app.wait()
         self.serverOn = False
 
     def start_server(self):
-        if self.theApp.On:
+        if self.serverOn:
             self.kill_server()
-        self.app_thread = threading.Thread(target=self.theApp.start)
-        self.app_thread.daemon = False
-        self.app_thread.start()
+        self.app = subprocess.Popen(['app.exe', self.directory, str(self.port)])
         self.serverOn = True
 
     def startStopServer(self):
@@ -66,7 +61,6 @@ class Window(QtGui.QDialog):
                 'port':self.port,
                 'rootdir':self.directory,
             }
-            self.theApp = app.App(self.config)
             self.portEdit.setEnabled(False)
             self.dirEditButton.setEnabled(False)
             self.startStopButton.setText("Stop")
@@ -228,7 +222,7 @@ class Window(QtGui.QDialog):
         self.kill_server()
         QtGui.qApp.quit()
 
-def main(server_app=None):
+def main():
     app = QtGui.QApplication(sys.argv)
     if not QtGui.QSystemTrayIcon.isSystemTrayAvailable():
         QtGui.QMessageBox.critical(None, "Systray",
