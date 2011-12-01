@@ -8,7 +8,6 @@ import webserver
 import bonjour
 import helper
 
-
 class App(object):
   def __init__(self, config):
     self.On = True
@@ -43,11 +42,7 @@ class App(object):
         print "Stopping bonjour"
         bonjour.On = False
         self.bonjour_thread.join()
-
-        print "App should now turn off...."
-        raise KeyboardInterrupt
-        raise SystemExit
-        print "still there?"
+        sys.exit(0)
     else:
       try:
         while helper.pid_alive(pid):

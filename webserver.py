@@ -34,7 +34,6 @@ class Webserver(object):
     self.rootdir = config["rootdir"]
     self.port = config["port"]
     self.ip = config["ip"], # Just to know the system IP.
-    print "CHERRYPY BOOTING ON PORT "+str(config["port"])
     self.web_config = {
       'global': {
         'server.socket_host': '0.0.0.0', # Bind on all interfaces in this version.

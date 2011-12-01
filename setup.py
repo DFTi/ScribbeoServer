@@ -11,9 +11,9 @@ setup(
     name = "ScribbeoServer",
 
     windows = [
-        {"script":"wininit.py"}
-        # ,
-        # "app.py",
+        {"script":"wininit.py"},
+        "app.py"
+        # {"app.py",
         # "qtwintray/__init__.py",
         # "cherrypy/__init__.py",
         # "bonjour/__init__.py",

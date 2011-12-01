@@ -2,13 +2,12 @@
 from PySide import QtCore, QtGui
 
 import systray_rc
-import json # For easy config persistence
+import json
 import socket
 import os 
 import sys
 import threading
 import app
-import cherrypy
 
 class Window(QtGui.QDialog):
     def __init__(self):
@@ -36,7 +35,7 @@ class Window(QtGui.QDialog):
     def kill_server(self):
         if self.serverOn:
             self.theApp.On = False
-            cherrypy.process.bus.exit()
+            print "Turned theApp OFF -- please die, I'll join you now."
             self.app_thread.join()
         print "Server is KILLED according to QTWinTray"
         self.serverOn = False
@@ -45,7 +44,7 @@ class Window(QtGui.QDialog):
         if self.theApp.On:
             self.kill_server()
         self.app_thread = threading.Thread(target=self.theApp.start)
-        self.app_thread.daemon = True
+        self.app_thread.daemon = False
         self.app_thread.start()
         self.serverOn = True
 
