@@ -1,7 +1,7 @@
 from distutils.core import setup
 import py2exe
+import os
 
-print "MAKE SURE TO CHANGE app.exe TO scribbeoserver.exe. Rename wininit.exe and use that as the launcher/gui/systray"
 
 setup(
     # The first three parameters are not required, if at least a
@@ -12,16 +12,14 @@ setup(
     name = "ScribbeoServer",
 
     windows = [
-        {"script":"wininit.py"},
-        "app.py"
-        # {"app.py",
-        # "qtwintray/__init__.py",
-        # "cherrypy/__init__.py",
-        # "bonjour/__init__.py",
-        # "aditc/__init__.py"
+        {
+            "script":"wininit.py",
+            "icon_resources":[(1, "icon.ico")]
+        },
+        "app.py",
     ],
 
-    data_files = ['icon.bmp'],
+    data_files = ['icon.ico', 'icon.bmp'], # yeah we actually need both >.<
 
     # Exclude OpenSSL, unless we are building a https server
     #options = { 'py2exe': { 'excludes': 'OpenSSL', "packages": ["encodings", "email"] }},
@@ -36,3 +34,9 @@ setup(
                 ]
             },
     })
+
+for filename in os.listdir("dist"):
+    if filename == 'app.exe':
+        os.rename(os.path.join('dist',filename), os.path.join('dist','ScribbeoServer.exe'))
+    if filename == 'wininit.exe':
+        os.rename(os.path.join('dist',filename), os.path.join('dist','ScribbeoServerGUI.exe')) # <-- thats the launcher.

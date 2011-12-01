@@ -8,6 +8,8 @@ import os
 import sys
 import subprocess
 
+APP_NAME = 'ScribbeoServer.exe'
+
 class Window(QtGui.QDialog):
     def __init__(self):
         super(Window, self).__init__()
@@ -40,7 +42,7 @@ class Window(QtGui.QDialog):
     def start_server(self):
         if self.serverOn:
             self.kill_server()
-        self.app = subprocess.Popen(['scribbeoserver.exe', self.directory, str(self.port)])
+        self.app = subprocess.Popen([APP_NAME, self.directory, str(self.port)])
         self.serverOn = True
 
     def startStopServer(self):
@@ -67,6 +69,7 @@ class Window(QtGui.QDialog):
             self.start_server()
             self.statusLabel.setText("Server is running: "+self.ip+':'+str(self.port))
             self.updateConfigFile(self.config)
+        self.trayIcon.setToolTip(self.statusLabel.text()) # Update tooltip with new server status.
 
     def loadConfigFile(self):
         if not os.path.exists('settings.json'):
@@ -113,6 +116,7 @@ class Window(QtGui.QDialog):
         super(Window, self).setVisible(visible)
 
     def closeEvent(self, event):
+        self.showMessage()
         return
         if self.trayIcon.isVisible():
             QtGui.QMessageBox.information(self, "Scribbeo Server",
@@ -123,10 +127,10 @@ class Window(QtGui.QDialog):
             event.ignore()
 
     def setIcon(self):
-        icon = QtGui.QIcon('icon.bmp')
+        self.icon = icon = QtGui.QIcon('icon.bmp')
         self.trayIcon.setIcon(icon)
         self.setWindowIcon(icon)
-        self.trayIcon.setToolTip("Server is (status)") # arg was: self.iconComboBox.itemText(index)
+        self.trayIcon.setToolTip(self.statusLabel.text())
 
     def iconActivated(self, reason):
         if reason in (QtGui.QSystemTrayIcon.Trigger, QtGui.QSystemTrayIcon.DoubleClick):
@@ -138,13 +142,11 @@ class Window(QtGui.QDialog):
             self.showMessage()
 
     def showMessage(self):
-        print "ShowMessage called"
-        return
-        icon = QtGui.QSystemTrayIcon.MessageIcon(
-                self.typeComboBox.itemData(self.typeComboBox.currentIndex()))
-        self.trayIcon.showMessage(self.titleEdit.text(),
-                self.bodyEdit.toPlainText(), icon,
-                self.durationSpinBox.value() * 1000)
+        icon = QtGui.QSystemTrayIcon.Information
+        self.trayIcon.showMessage("Scribbeo Server",
+                "Scribbeo Server is running in your system tray.\n"
+                "Right click the icon to quit the program.", icon,
+                5 * 1000)
 
     def validate(self):
         problem = None
