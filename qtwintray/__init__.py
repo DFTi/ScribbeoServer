@@ -40,7 +40,7 @@ class Window(QtGui.QDialog):
     def start_server(self):
         if self.serverOn:
             self.kill_server()
-        self.app = subprocess.Popen(['app.exe', self.directory, str(self.port)])
+        self.app = subprocess.Popen(['scribbeoserver.exe', self.directory, str(self.port)])
         self.serverOn = True
 
     def startStopServer(self):

@@ -1,6 +1,7 @@
 from distutils.core import setup
 import py2exe
 
+print "MAKE SURE TO CHANGE app.exe TO scribbeoserver.exe. Rename wininit.exe and use that as the launcher/gui/systray"
 
 setup(
     # The first three parameters are not required, if at least a
