@@ -7,10 +7,13 @@ import socket
 import os 
 import sys
 import subprocess
+import winhelper
+import requests
 
+GUI_NAME = 'ScribbeoServerGUI.exe'
 APP_NAME = 'ScribbeoServer.exe'
 VERSION = '1.0'
-UPDATEURL = 'http://www.yahoo.com'
+UPDATEURL = 'http://keyvanfatehi.com/up/update.json'
 
 class Window(QtGui.QDialog):
     def __init__(self):
@@ -34,13 +37,17 @@ class Window(QtGui.QDialog):
         self.trayIcon.show()
         self.setWindowTitle("Scribbeo Server")
         self.resize(400, 100)
-        try:
-            import pybonjour
-        except Exception:
-            QtGui.QMessageBox.warning(self, "Bonjour Not Installed",
+
+    def doBonjourCheck(self):
+        if not winhelper.bonjourRunning():
+            QtGui.QMessageBox.warning(self, "Bonjour Not Detected",
                 "Bonjour Print Services could not be found.\n"
                 "It is highly recommended that you install Bonjour.\n"
-                "Bonjour is required for automatic server discovery.")
+                "Bonjour is required for automatic discovery.\n"
+                "It is available for free download from Apple's website")
+        
+    def doUpdateCheck(self):
+        r = requests.get('http://www.keyvanfatehi.com/')
 
     def kill_server(self):
         if self.serverOn:
@@ -75,7 +82,7 @@ class Window(QtGui.QDialog):
                 return
             self.config = {
                 'port':self.port,
-                'rootdir':self.directory,
+                'rootdir':self.directory
             }
             self.portEdit.setEnabled(False)
             self.dirEditButton.setEnabled(False)
@@ -253,6 +260,7 @@ def main():
     QtGui.QApplication.setQuitOnLastWindowClosed(False)
     window = Window()
     window.show()
+    window.doBonjourCheck()
     sys.exit(app.exec_())
 
 if __name__ == '__main__':

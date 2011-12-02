@@ -1,14 +1,21 @@
 import os
 import sys
 import socket
+if sys.platform == 'win32':
+  import winhelper
 
-def pid_alive(pid): 
-  try:
-    os.kill(pid, 0) # Send null signal to the PID
+def pid_alive(pid):
+  if not pid:
     return True
-  except OSError:
-    return False
-  return None
+  if sys.platform == 'win32':
+    return winhelper.existsProcessName(pid)
+  else: 
+    try:
+      os.kill(pid, 0) # Send null signal to the PID
+      return True
+    except OSError:
+      return False
+    return None
 
 def get_ip_port(testPort=0):
   s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
