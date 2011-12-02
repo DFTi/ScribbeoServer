@@ -74,6 +74,7 @@ class Window(QtGui.QDialog):
     def __init__(self):
         super(Window, self).__init__()
         self.serverOn = False
+        self.acceptedLicense = False
         self.loadConfigFile()
         self.updateFound = winhelper.checkForUpdate(VERSION, UPDATEURL)
         # set up the enclosure for Status, Dir, Port, Start/stop btn
