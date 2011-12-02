@@ -8,18 +8,18 @@ import os
 import sys
 import subprocess
 import winhelper
-import requests
 
-GUI_NAME = 'ScribbeoServerGUI.exe'
-APP_NAME = 'ScribbeoServer.exe'
+UPDATEURL = 'http://update.scribbeo.com/windows'
+GUI_NAME = 'ScribbeoServerGUI.exe' # this script
+APP_NAME = 'ScribbeoServer.exe' # app.py
 VERSION = '1.0'
-UPDATEURL = 'http://keyvanfatehi.com/up/update.json'
 
 class Window(QtGui.QDialog):
     def __init__(self):
         super(Window, self).__init__()
         self.serverOn = False
         self.loadConfigFile()
+        self.updateFound = winhelper.checkForUpdate(VERSION, UPDATEURL)
         # set up the enclosure for Status, Dir, Port, Start/stop btn
         self.createMessageGroupBox() 
         # set up the actions for the tray
@@ -36,7 +36,8 @@ class Window(QtGui.QDialog):
         self.setLayout(mainLayout)
         self.trayIcon.show()
         self.setWindowTitle("Scribbeo Server")
-        self.resize(400, 100)
+        #self.resize(400, 100)
+        self.setFixedSize(450,150)
 
     def doBonjourCheck(self):
         if not winhelper.bonjourRunning():
@@ -46,9 +47,6 @@ class Window(QtGui.QDialog):
                 "Bonjour is required for automatic discovery.\n"
                 "It is available for free download from Apple's website")
         
-    def doUpdateCheck(self):
-        r = requests.get('http://www.keyvanfatehi.com/')
-
     def kill_server(self):
         if self.serverOn:
             self.app.terminate()
@@ -65,7 +63,7 @@ class Window(QtGui.QDialog):
         if not os.path.exists(APP_NAME):
             QtGui.QMessageBox.warning(self, "Cannot start the server",
                 "Required components could not be found.\n"
-                "Please reinstall or contact us.")
+                "Please reinstall or contact us for help.")
             return
         if self.serverOn:
             self.kill_server()
@@ -98,7 +96,7 @@ class Window(QtGui.QDialog):
             self.directory = None
             return
         try:    
-            f = open('settings.json', 'r')
+            f = open('settings.json')
             self.config = json.load(f)
             f.close()
             self.port = self.config["port"] 
@@ -191,11 +189,6 @@ class Window(QtGui.QDialog):
     def createMessageGroupBox(self):
         self.messageGroupBox = QtGui.QGroupBox("Settings")
 
-        # If an update is available, we should put this:
-        self.updateNoticeLabel = QtGui.QLabel("<a href='"+UPDATEURL+"'>An update is available! Click here to download the update.</a>")
-        self.updateNoticeLabel.setOpenExternalLinks(True)
-        # ------------------------------------------
-
         self.statusLabel = QtGui.QLabel("Server is not running")
 
         portLabel = QtGui.QLabel("Port:")
@@ -228,7 +221,15 @@ class Window(QtGui.QDialog):
         messageLayout.addWidget(self.statusLabel, 5, 1)
 
         messageLayout.addWidget(self.startStopButton, 5, 4)
-        messageLayout.addWidget(self.updateNoticeLabel, 6, 1)
+        
+        if self.updateFound:
+            print self.updateFound
+            self.updateNoticeLabel = QtGui.QLabel(
+                "<a href='"+self.updateFound['url']+"'>Update available: "
+                " Download Scribbeo v"+self.updateFound["version"]+".</a>")
+            self.updateNoticeLabel.setOpenExternalLinks(True)
+            messageLayout.addWidget(self.updateNoticeLabel, 6, 1)
+
         messageLayout.setColumnStretch(3, 1)
         messageLayout.setRowStretch(4, 1)
         self.messageGroupBox.setLayout(messageLayout)

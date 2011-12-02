@@ -1,4 +1,8 @@
+""" Windows support helper """
+
 import wmi
+import requests
+import json
 c = wmi.WMI()
 
 def listProcesses():
@@ -24,3 +28,22 @@ def killProcess(pname):
 def bonjourRunning():
 	bonjour = "mDNSResponder.exe"
 	return existsProcessName(bonjour)
+
+def checkForUpdate(currentVersion, updateURL):
+	"""
+		Expected JSON from UPDATEURL:
+		{
+			"version":"1.1",
+			"url":"http://path/to/installer"
+		}
+	"""
+	try:
+		r = requests.get(updateURL, timeout=1)
+		info = json.loads(r.content)
+		if info['version'] == currentVersion:
+			return False
+		else:
+			return info
+	except:
+		return False
+	return False
