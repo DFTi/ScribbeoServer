@@ -258,6 +258,11 @@ def main():
         QtGui.QMessageBox.critical(None, "Systray",
                 "I couldn't detect any system tray on this system.")
         sys.exit(1)
+    if winhelper.existsProcessName("ScribbeoServerGUI.exe"):
+        QtGui.QMessageBox.information(None, "Scribbeo Server already running!",
+            "You are already running an instance of Scribbeo Server.\n"
+            "Check your system tray for the Scribbeo icon")
+        sys.exit(1)
     QtGui.QApplication.setQuitOnLastWindowClosed(False)
     window = Window()
     window.show()

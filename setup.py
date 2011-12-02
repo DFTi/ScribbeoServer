@@ -1,7 +1,13 @@
 from distutils.core import setup
 import py2exe
 import os
+import shutil
 
+try:
+    shutil.rmtree('dist/')
+    shutil.rmtree('build/')
+except:
+    pass
 
 setup(
     # The first three parameters are not required, if at least a
@@ -31,12 +37,44 @@ setup(
                 ],
                 'includes':[
                     'PySide'
-                ]
+                ],
+                'bundle_files':1,
+                'dll_excludes': [ "mswsock.dll", "powrprof.dll" ]
             },
     })
 
-for filename in os.listdir("dist"):
-    if filename == 'app.exe':
-        os.rename(os.path.join('dist',filename), os.path.join('dist','ScribbeoServer.exe'))
-    if filename == 'wininit.exe':
-        os.rename(os.path.join('dist',filename), os.path.join('dist','ScribbeoServerGUI.exe')) # <-- thats the launcher.
+def renameExecutablesAndVerify():
+    for filename in os.listdir("dist"):
+        if filename == 'app.exe': # actual server
+            os.rename(
+                os.path.join('dist',filename),
+                os.path.join('dist','ScribbeoServer.exe')
+            )
+        if filename == 'wininit.exe': # launcher/Gui/Tray
+            os.rename(
+                os.path.join('dist',filename),
+                os.path.join('dist','ScribbeoServerGUI.exe')
+            )
+
+    app = os.path.join('dist','ScribbeoServer.exe')
+    gui = os.path.join('dist','ScribbeoServerGUI.exe')
+
+    if not os.path.exists(app):
+        raise "Missing "+app
+    if not os.path.exists(gui):
+        raise "Missing "+gui
+
+def copyDLLs():
+    shutil.copy("c:\Python27\lib\site-packages\Pythonwin\mfc90.dll",
+        os.path.join('dist', 'mfc90.dll'))
+    shutil.copy("c:\Python27\DLLs\MSVCP90.dll",
+        os.path.join('dist', 'MSVCP90.dll'))
+
+def main():
+    renameExecutablesAndVerify()
+    #copyDLLs()
+    ## Do NSIS stuff and bust out an installer
+
+    
+if __name__ == '__main__':
+  main()

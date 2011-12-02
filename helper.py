@@ -1,13 +1,21 @@
 import os
 import sys
 import socket
-if sys.platform == 'win32':
+
+# Detect if we're running on Windows
+win32 = sys.platform.startswith("win")
+# Detect if we're running a packed exe created with py2exe
+py2exe = False
+if win32 and hasattr(sys, 'frozen'):
+  py2exe = True
+
+if win32:
   import winhelper
 
 def pid_alive(pid):
   if not pid:
     return True
-  if sys.platform == 'win32':
+  if win32:
     return winhelper.existsProcessName(pid)
   else: 
     try:
@@ -66,4 +74,15 @@ def make_config(argc, argv):
     "rootdir":rootdir,
     "guipid":None
   }
-    
+  
+def disableFrozenLogging():
+  # Disable py2exe log feature by routing stdout/sterr to the special nul file
+  if win32 and py2exe:
+    try:
+      sys.stdout = open("nul", "w")
+    except:
+      print('Failed to close stdout')
+    try:
+      sys.stderr = open("nul", "w")
+    except:
+      print('Failed to close stderr')

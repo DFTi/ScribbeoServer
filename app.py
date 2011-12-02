@@ -30,7 +30,7 @@ class App(object):
     self.bonjour_thread.start()
 
   def block(self, pid=None):
-    if sys.platform == 'win32':
+    if helper.win32 and helper.py2exe:
       pid = "ScribbeoServerGUI.exe"
     else:
       if self.config.has_key("guipid"):
@@ -50,11 +50,10 @@ class App(object):
     self.bonjour_thread.join()
     print "Stopping web thread"
     webserver.cherrypy.process.bus.exit()
-    # Annoying. Just quit.
-    sys.exit()
-      
+    # Annoying. Just quit.      
 
 def main(config=None):
+  helper.disableFrozenLogging()
   if not config:
     config = helper.make_config(len(sys.argv), sys.argv)
   App(config).start()
