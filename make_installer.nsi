@@ -34,6 +34,8 @@ File dist\ScribbeoServer.exe
 File dist\ScribbeoServerEULA.txt
 File dist\ScribbeoServerGUI.exe
 File dist\w9xpopen.exe
+File dist\MSVCP90.dll
+File dist\mfc90.dll
 
 ; Tell the compiler to write an uninstaller and to look for a "Uninstall" section 
 WriteUninstaller $INSTDIR\Uninstall.exe
@@ -72,6 +74,8 @@ Delete $INSTDIR\ScribbeoServerEULA.txt
 Delete $INSTDIR\ScribbeoServerGUI.exe
 Delete $INSTDIR\w9xpopen.exe
 Delete $INSTDIR\settings.json
+Delete $INSTDIR\MSVCP90.dll
+Delete $INSTDIR\mfc90.dll
 RMDir $INSTDIR
 
 ; Now remove shortcuts too

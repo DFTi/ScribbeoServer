@@ -2,12 +2,17 @@ from distutils.core import setup
 import py2exe
 import os
 import shutil
+import subprocess
 
-try:
-    shutil.rmtree('dist/')
-    shutil.rmtree('build/')
-except:
-    pass
+def cleanup():
+    try:
+        shutil.rmtree('dist/')
+        shutil.rmtree('build/')
+    except:
+        pass
+
+print "Cleaning up first."
+cleanup()
 
 setup(
     # The first three parameters are not required, if at least a
@@ -75,10 +80,20 @@ def copyDLLs():
         os.path.join('dist', 'MSVCP90.dll'))
 
 def main():
+    print "Renaming executables and verifying..."
     renameExecutablesAndVerify()
-    #copyDLLs()
-    ## Do NSIS stuff and bust out an installer
+    print "Copying a few dlls..."
+    copyDLLs()
+    print "Creating the installer..."
+    makeNSIS()
+    print "Cleaning up."
+    cleanup()
 
+NSIS = "C:\Program Files (x86)\NSIS\makensis.exe"
+
+def makeNSIS():
+  proc = subprocess.Popen([NSIS, "/V3", "make_installer.nsi"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  proc.wait()
     
 if __name__ == '__main__':
   main()
