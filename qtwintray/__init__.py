@@ -9,6 +9,8 @@ import sys
 import subprocess
 
 APP_NAME = 'ScribbeoServer.exe'
+VERSION = '1.0'
+UPDATEURL = 'http://www.yahoo.com'
 
 class Window(QtGui.QDialog):
     def __init__(self):
@@ -32,6 +34,13 @@ class Window(QtGui.QDialog):
         self.trayIcon.show()
         self.setWindowTitle("Scribbeo Server")
         self.resize(400, 100)
+        try:
+            import pybonjour
+        except Exception:
+            QtGui.QMessageBox.warning(self, "Bonjour Not Installed",
+                "Bonjour Print Services could not be found.\n"
+                "It is highly recommended that you install Bonjour.\n"
+                "Bonjour is required for automatic server discovery.")
 
     def kill_server(self):
         if self.serverOn:
@@ -46,6 +55,11 @@ class Window(QtGui.QDialog):
         self.serverOn = True
 
     def startStopServer(self):
+        if not os.path.exists(APP_NAME):
+            QtGui.QMessageBox.warning(self, "Cannot start the server",
+                "Required components could not be found.\n"
+                "Please reinstall or contact us.")
+            return
         if self.serverOn:
             self.kill_server()
             self.portEdit.setEnabled(True)
@@ -170,6 +184,11 @@ class Window(QtGui.QDialog):
     def createMessageGroupBox(self):
         self.messageGroupBox = QtGui.QGroupBox("Settings")
 
+        # If an update is available, we should put this:
+        self.updateNoticeLabel = QtGui.QLabel("<a href='"+UPDATEURL+"'>An update is available! Click here to download the update.</a>")
+        self.updateNoticeLabel.setOpenExternalLinks(True)
+        # ------------------------------------------
+
         self.statusLabel = QtGui.QLabel("Server is not running")
 
         portLabel = QtGui.QLabel("Port:")
@@ -202,6 +221,7 @@ class Window(QtGui.QDialog):
         messageLayout.addWidget(self.statusLabel, 5, 1)
 
         messageLayout.addWidget(self.startStopButton, 5, 4)
+        messageLayout.addWidget(self.updateNoticeLabel, 6, 1)
         messageLayout.setColumnStretch(3, 1)
         messageLayout.setRowStretch(4, 1)
         self.messageGroupBox.setLayout(messageLayout)
