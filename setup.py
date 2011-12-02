@@ -1,9 +1,14 @@
 from distutils.core import setup
 import py2exe
 import os
+import sys
 import shutil
 import subprocess
 
+if not sys.platform.startswith("win"):
+    print "Windows only"
+    sys.exit(0)
+    
 def cleanup():
     try:
         shutil.rmtree('dist/')
