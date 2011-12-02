@@ -8,11 +8,67 @@ import os
 import sys
 import subprocess
 import winhelper
+import time
 
 UPDATEURL = 'http://update.scribbeo.com/windows'
 GUI_NAME = 'ScribbeoServerGUI.exe' # this script
 APP_NAME = 'ScribbeoServer.exe' # app.py
 VERSION = '1.0'
+
+class LicenseWindow(QtGui.QDialog):
+    def __init__(self):
+        super(LicenseWindow, self).__init__()
+        self.setWindowIcon(QtGui.QIcon('icon.bmp'))
+        self.acceptedLicense = None
+        licenseLayout = QtGui.QGridLayout()
+        self.createMessageGroupBox() 
+
+        self.acceptButton.clicked.connect(self.accept)
+        self.denyButton.clicked.connect(self.deny)
+
+        mainLayout = QtGui.QVBoxLayout()
+        mainLayout.addWidget(self.messageGroupBox)
+        self.setLayout(mainLayout)
+        self.setWindowTitle("End User License Agreement")
+        self.resize(500, 400)
+
+    def createMessageGroupBox(self):
+        self.messageGroupBox = QtGui.QGroupBox("Scribbeo Server EULA")
+
+        self.acceptButton = QtGui.QPushButton("Accept")
+        self.denyButton = QtGui.QPushButton("Deny")
+
+        messageLayout = QtGui.QGridLayout()
+        self.textDocument = QtGui.QTextEdit()
+        self.textDocument.setReadOnly(True)
+        self.textDocument.insertPlainText(open('ScribbeoServerEULA.txt').read())
+        messageLayout.addWidget(self.textDocument, 0, 0, 5, 5)
+        messageLayout.addWidget(self.acceptButton, 5, 4)
+        messageLayout.addWidget(self.denyButton, 5, 2)
+    
+        messageLayout.setColumnStretch(3, 1)
+        messageLayout.setRowStretch(4, 1)
+        self.messageGroupBox.setLayout(messageLayout)
+    
+    def closeEvent(self, event):
+        if self.acceptedLicense:
+            self.close()
+        else:
+            self.deny()
+
+    def deny(self):
+        QtGui.qApp.quit()
+    
+    def accept(self):
+        self.acceptedLicense = True
+        self.mainAppWindow.updateConfigFile({
+            'port':None,
+            'rootdir':None,
+            'acceptedLicense':True
+        })
+        self.mainAppWindow.unlock()
+        self.close()
+        
 
 class Window(QtGui.QDialog):
     def __init__(self):
@@ -41,6 +97,7 @@ class Window(QtGui.QDialog):
         self.setWindowTitle("Scribbeo Server")
         #self.resize(400, 100)
         self.setFixedSize(450,150)
+        self.doBonjourCheck()
 
     def doBonjourCheck(self):
         if not winhelper.bonjourRunning():
@@ -97,6 +154,7 @@ class Window(QtGui.QDialog):
         if not os.path.exists('settings.json'):
             self.port = None
             self.directory = None
+            self.acceptedLicense = None
             return
         try:    
             f = open('settings.json')
@@ -104,6 +162,7 @@ class Window(QtGui.QDialog):
             f.close()
             self.port = self.config["port"] 
             self.directory = self.config["rootdir"]
+            self.acceptedLicense = self.config["acceptedLicense"]
         except:
             pass
 
@@ -256,7 +315,17 @@ class Window(QtGui.QDialog):
         self.kill_server()
         QtGui.qApp.quit()
 
-def main():
+    def lock(self):
+        self.portEdit.setEnabled(False)
+        self.dirEditButton.setEnabled(False)
+        self.startStopButton.setEnabled(False)
+
+    def unlock(self):
+        self.portEdit.setEnabled(True)
+        self.dirEditButton.setEnabled(True)
+        self.startStopButton.setEnabled(True)
+
+def main(app=None):
     app = QtGui.QApplication(sys.argv)
     if not QtGui.QSystemTrayIcon.isSystemTrayAvailable():
         QtGui.QMessageBox.critical(None, "Systray",
@@ -270,7 +339,11 @@ def main():
     QtGui.QApplication.setQuitOnLastWindowClosed(False)
     window = Window()
     window.show()
-    window.doBonjourCheck()
+    if not window.acceptedLicense:
+        window.lock()
+        lw = LicenseWindow()
+        lw.mainAppWindow = window
+        lw.show()
     sys.exit(app.exec_())
 
 if __name__ == '__main__':
