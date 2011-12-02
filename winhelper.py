@@ -15,6 +15,13 @@ def existsProcessName(pname):
  			return True
  	return False
 
+def numberOfProcessesWithName(pname):
+	procs = 0
+	for process in c.Win32_Process(name=pname):
+ 		if process.Name == pname:
+ 			procs = procs+1
+ 	return procs
+
 def existsProcessID(pid):
 	for process in c.Win32_Process(ProcessId=pid):
  		if process.ProcessId == pid:

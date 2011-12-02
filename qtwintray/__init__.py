@@ -30,6 +30,9 @@ class Window(QtGui.QDialog):
         self.setIcon()
         self.startStopButton.clicked.connect(self.startStopServer)
         self.dirEditButton.clicked.connect(self.dirEditAction)
+        self.hideButton.clicked.connect(self.closeEvent)
+        self.quitButton.clicked.connect(self.shutdown)
+
         self.trayIcon.activated.connect(self.iconActivated)
         mainLayout = QtGui.QVBoxLayout()
         mainLayout.addWidget(self.messageGroupBox)
@@ -134,16 +137,12 @@ class Window(QtGui.QDialog):
     def setVisible(self, visible):
         super(Window, self).setVisible(visible)
 
-    def closeEvent(self, event):
-        self.showMessage()
-        return
+    def closeEvent(self, event=None):
         if self.trayIcon.isVisible():
-            QtGui.QMessageBox.information(self, "Scribbeo Server",
-                    "The program will keep running in the system tray. To "
-                    "terminate the program, choose <b>Quit</b> in the "
-                    "context menu of the system tray entry.")
+            self.showMessage()
             self.hide()
-            event.ignore()
+            if event:
+                event.ignore()
 
     def setIcon(self):
         self.icon = icon = QtGui.QIcon('icon.bmp')
@@ -211,6 +210,9 @@ class Window(QtGui.QDialog):
         self.startStopButton = QtGui.QPushButton("Start")
         self.startStopButton.setDefault(True)
 
+        self.hideButton = QtGui.QPushButton("Hide")
+        self.quitButton = QtGui.QPushButton("Quit")
+
         messageLayout = QtGui.QGridLayout()
         messageLayout.addWidget(portLabel, 2, 0)
         messageLayout.addWidget(self.portEdit, 2, 1, 1, 4)
@@ -218,9 +220,11 @@ class Window(QtGui.QDialog):
         messageLayout.addWidget(dirLabel, 3, 0)
         messageLayout.addWidget(self.dirEditButton, 3, 1, 1, 4)
 
-        messageLayout.addWidget(self.statusLabel, 5, 1)
+        messageLayout.addWidget(self.statusLabel, 4, 1)
 
         messageLayout.addWidget(self.startStopButton, 5, 4)
+        messageLayout.addWidget(self.hideButton, 5, 3)
+        messageLayout.addWidget(self.quitButton, 5, 2)
         
         if self.updateFound:
             print self.updateFound
@@ -258,7 +262,7 @@ def main():
         QtGui.QMessageBox.critical(None, "Systray",
                 "I couldn't detect any system tray on this system.")
         sys.exit(1)
-    if winhelper.existsProcessName("ScribbeoServerGUI.exe"):
+    if winhelper.numberOfProcessesWithName("ScribbeoServerGUI.exe") > 1:
         QtGui.QMessageBox.information(None, "Scribbeo Server already running!",
             "You are already running an instance of Scribbeo Server.\n"
             "Check your system tray for the Scribbeo icon")
