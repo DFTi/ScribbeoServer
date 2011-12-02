@@ -25,7 +25,11 @@ setup(
         "app.py",
     ],
 
-    data_files = ['icon.ico', 'icon.bmp'], # yeah we actually need both >.<
+    data_files = [
+        'icon.ico',
+        'icon.bmp', # yeah we actually need both >.<
+        'ScribbeoServerEULA.txt'
+    ],
 
     # Exclude OpenSSL, unless we are building a https server
     #options = { 'py2exe': { 'excludes': 'OpenSSL', "packages": ["encodings", "email"] }},

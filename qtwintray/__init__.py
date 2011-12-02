@@ -279,7 +279,7 @@ class Window(QtGui.QDialog):
         messageLayout.addWidget(dirLabel, 3, 0)
         messageLayout.addWidget(self.dirEditButton, 3, 1, 1, 4)
 
-        messageLayout.addWidget(self.statusLabel, 4, 1)
+        messageLayout.addWidget(self.statusLabel, 4, 1, 1, 5)
 
         messageLayout.addWidget(self.startStopButton, 5, 4)
         messageLayout.addWidget(self.hideButton, 5, 3)
