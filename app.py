@@ -11,20 +11,20 @@ import helper
 class App(object):
   def __init__(self, config):
     self.config = helper.validate_config(config)
+    self.server = webserver.Webserver(self.config)
 
   def start(self):
     self.start_web_thread()
-    self.start_bonjour_thread()
+    if bonjour.On:
+      self.start_bonjour_thread()
     self.block()
     
   def start_web_thread(self):
-    self.server = webserver.Webserver(self.config)
     self.web_thread = Thread(target=self.server.start, args=())
     self.web_thread.daemon = True
     self.web_thread.start()
       
   def start_bonjour_thread(self):
-    bonjour.On = True
     self.bonjour_thread = Thread(target=bonjour.register, args=(self.config['port'], ))
     self.bonjour_thread.daemon = True
     self.bonjour_thread.start()
@@ -46,14 +46,15 @@ class App(object):
   def shutdown(self):
     print "Shutting down!"
     print "Stopping bonjour"
-    bonjour.On = False
-    self.bonjour_thread.join()
+    if bonjour.On:
+      bonjour.On = False
+      self.bonjour_thread.join()
     print "Stopping web thread"
     webserver.cherrypy.process.bus.exit()
     # Annoying. Just quit.      
 
 def main(config=None):
-  helper.disableFrozenLogging()
+  #helper.disableFrozenLogging()
   if not config:
     config = helper.make_config(len(sys.argv), sys.argv)
   App(config).start()
