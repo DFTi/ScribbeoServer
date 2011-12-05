@@ -5,6 +5,17 @@ import sys
 import shutil
 import subprocess
 
+exe = False
+build = False
+for arg in sys.argv:
+    if arg == "py2exe":
+        exe = True
+    if arg == "build":
+        build = True
+if not exe and not build:
+    print "Usage: python setup.py py2exe build"
+    sys.exit(0)
+
 if not sys.platform.startswith("win"):
     print "Windows only"
     sys.exit(0)
@@ -13,6 +24,7 @@ def cleanup():
     try:
         shutil.rmtree('dist/')
         shutil.rmtree('build/')
+        shutil.rm('ScribbeoServerSetup.exe')
     except:
         pass
 
@@ -53,11 +65,13 @@ setup(
                     'PySide'
                 ],
                 'bundle_files':1,
-                'dll_excludes': [ "mswsock.dll", "powrprof.dll" ]
+                'dll_excludes': [ "mswsock.dll", "powrprof.dll", "MSVCP90.dll", "MSVCR90.dll"]
             },
     })
 
 def renameExecutablesAndVerify():
+    if not os.path.exists('dist'):
+        return
     for filename in os.listdir("dist"):
         if filename == 'app.exe': # actual server
             os.rename(
@@ -84,15 +98,9 @@ def copyDLLs():
     shutil.copy("c:\Python27\DLLs\MSVCP90.dll",
         os.path.join('dist', 'MSVCP90.dll'))
 
-def main():
+def post_process():
     print "Renaming executables and verifying..."
     renameExecutablesAndVerify()
-    print "Copying a few dlls..."
-    copyDLLs()
-    print "Creating the installer..."
-    makeNSIS()
-    print "Cleaning up."
-    cleanup()
 
 NSIS = "C:\Program Files (x86)\NSIS\makensis.exe"
 
@@ -100,5 +108,4 @@ def makeNSIS():
   proc = subprocess.Popen([NSIS, "/V3", "make_installer.nsi"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   proc.wait()
     
-if __name__ == '__main__':
-  main()
+post_process()

@@ -1,13 +1,13 @@
+On = True
 import sys
 try:
   import pybonjour
 except Exception:
-  print "Please install bonjour from http://www.apple.com/support/bonjour/"
-  sys.exit(-1)
+  print "Please install bonjour from http://www.apple.com/support/bonjour/. Disabling bonjour..."
+  global On
+  On = False
 import select
 import time
-
-On = True
 
 ### Bonjour ### 
 

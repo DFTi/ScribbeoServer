@@ -1,6 +1,7 @@
 dist/
 build/
 ScribbeoServerSetup.exe
+._*
 settings.json
 clips/*
 *.app/

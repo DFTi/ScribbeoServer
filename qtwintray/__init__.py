@@ -12,8 +12,17 @@ import time
 
 UPDATEURL = 'http://update.scribbeo.com/windows'
 GUI_NAME = 'ScribbeoServerGUI.exe' # this script
-APP_NAME = 'ScribbeoServer.exe' # app.py
 VERSION = '1.0'
+
+PROGRAMDATADIR = os.environ['ALLUSERSPROFILE']
+DATADIR = os.path.join(PROGRAMDATADIR, 'ScribbeoServer')
+SETTINGSFILEPATH = os.path.join(DATADIR, 'settings.json')
+#APP_PATH = os.path.join(DATADIR,'ScribbeoServer.exe') # app.py
+
+APP_PATH = 'ScribbeoServer.exe'
+
+#print APP_PATH
+#print SETTINGSFILEPATH
 
 class LicenseWindow(QtGui.QDialog):
     def __init__(self):
@@ -117,11 +126,11 @@ class Window(QtGui.QDialog):
     def start_server(self):
         if self.serverOn:
             self.kill_server()
-        self.app = subprocess.Popen([APP_NAME, self.directory, str(self.port)])
+        self.app = subprocess.Popen([APP_PATH, self.directory, str(self.port)])
         self.serverOn = True
 
     def startStopServer(self):
-        if not os.path.exists(APP_NAME):
+        if not os.path.exists(APP_PATH):
             QtGui.QMessageBox.warning(self, "Cannot start the server",
                 "Required components could not be found.\n"
                 "Please reinstall or contact us for help.")
@@ -152,13 +161,15 @@ class Window(QtGui.QDialog):
         self.trayIcon.setToolTip(self.statusLabel.text()) # Update tooltip with new server status.
 
     def loadConfigFile(self):
-        if not os.path.exists('settings.json'):
+        if not os.path.exists(DATADIR):
+            os.makedirs(DATADIR)
+        if not os.path.exists(SETTINGSFILEPATH):
             self.port = None
             self.directory = None
             self.acceptedLicense = None
             return
         try:    
-            f = open('settings.json')
+            f = open(SETTINGSFILEPATH)
             self.config = json.load(f)
             f.close()
             self.port = self.config["port"] 
@@ -168,7 +179,7 @@ class Window(QtGui.QDialog):
             pass
 
     def updateConfigFile(self, config):
-        f = open('settings.json', 'w')
+        f = open(SETTINGSFILEPATH, 'w')
         f.write(json.dumps(config))
         f.close()
 
@@ -222,9 +233,9 @@ class Window(QtGui.QDialog):
     def showMessage(self):
         icon = QtGui.QSystemTrayIcon.Information
         self.trayIcon.showMessage("Scribbeo Server",
-                "Scribbeo Server is running in your system tray.\n"
-                "Right click the icon to quit the program.", icon,
-                5 * 1000)
+            "Scribbeo Server is running in your system tray.\n"
+            "Right click the icon to quit the program.", icon,
+            5 * 1000)
 
     def validate(self):
         problem = None

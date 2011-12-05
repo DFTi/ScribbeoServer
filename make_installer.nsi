@@ -1,4 +1,3 @@
-
 ; This script shows how to make your applicaton uninstallable
 
 ;--------------------------------
@@ -21,7 +20,13 @@ DirText "This will install Scribbeo Server v1.0 on your computer."
 ; INSTALL SECTION
 ; ---------------------------------------------------------
 ; The stuff to install
-Section "" ;No components page, name is not important
+Section "" ; No components page, name is not important
+
+; This is important to have $APPDATA variable
+; point to ProgramData folder
+; instead of current user's Roaming folder
+SetShellVarContext all
+
 
 ; Set output path to the installation directory.
 SetOutPath $INSTDIR
@@ -34,8 +39,9 @@ File dist\ScribbeoServer.exe
 File dist\ScribbeoServerEULA.txt
 File dist\ScribbeoServerGUI.exe
 File dist\w9xpopen.exe
-File dist\MSVCP90.dll
-File dist\mfc90.dll
+;File dist\MSVCP90.dll
+;File dist\mfc90.dll
+File dist\ScribbeoServer.exe
 
 ; Tell the compiler to write an uninstaller and to look for a "Uninstall" section 
 WriteUninstaller $INSTDIR\Uninstall.exe
@@ -44,7 +50,6 @@ CreateDirectory "$SMPROGRAMS\Scribbeo Server"
 CreateShortCut "$SMPROGRAMS\Scribbeo Server\Scribbeo Server.lnk" "$INSTDIR\ScribbeoServerGUI.exe"
 CreateShortCut "$SMPROGRAMS\Scribbeo Server\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
 CreateShortCut "$DESKTOP\Scribbeo Server.lnk" "$INSTDIR\ScribbeoServerGUI.exe"
-
 
 WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Scribbeo Server" "DisplayName"\
 "Scribbeo Server (remove only)"
@@ -55,6 +60,12 @@ WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Scribbeo S
 ; //////////////////////// END CREATING REGISTRY KEYS ////////////////////////////
 
 MessageBox MB_OK "Installation was successful."
+
+; This sets us permissions
+AccessControl::GrantOnFile "$APPDATA\ScribbeoServer" "(S-1-5-32-545)" "FullAccess"
+AccessControl::GrantOnFile "$APPDATA\ScribbeoServer\*" "(S-1-5-32-545)" "FullAccess"
+AccessControl::GrantOnFile "$INSTDIR\ScribbeoServer" "(S-1-5-32-545)" "FullAccess"
+AccessControl::GrantOnFile "$INSTDIR\ScribbeoServer\*" "(S-1-5-32-545)" "FullAccess"
 
 SectionEnd ; end the section
 
@@ -73,10 +84,12 @@ Delete $INSTDIR\ScribbeoServer.exe
 Delete $INSTDIR\ScribbeoServerEULA.txt
 Delete $INSTDIR\ScribbeoServerGUI.exe
 Delete $INSTDIR\w9xpopen.exe
-Delete $INSTDIR\settings.json
-Delete $INSTDIR\MSVCP90.dll
-Delete $INSTDIR\mfc90.dll
+;Delete $INSTDIR\MSVCP90.dll
+;Delete $INSTDIR\mfc90.dll
 RMDir $INSTDIR
+
+Delete $APPDATA\ScribbeoServer\settings.json
+RMDir $APPDATA\ScribbeoServer
 
 ; Now remove shortcuts too
 Delete "$SMPROGRAMS\Scribbeo Server\Scribbeo Server.lnk"
