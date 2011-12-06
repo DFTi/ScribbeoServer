@@ -71,7 +71,7 @@ class Webserver(object):
       path = os.path.join(self.notedir, name)
       if cherrypy.request.method == 'GET':
         if os.path.exists(path) and not os.path.isdir(path):
-          cherrypy.response.headers['Content-Type'] = 'application/x-gzip'
+          cherrypy.response.headers['Content-Type'] = 'application/x-binary'
           return cherrypy.lib.static.serve_file(path)
         else:
           return 'Note not found.'
