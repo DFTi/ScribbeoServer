@@ -5,6 +5,7 @@ import subprocess
 import cherrypy
 import aditc
 import re
+from transcode import Transcoder
 
 hidden_names = {
   ".DS_Store":True,
@@ -40,6 +41,7 @@ class Webserver(object):
         'server.socket_port': self.port
       }
     }
+    self.transcoder = Transcoder(config)
 
   def start(self):
     cherrypy.engine.timeout_monitor.unsubscribe()
@@ -85,7 +87,7 @@ class Webserver(object):
         return 'Invalid request.'
       
     @cherrypy.expose
-    def asset(self, *arg):
+    def asset(self, *arg): # serves static assets
       if check_dirpath(*arg):
         return 'Invalid URL'
       path = os.path.join(self.rootdir, *arg)
@@ -93,6 +95,15 @@ class Webserver(object):
         return cherrypy.lib.static.serve_file(path)
       else:
         return ''
+        
+    @cherrypy.expose
+    def live_transcode(self, *arg): # live transcode videos
+      if check_dirpath(*arg):
+        return 'Invalid URL'
+      path = os.path.join(self.rootdir, *arg)
+      relpath = os.path.join(*arg)
+      if os.path.exists(path) and not os.path.isdir(path):
+        return self.transcoder.start_transcoding(relpath)
       
     @cherrypy.expose
     def email(self, name=''):
@@ -158,6 +169,7 @@ class Webserver(object):
         else:
           # Files
           entry['asset_url'] = '/asset/'+relpath
+          entry['live_transcode'] = '/live_transcode/'+relpath
           entries['files'].append(entry)
       return entries
 
@@ -190,8 +202,6 @@ class Webserver(object):
             archive_url = os.path.join('/note/'+file)
             urls.append(archive_url)
       return urls
-    
-    
     
     @cherrypy.expose
     @cherrypy.tools.json_out()
