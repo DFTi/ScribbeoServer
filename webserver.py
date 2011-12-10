@@ -41,12 +41,12 @@ class Webserver(object):
         'server.socket_port': self.port
       }
     }
-    self.transcoder = Transcoder(config)
-
+    
   def start(self):
     cherrypy.engine.timeout_monitor.unsubscribe()
     cherrypy.engine.autoreload.unsubscribe()
     self.router = self.Router(self.rootdir)
+    self.router.encoder = Transcoder(self.app_config)
     self.router.owner = self
     self.alive = True
     cherrypy.quickstart(self.router, '/', self.web_config)
@@ -88,8 +88,7 @@ class Webserver(object):
       
     @cherrypy.expose
     def asset(self, *arg): # serves static assets
-      if check_dirpath(*arg):
-        return 'Invalid URL'
+      check_dirpath(*arg)
       path = os.path.join(self.rootdir, *arg)
       if os.path.exists(path) and not os.path.isdir(path):
         return cherrypy.lib.static.serve_file(path)
@@ -97,14 +96,36 @@ class Webserver(object):
         return ''
         
     @cherrypy.expose
-    def live_transcode(self, *arg): # live transcode videos
-      if check_dirpath(*arg):
-        return 'Invalid URL'
-      path = os.path.join(self.rootdir, *arg)
-      relpath = os.path.join(*arg)
-      if os.path.exists(path) and not os.path.isdir(path):
-        return self.transcoder.start_transcoding(relpath)
-      
+    def transcoder(self, *arg): 
+      """ live transcode videos, api:
+        transcoder/start/path/to/file.mov
+        transcoder/$hash/$bitrate/segments.m3u
+        transcoder/$hash/$bitrate/$segment.ts
+      """
+      arg = list(arg)
+      if arg[0] == 'start':
+        # Beginning a new live transcode session
+        arg.pop(0) # remove 'start', the rest is the relative path
+        check_dirpath(*arg)
+        path = os.path.join(self.rootdir, *arg)
+        if os.path.exists(path) and not os.path.isdir(path):
+          # Send the available bitrates
+          return self.encoder.start_transcoding(path)
+      else:
+        # Requesting a segment (.ts) or a playlist (.m3u8) of segments
+        md5, bitrate, name = arg
+        fileName, fileExt = os.path.splitext(name)
+        if fileExt == 'm3u8': # Send the .m3u8 of segment URLs
+          cherrypy.response.headers['Content-Type'] = 'application/x-mpegURL'
+          return self.transcoder.m3u8_segments_for(md5, bitrate)
+        elif fileExt == 'ts': # Send the .ts segment.
+          partPath = self.encoder.segment_path(md5, bitrate, fileName)
+          if not partPath:
+            raise cherrypy.HTTPError("404 Segment not found")
+          else:
+            cherrypy.response.headers['Content-Type'] = 'video/MP2T'
+            return cherrypy.lib.static.serve_file(partPath)
+     
     @cherrypy.expose
     def email(self, name=''):
       """ Upload and download notes in email format
@@ -169,7 +190,7 @@ class Webserver(object):
         else:
           # Files
           entry['asset_url'] = '/asset/'+relpath
-          entry['live_transcode'] = '/live_transcode/'+relpath
+          entry['live_transcode'] = '/transcode/start/'+relpath
           entries['files'].append(entry)
       return entries
 
