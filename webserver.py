@@ -98,19 +98,23 @@ class Webserver(object):
     @cherrypy.expose
     def transcoder(self, *arg): 
       """ live transcode videos, api:
-        transcoder/start/path/to/file.mov
-        transcoder/$hash/$bitrate/segments.m3u
+        transcoder/start/path/to/file.mov.m3u8
+        transcoder/$hash/$bitrate/segments.m3u8
         transcoder/$hash/$bitrate/$segment.ts
       """
       arg = list(arg)
       if arg[0] == 'start':
         # Beginning a new live transcode session
         arg.pop(0) # remove 'start', the rest is the relative path
+        arg[-1] = os.path.splitext(arg[-1])[0] # remove the .m3u8
         check_dirpath(*arg)
         path = os.path.join(self.rootdir, *arg)
         if os.path.exists(path) and not os.path.isdir(path):
           # Send the available bitrates
+          cherrypy.response.headers['Content-Type'] = 'application/x-mpegURL'
           return self.encoder.start_transcoding(path)
+        else:
+          raise cherrypy.HTTPError("404 File not found")
       else:
         # Requesting a segment (.ts) or a playlist (.m3u8) of segments
         md5, bitrate, name = arg
@@ -190,7 +194,7 @@ class Webserver(object):
         else:
           # Files
           entry['asset_url'] = '/asset/'+relpath
-          entry['live_transcode'] = '/transcode/start/'+relpath
+          entry['live_transcode'] = '/transcode/start/'+relpath+'.m3u8'
           entries['files'].append(entry)
       return entries
 

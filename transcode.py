@@ -100,6 +100,7 @@ class Transcoder(object):
       last_segment_length = self.sessions[md5_hash].duration - (partCount * 10)
       m3u8_segment_file += segment.substitute(length=last_segment_length, hash=md5_hash, bitrate=video_bitrate, part=i)
       m3u8_segment_file += "#EXT-X-ENDLIST"
+    print m3u8_segment_file
     return m3u8_segment_file
     
   def m3u8_bitrates_for(self, md5_hash):
