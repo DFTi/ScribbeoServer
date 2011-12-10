@@ -3,7 +3,7 @@ import string
 import re
 import md5
 import math
-from subprocess import Popen, PIPE
+from subprocess import call, Popen, PIPE
 
 class TranscodeSession(object):
   def __init__(self, transcoder, videoPath):
@@ -16,10 +16,15 @@ class TranscodeSession(object):
     self.inspection = self.inspect()
     self.fps = self.getFps()
     self.duration = self.getDuration()
-    self.frame_size = self.getFrameSize()
+    self.frame_size = 640,480#self.getFrameSize()
     self.md5 = md5.new(videoPath).hexdigest()
     self.tmp_dir = transcoder.tmp_dir
-    self.ts_filename_tmpl = string.Template("$md5_$bitrate_$segment.ts")
+    self.ts_filename_tmpl = string.Template("$md5hash-$bitrate-$segment.ts")
+    self.ffmpeg_cmd_tmpl = string.Template(self.ffmpeg_path+" -i "+videoPath+" "
+      "-ss $startTime -t 10 -vcodec libx264 -y -r 23.976 "
+      "-vf \"crop=iw:ih:0:0,scale=$frameWidth:$frameHeight\" -aspect \"$frameWidth:$frameHeight\" "
+      "-threads 4 "
+      "\"$outFile\"")
     
   def inspect(self):
     proc = Popen([self.ffmpeg_path, '-i', self.videoPath], stderr=PIPE)
@@ -63,19 +68,53 @@ class TranscodeSession(object):
     else:
       raise 'Problem grabbing FPS'
   
-  def transcode(seg, br):
-    ts_file = self.ts_path_tmpl.substitute(md5=self.md5, bitrate=br, segment=seg)
-    ts_path = os.path.join(self.tmp_dir, self.ts_file)
-    cmd = str(
-      ("%s " % self.ffmpeg_path)
-      ("-i %s " % self.videoPath)
-      ("-ss \"%s\" " % self.transcoder.segment_number_to_time_offset(seg)) # start time
-      ("-t 10 ") # Segment duration, 10 seconds
-      ("-vcodec libx264 -y ") # Use h264, and overwrite if necessary
-      ("-r 23.976 ") # Output framerate, standard h264 framerate
-      ("")
-      ("%s" % ts_path)
+  def transcode(self, seg, br):
+    print "SEG IS "+str(seg)
+    self.ts_file = self.ts_filename_tmpl.substitute(md5hash=self.md5, bitrate=br, segment=seg)
+    self.ts_path = os.path.join(self.tmp_dir, self.ts_file)
+    cmd = self.ffmpeg_cmd_tmpl.substitute(startTime=int(seg)*10, outFile=self.ts_path,
+      frameWidth=self.frame_size[0], frameHeight=self.frame_size[1]
     )
+    print "WE ARE GOING TO EXECUTE THIS FFMPEG COMMAND: %s" % cmd
+    os.popen(cmd)
+    return self.ts_path
+
+"""
+ScribbeoServer git:(live_transcode)  ffmpeg -i clips/Cuts/311\ PC01\ 111411.mov 
+ffmpeg version 0.8.7, Copyright (c) 2000-2011 the FFmpeg developers
+  built on Dec  9 2011 20:01:29 with clang 3.0 (tags/Apple/clang-211.12)
+  configuration: --prefix=/usr/local/Cellar/ffmpeg/0.8.7 --enable-shared --enable-gpl --enable-version3 --enable-nonfree --enable-hardcoded-tables --cc=/usr/bin/clang --enable-libx264 --enable-libfaac --enable-libmp3lame --enable-libtheora --enable-libvorbis --enable-libvpx --enable-libxvid --disable-ffplay
+  libavutil    51.  9. 1 / 51.  9. 1
+  libavcodec   53.  8. 0 / 53.  8. 0
+  libavformat  53.  5. 0 / 53.  5. 0
+  libavdevice  53.  1. 1 / 53.  1. 1
+  libavfilter   2. 23. 0 /  2. 23. 0
+  libswscale    2.  0. 0 /  2.  0. 0
+  libpostproc  51.  2. 0 / 51.  2. 0
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0x7fa7b4007c00] max_analyze_duration 5000000 reached at 5015510
+
+Seems stream 1 codec frame rate differs from container frame rate: 47952.00 (47952/1) -> 23.98 (2997/125)
+Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'clips/Cuts/311 PC01 111411.mov':
+  Metadata:
+    creation_time   : 2011-11-14 23:53:55
+  Duration: 00:23:07.74, start: 0.000000, bitrate: 2335 kb/s
+    Stream #0.0(eng): Audio: aac, 44100 Hz, stereo, s16, 106 kb/s
+    Metadata:
+      creation_time   : 2011-11-14 23:53:55
+    Stream #0.1(eng): Video: h264 (Main), yuv420p, 420x236, 2218 kb/s, 23.98 fps, 23.98 tbr, 23976 tbn, 47952 tbc
+    Metadata:
+      creation_time   : 2011-11-14 23:53:55
+    Stream #0.2(eng): Data: tmcd / 0x64636D74
+    Metadata:
+      creation_time   : 2011-11-15 00:12:13
+At least one output file must be specified
+
+/Applications/Air Video Server.app/Contents/Resources/ffmpeg --conversion-id 78e55543-1af1-4e75-8584-3c0ad80cc128 --port-number 46631 -threads 4 -flags2 +fast -flags +loop -g 30 -keyint_min 1 -bf 0 -b_strategy 0 -flags2 -wpred-dct8x8 -cmp +chroma -deblockalpha 0 -deblockbeta 0 -refs 1 -coder 0 -me_range 16 -subq 5 -partitions +parti4x4+parti8x8+partp8x8 -trellis 0 -sc_threshold 40 -i_qfactor 0.71 -qcomp 0.6 -map 0.0:0.0 -map 0.2:0.2 -ss 0.0 -i /Users/keyvan/Projects/ScribbeoServer/clips/Cuts/test.mov -cropleft 0 -cropright 0 -croptop 0 -cropbottom 0 -s 818x460 -aspect 1.7782608 -y -f mpegts -vcodec libx264 -bufsize 512k -b 1200k -bt 1300k -qmax 48 -qmin 2 -r 23.976 -acodec libmp3lame -ab 192k -ar 44100 -vol 765 -ac 2 -
+
+
+"""
+
+
 
 class Transcoder(object):
   def __init__(self, config):
@@ -92,35 +131,34 @@ class Transcoder(object):
     return self.m3u8_bitrates_for(transcodingSession.md5)
     
   def m3u8_segments_for(self, md5_hash, video_bitrate):
-    segment = string.Template("#EXTINF:$length,\ntranscoder/$hash/$bitrate/$segment.ts\n")
+    segment = string.Template("#EXTINF:$length,\n$md5hash-$bitrate-$segment.ts\n")
     partCount = math.floor(self.sessions[md5_hash].duration / 10)
     m3u8_segment_file = "#EXTM3U\n#EXT-X-TARGETDURATION:10\n"
-    for i in range(0, partCount):
-      m3u8_segment_file += segment.substitute(length=10, hash=md5_hash, bitrate=video_bitrate, segment=i)
-      last_segment_length = self.sessions[md5_hash].duration - (partCount * 10)
-      m3u8_segment_file += segment.substitute(length=last_segment_length, hash=md5_hash, bitrate=video_bitrate, part=i)
-      m3u8_segment_file += "#EXT-X-ENDLIST"
-    print m3u8_segment_file
+    for i in range(0, int(partCount)):
+      m3u8_segment_file += segment.substitute(length=10, md5hash=md5_hash, bitrate=video_bitrate, segment=i)
+    last_segment_length = int(math.ceil((self.sessions[md5_hash].duration - (partCount * 10))))
+    m3u8_segment_file += segment.substitute(length=last_segment_length, md5hash=md5_hash, bitrate=video_bitrate, segment=i)
+    m3u8_segment_file += "#EXT-X-ENDLIST"
     return m3u8_segment_file
     
   def m3u8_bitrates_for(self, md5_hash):
     m3u8_fudge = string.Template(
       "#EXTM3U\n"
       "#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=384000\n"
-      "transcoder/$hash/384/segments.m3u8\n"
+      "$hash-384-segments.m3u8\n"
       "#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=512000\n"
-      "transcoder/$hash/512/segments.m3u8\n"
+      "$hash-512-segments.m3u8\n"
       "#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=768000\n"
-      "transcoder/$hash/768/segments.m3u8\n"
+      "$hash-768-segments.m3u8\n"
     );
     return m3u8_fudge.substitute(hash=md5_hash)
 
   def segment_path(self, md5_hash, the_bitrate, segment_number):
     path = self.sessions[md5_hash].transcode(segment_number, the_bitrate)
     if path:
-      return 'Segment not found'
-    else:
       return path
+    else:
+      raise "Segment path not found"
         
  ### 00:24:01.49
   
