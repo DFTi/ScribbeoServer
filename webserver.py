@@ -105,38 +105,12 @@ class Webserver(object):
       # FIXME: get paths that have slashes working /transcoder/Cuts/blah/foo.mov
       # CACHE AND PRE TRANSCODE!
       #arg = list(arg)
-      """  if arg[0] == 'start':
-        # Beginning a new live transcode session
-        arg.pop(0) # remove 'start', the rest is the relative path
-        arg[-1] = os.path.splitext(arg[-1])[0] # remove the .m3u8
-        check_dirpath(*arg)
-        path = os.path.join(self.rootdir, *arg)
-        if os.path.exists(path) and not os.path.isdir(path):
-          # Send the available bitrates
-          cherrypy.response.headers['Content-Type'] = 'application/x-mpegURL'
-          return self.encoder.start_transcoding(path)
-        else:
-          raise cherrypy.HTTPError("404 File not found")
-      else:"""
-      # Requesting a segment (.ts) or a playlist (.m3u8) of segments
       fileName, fileExt = os.path.splitext(arg[-1])
-      if fileExt == '.mov':
-        #arg[-1] = os.path.splitext(arg[-1])[0] # remove the .m3u8
-        check_dirpath(*arg)
-        path = os.path.join(self.rootdir, *arg)
-        if os.path.exists(path) and not os.path.isdir(path):
-          # Send the available bitrates
-          cherrypy.response.headers['Content-Type'] = 'application/x-mpegURL'
-          cherrypy.response.headers['Content-Disposition'] = 'attachment; filename=foo.m3u8'
-          return self.encoder.start_transcoding(path)
-        else:
-          raise cherrypy.HTTPError("404 File not found")
-      elif fileExt == '.m3u8': # Send the .m3u8 of segment URLs
+      if fileExt == '.m3u8': # Requesting a playlist of segments
         md5, bitrate, name = str.split(arg[0], '-')
-
         cherrypy.response.headers['Content-Type'] = 'application/x-mpegURL'
         return self.encoder.m3u8_segments_for(md5, bitrate)
-      elif fileExt == '.ts': # Send the .ts segment.
+      elif fileExt == '.ts': # Requesting a segment.
         md5, bitrate, seg = str.split(arg[0], '-')
         partPath = self.encoder.segment_path(md5, bitrate, os.path.splitext(seg)[0])
         if not partPath:
@@ -144,6 +118,17 @@ class Webserver(object):
         else:
           cherrypy.response.headers['Content-Type'] = 'video/MP2T'
           return cherrypy.lib.static.serve_file(partPath)
+      else: # Requesting the video as a live transcode session
+        check_dirpath(*arg)
+        path = os.path.join(self.rootdir, *arg)
+        if os.path.exists(path) and not os.path.isdir(path):
+          # Send the available bitrates
+          cherrypy.response.headers['Content-Type'] = 'application/x-mpegURL'
+          cherrypy.response.headers['Content-Disposition'] = 'attachment; filename=bitrates.m3u8'
+          return self.encoder.start_transcoding(path)
+        else:
+          raise cherrypy.HTTPError("404 File not found")
+
      
     @cherrypy.expose
     def email(self, name=''):
