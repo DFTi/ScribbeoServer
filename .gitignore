@@ -3,6 +3,7 @@ build/
 ScribbeoServerSetup.exe
 settings.json
 clips/*
+clips
 *.app/
 .DS_Store
 dir/*
