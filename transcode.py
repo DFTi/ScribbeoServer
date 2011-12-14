@@ -1,11 +1,12 @@
 import os
+import sys
 import string
 import re
 import md5
 import math
 from subprocess import call, Popen, PIPE
 """
-class TranscodeProcess
+class Ffmpeg
   def __init__(self, some_identifier):
   
   
@@ -15,6 +16,16 @@ class TranscodeProcess
 
 class TranscodeSession(object):
   def __init__(self, transcoder, videoPath):
+    if sys.platform.startswith('win32'):
+      raise "live_segmenter not built for windows!!!!"
+    self.segmenter_path = os.path.abspath(os.path.dirname(sys.argv[0]))+'live_segmenter'
+    ## The above will not work on windows :/
+    self.ffmpegs = {}
+    """
+    ffmpegs = {
+      "hashvalue":Ffmpeg
+    }
+    """
     self.transcoder = transcoder
     if self.transcoder.ffmpeg_path:
       self.ffmpeg_path = self.transcoder.ffmpeg_path
@@ -28,22 +39,14 @@ class TranscodeSession(object):
     self.md5 = md5.new(videoPath).hexdigest()
     self.tmp_dir = transcoder.tmp_dir
     self.ts_filename_tmpl = string.Template("$md5hash-$bitrate-$segment.ts")
-    self.ffmpeg_cmd_tmpl = string.Template(self.ffmpeg_path+" -i "+videoPath+" "
-      "-ss $startTime -t 10 -vcodec libx264 -y -r 23.976 "
-      "-acodec libfaac "
-      "-bufsize 2048k "
-      "-vf \"crop=iw:ih:0:0,scale=$frameWidth:$frameHeight\" -aspect \"$frameWidth:$frameHeight\" "
-      "-threads 4 -preset ultrafast -tune film -b $bitrate "
-    #  "-map 0.0:0.0 -map 0.2:0.2 "
-      "\"$outFile\"")
+    self.ffmpeg_cmd_tmpl = string.Template(self.ffmpeg_path+" -threads 4 -flags2 +fast -flags +loop -g 30 -keyint_min 1 -bf 0 -b_strategy 0 -flags2 -wpred-dct8x8 -cmp +chroma -deblockalpha 0 -deblockbeta 0 -refs 1 -coder 0 -me_range 16 -subq 5 -partitions +parti4x4+parti8x8+partp8x8 -trellis 0 -sc_threshold 40 -i_qfactor 0.71 -qcomp 0.6 -map 0.0:0.0 -map 0.1:0.1  -i "+videoPath+" -ss $startTime -t 10 -vf \"crop=iw:ih:0:0,scale=$frameWidth:$frameHeight\" -aspect \"$frameWidth:$frameHeight\" -y -f mpegts -vcodec libx264 -bufsize 1024k -b $bitrate -bt $bitrate -qmax 48 -qmin 2 -r 23.976 -acodec libmp3lame -ab 48k -ar 48000 -ac 2 \"$outFile\"")
       
       
-      """
+  """
       Example pipe transcoding to live_segmenter
       
-      /usr/local/bin/ffmpeg -i /Library/WebServer/Documents/Projects/DFT/Test_Movs/Dexter.S06E01.REPACK.720p.HDTV.x264-IMMERSE.mkv -ss 0 -t 60 -vcodec libx264 -y -r 23.976 -acodec libfaac -bufsize 2048k -vf "crop=iw:ih:0:0,scale=640:360" -aspect "640:360" -threads 4 -preset ultrafast -tune film -b 1024000 -f mpegts - | ./live_segmenter 10 /Library/WebServer/Documents/Projects/DFT/Test_Movs/tmp/
-      
-      """
+      /usr/local/bin/ffmpeg -i /Library/WebServer/Documents/Projects/DFT/Test_Movs/Dexter.S06E01.REPACK.720p.HDTV.x264-IMMERSE.mkv -ss 0 -t 60 -vcodec libx264 -y -r 23.976 -acodec libfaac -bufsize 2048k -vf "crop=iw:ih:0:0,scale=640:360" -aspect "640:360" -threads 4 -preset ultrafast -tune film -b 1024000 -f mpegts - | ./live_segmenter 10 /Library/WebServer/Documents/Projects/DFT/Test_Movs/tmp/ namePrefix mpegts
+  """
     
   def inspect(self):
     proc = Popen([self.ffmpeg_path, '-i', self.videoPath], stderr=PIPE)
@@ -90,9 +93,10 @@ class TranscodeSession(object):
   def transcode(self, seg, br): # Segment# and bitrate
     # here we will be smart
     # and check to see if the segment is already in TranscodeSession's Segments dict
+    # check if subprocess is alive, if it is, send the ts, queue up the next segments if we're 
+    # approaching the middle of our cache of segments. if its dead, remove it from the dict.
     # if it is there, with a completed status, then we will simply return it
     # else, we will guarantee that the next 10 segments are intitiated, and return this one.
-    print "SEG IS "+str(seg)
     self.ts_file = self.ts_filename_tmpl.substitute(md5hash=self.md5, bitrate=br, segment=seg)
     self.ts_path = os.path.join(self.tmp_dir, self.ts_file)
     cmd = self.ffmpeg_cmd_tmpl.substitute(startTime=int(seg)*10, outFile=self.ts_path,

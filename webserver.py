@@ -109,6 +109,7 @@ class Webserver(object):
       if fileExt == '.m3u8': # Requesting a playlist of segments
         md5, bitrate, name = str.split(arg[0], '-')
         cherrypy.response.headers['Content-Type'] = 'application/x-mpegURL'
+        # airvideo uses content-type "application/vnd.apple.mpegurl"
         return self.encoder.m3u8_segments_for(md5, bitrate)
       elif fileExt == '.ts': # Requesting a segment.
         md5, bitrate, seg = str.split(arg[0], '-')
