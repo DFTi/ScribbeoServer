@@ -1,0 +1,3 @@
+Usage: app.py path/to/clips [port]
+For bonjour support, install avahi-daemon and libavahi-compat-libdnssd1
+On Ubuntu, just do sudo apt-get install libavahi-compat-libdnssd1
