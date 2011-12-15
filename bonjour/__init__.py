@@ -1,13 +1,14 @@
 import sys
 try:
   import pybonjour
+  On = True
 except Exception:
-  print "Please install bonjour from http://www.apple.com/support/bonjour/"
-  sys.exit(-1)
+  On = False
+  print "Could not register bonjour service. Server will not be automatically discovered."
+  if sys.platform.startswith('win'):
+    print "Please install bonjour from http://www.apple.com/support/bonjour/"
 import select
 import time
-
-On = True
 
 ### Bonjour ### 
 

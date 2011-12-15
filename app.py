@@ -14,7 +14,8 @@ class App(object):
 
   def start(self):
     self.start_web_thread()
-    self.start_bonjour_thread()
+    if bonjour.On:
+      self.start_bonjour_thread()
     self.block()
     
   def start_web_thread(self):
@@ -24,7 +25,6 @@ class App(object):
     self.web_thread.start()
       
   def start_bonjour_thread(self):
-    bonjour.On = True
     self.bonjour_thread = Thread(target=bonjour.register, args=(self.config['port'], ))
     self.bonjour_thread.daemon = True
     self.bonjour_thread.start()
