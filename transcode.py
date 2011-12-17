@@ -5,14 +5,16 @@ import re
 import md5
 import math
 from subprocess import call, Popen, PIPE
-"""
-class Ffmpeg
-  def __init__(self, some_identifier):
-  
-  
 
-""" 
-  
+WIN32 = True if sys.platform.startswith('win32') else False
+
+def shellquote(path):
+  return path # temp
+  if WIN32:
+    return '"'+path+'"'
+  else:
+    return path.replace(' ', '\ ')
+    
 
 class TranscodeSession(object):
   def __init__(self, transcoder, videoPath):
@@ -39,18 +41,27 @@ class TranscodeSession(object):
     self.md5 = md5.new(videoPath).hexdigest()
     self.tmp_dir = transcoder.tmp_dir
     self.ts_filename_tmpl = string.Template("$md5hash-$bitrate-$segment.ts")
-    self.ffmpeg_cmd_tmpl = string.Template(self.ffmpeg_path+" -threads 4 -flags2 +fast -flags +loop -g 30 -keyint_min 1 -bf 0 -b_strategy 0 -flags2 -wpred-dct8x8 -cmp +chroma -deblockalpha 0 -deblockbeta 0 -refs 1 -coder 0 -me_range 16 -subq 5 -partitions +parti4x4+parti8x8+partp8x8 -trellis 0 -sc_threshold 40 -i_qfactor 0.71 -qcomp 0.6 -map 0.0:0.0 -map 0.1:0.1  -i "+videoPath+" -ss $startTime -t 10 -vf \"crop=iw:ih:0:0,scale=$frameWidth:$frameHeight\" -aspect \"$frameWidth:$frameHeight\" -y -f mpegts -vcodec libx264 -bufsize 1024k -b $bitrate -bt $bitrate -qmax 48 -qmin 2 -r 23.976 -acodec libmp3lame -ab 48k -ar 48000 -ac 2 \"$outFile\"")
-      
-      
-  """
-      Example pipe transcoding to live_segmenter
-      
+    self.ffmpeg_cmd_tmpl = string.Template(self.ffmpeg_path+" -i "+shellquote(videoPath)+" "
+    "-ss $startTime -t $duration "
+    "-vcodec libx264 -r 23.976 "
+    "-b $bitrate -bt $bitrate "
+    "-vf \"crop=iw:ih:0:0,scale=$frameWidth:$frameHeight\" -aspect \"$frameWidth:$frameHeight\" "
+    "-acodec libmp3lame -ab 48k -ar 48000 -ac 2 "
+    "-bufsize 1024k -threads 4 -preset ultrafast -tune film "
+    #"-loglevel quiet "
+    "-f mpegts - "
+    "| ./live_segmenter 10 "+shellquote(self.tmp_dir)+" $segmentPrefix mpegts $startSegment")
+      # FIXME: Detect CPU's for optimized transcoding (threads)
+    self.cached_segments = [0]*int(math.ceil(self.duration/10)) # init list with 10 0's ... [seg] = 0:uncached, 1:processing, 2:cached
+    self.current_ffmpeg_process = False
+  """    
       /usr/local/bin/ffmpeg -i /Library/WebServer/Documents/Projects/DFT/Test_Movs/Dexter.S06E01.REPACK.720p.HDTV.x264-IMMERSE.mkv -ss 0 -t 60 -vcodec libx264 -y -r 23.976 -acodec libfaac -bufsize 2048k -vf "crop=iw:ih:0:0,scale=640:360" -aspect "640:360" -threads 4 -preset ultrafast -tune film -b 1024000 -f mpegts - | ./live_segmenter 10 /Library/WebServer/Documents/Projects/DFT/Test_Movs/tmp/ namePrefix mpegts
   """
     
   def inspect(self):
     proc = Popen([self.ffmpeg_path, '-i', self.videoPath], stderr=PIPE)
     return proc.stderr.read()
+    
     
   def getDuration(self):
     pattern = re.compile('Duration:\s([0-9]{2}):([0-9]{2}):([0-9]{2}).([0-9]{2})');
@@ -80,32 +91,65 @@ class TranscodeSession(object):
       return width, height
     except Exception:
       raise "Could not capture frame size"
-          
+  
   def getFps(self):
-    pattern = re.compile('([0-9\.]{5})\sfps');
-    print self.inspection
+    pattern = re.compile('([0-9\.]{5})\sfps')
     fpsString = pattern.search(self.inspection).group(1)
     if fpsString:
       return float(fpsString)
     else:
       raise 'Problem grabbing FPS'
   
-  def transcode(self, seg, br): # Segment# and bitrate
-    # here we will be smart
-    # and check to see if the segment is already in TranscodeSession's Segments dict
-    # check if subprocess is alive, if it is, send the ts, queue up the next segments if we're 
-    # approaching the middle of our cache of segments. if its dead, remove it from the dict.
-    # if it is there, with a completed status, then we will simply return it
-    # else, we will guarantee that the next 10 segments are intitiated, and return this one.
+  def transcode(self, seg, br):
+    seg = int(seg) - 1
+    cache_status = self.cached_segments[seg]
+    
     self.ts_file = self.ts_filename_tmpl.substitute(md5hash=self.md5, bitrate=br, segment=seg)
     self.ts_path = os.path.join(self.tmp_dir, self.ts_file)
-    cmd = self.ffmpeg_cmd_tmpl.substitute(startTime=int(seg)*10, outFile=self.ts_path,
-      frameWidth=self.frame_size[0], frameHeight=self.frame_size[1], bitrate=(int(br)*1000)
-    )
-    print "WE ARE GOING TO EXECUTE THIS FFMPEG COMMAND: %s" % cmd
-    os.popen(cmd)
+    
+    # if unprocessed segment begin processing next chunk of segments
+    if cache_status == 0:#unprocessed
+      segments_to_process = 10
+      
+      #find range of chunks to process
+      for i in range(0, segments_to_process):
+        cache_i_statues = self.cached_segments[i]
+        if cache_i_statues == 1 or cache_i_statues == 2:
+          segments_to_process = i-1
+          
+      cmd = self.ffmpeg_cmd_tmpl.substitute(startTime=seg*10, duration=10, segmentPrefix=self.md5+"-"+br,
+        frameWidth=self.frame_size[0], frameHeight=self.frame_size[1], bitrate=int(br)*1000, startSegment=seg
+      )
+      
+      print "FFMPEG: %s" % cmd
+      
+      os.popen(cmd)
+      
+      cmd2 = self.ffmpeg_cmd_tmpl.substitute(startTime=(seg+1)*10, duration=(segments_to_process-1)*10, segmentPrefix=self.md5+"-"+br,
+        frameWidth=self.frame_size[0], frameHeight=self.frame_size[1], bitrate=int(br)*1000, startSegment=seg+1
+      )
+      
+      for i in range(seg+1, seg+segments_to_process):
+        self.cached_segments[i] = 1
+      
+      self.current_ffmpeg_process = Popen(cmd2, shell=True)
+        
+    elif cache_status == 1:#processing
+    
+      #TODO: check current_ffmpeg_process for errors
+    
+      if self.current_ffmpeg_process:
+        self.current_ffmpeg_process.wait()
+      
+      #the last ffmpeg process is finished so clean up the lookup
+      for i in range(0, len(self.cached_segments)):
+        if self.cached_segments[i] == 1:
+          self.cached_segments[i] == 2
+      
+      self.current_ffmpeg_process = False
+    
+    #elif cache_status == 2:#cached
     return self.ts_path
-
 """
 ScribbeoServer git:(live_transcode)  ffmpeg -i clips/Cuts/311\ PC01\ 111411.mov 
 ffmpeg version 0.8.7, Copyright (c) 2000-2011 the FFmpeg developers
@@ -201,6 +245,9 @@ class Transcoder(object):
     self.sessions = {}
       
   def start_transcoding(self, videoPath):
+    video_md5 = md5.new(videoPath).hexdigest()
+    if self.sessions.has_key(video_md5): # Session already exists?
+      return self.m3u8_bitrates_for(video_md5)
     transcodingSession = TranscodeSession(self, videoPath)
     self.sessions[transcodingSession.md5] = transcodingSession
     return self.m3u8_bitrates_for(transcodingSession.md5)
@@ -209,7 +256,7 @@ class Transcoder(object):
     segment = string.Template("#EXTINF:$length,\n$md5hash-$bitrate-$segment.ts\n")
     partCount = math.floor(self.sessions[md5_hash].duration / 10)
     m3u8_segment_file = "#EXTM3U\n#EXT-X-TARGETDURATION:10\n"
-    for i in range(0, int(partCount)):
+    for i in range(1, int(partCount)+1):
       m3u8_segment_file += segment.substitute(length=10, md5hash=md5_hash, bitrate=video_bitrate, segment=i)
     last_segment_length = int(math.ceil((self.sessions[md5_hash].duration - (partCount * 10))))
     m3u8_segment_file += segment.substitute(length=last_segment_length, md5hash=md5_hash, bitrate=video_bitrate, segment=i)
@@ -227,7 +274,7 @@ class Transcoder(object):
       "$hash-768-segments.m3u8\n"
       "#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=1024000\n"
       "$hash-1024-segments.m3u8\n"
-    );
+    )
     return m3u8_fudge.substitute(hash=md5_hash)
 
   def segment_path(self, md5_hash, the_bitrate, segment_number):
@@ -236,47 +283,3 @@ class Transcoder(object):
       return path
     else:
       raise "Segment path not found"
-        
- ### 00:24:01.49
-  
-  
-  
-  
-  """
-  Here is an example of how to use a Template:
-
->>> from string import Template
->>> s = Template('$who likes $what')
->>> s.substitute(who='tim', what='kung pao')
-'tim likes kung pao'
->>> d = dict(who='tim')
->>> Template('Give $who $100').substitute(d)
-Traceback (most recent call last):
-[...]
-ValueError: Invalid placeholder in string: line 1, col 10
->>> Template('$who likes $what').substitute(d)
-Traceback (most recent call last):
-[...]
-KeyError: 'what'
->>> Template('$who likes $what').safe_substitute(d)
-'tim likes $what'
-  """
-  
-  
-"""
-#EXTM3U
-#EXT-X-TARGETDURATION:10
-#EXTINF:10,
-segment_ab9d5cf6-d983-4ca2-809d-8827ca723ff6_512_part0.ts
-#EXTINF:10,
-segment_ab9d5cf6-d983-4ca2-809d-8827ca723ff6_512_part1.ts
-#EXTINF:10,
-segment_ab9d5cf6-d983-4ca2-809d-8827ca723ff6_512_part2.ts
-#EXTINF:10,
-segment_ab9d5cf6-d983-4ca2-809d-8827ca723ff6_512_part3.ts
-#EXTINF:10,
-segment_ab9d5cf6-d983-4ca2-809d-8827ca723ff6_512_part4.ts
-#EXTINF:8,
-segment_ab9d5cf6-d983-4ca2-809d-8827ca723ff6_512_part576.ts
-#EXT-X-ENDLIST
-"""

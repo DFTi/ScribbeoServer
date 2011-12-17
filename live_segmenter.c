@@ -30,6 +30,7 @@ struct config_info
   const char *temp_directory;
   const char *filename_prefix;
   const char *encoding_profile;
+  unsigned int start_segment;
 };
 
 static AVStream *add_output_stream(AVFormatContext *output_format_context, AVStream *input_stream) 
@@ -111,9 +112,9 @@ void output_transfer_command(const unsigned int first_segment, const unsigned in
 
 int main(int argc, char **argv)
 {
-  if(argc != 5)
+  if(argc < 5)
   {
-    fprintf(stderr, "Usage: %s <segment length> <output location> <filename prefix> <encoding profile>\n", argv[0]);
+    fprintf(stderr, "Usage: %s <segment length> <output location> <filename prefix> <encoding profile> [start segement]\n", argv[0]);
     return 1;
   }
 
@@ -126,6 +127,18 @@ int main(int argc, char **argv)
   config.filename_prefix = argv[3];
   config.encoding_profile = argv[4];
   config.input_filename = "pipe://1";
+  
+  if(argc == 5)
+  {
+  	config.start_segment = 0;
+  }
+  else
+  {
+	sscanf(argv[5], "%u", &config.start_segment);
+  }
+  
+  config.start_segment = argv[5];
+  
 
   char *output_filename = malloc(sizeof(char) * (strlen(config.temp_directory) + 1 + strlen(config.filename_prefix) + 10));
   if (!output_filename) 
@@ -228,7 +241,7 @@ int main(int argc, char **argv)
   }
 
   unsigned int output_index = 1;
-  snprintf(output_filename, strlen(config.temp_directory) + 1 + strlen(config.filename_prefix) + 10, "%s/%s-%05u.ts", config.temp_directory, config.filename_prefix, output_index++);
+  snprintf(output_filename, strlen(config.temp_directory) + 1 + strlen(config.filename_prefix) + 10, "%s/%s-%u.ts", config.temp_directory, config.filename_prefix, config.start_segment + output_index++);
   if (url_fopen(&output_context->pb, output_filename, URL_WRONLY) < 0) 
   {
     fprintf(stderr, "Segmenter error: Could not open '%s'\n", output_filename);
@@ -285,7 +298,7 @@ int main(int argc, char **argv)
 
       output_transfer_command(first_segment, ++last_segment, 0, config.encoding_profile);
 
-      snprintf(output_filename, strlen(config.temp_directory) + 1 + strlen(config.filename_prefix) + 10, "%s/%s-%05u.ts", config.temp_directory, config.filename_prefix, output_index++);
+      snprintf(output_filename, strlen(config.temp_directory) + 1 + strlen(config.filename_prefix) + 10, "%s/%s-%u.ts", config.temp_directory, config.filename_prefix, config.start_segment + output_index++);
       if (url_fopen(&output_context->pb, output_filename, URL_WRONLY) < 0) 
       {
         fprintf(stderr, "Segmenter error: Could not open '%s'\n", output_filename);
