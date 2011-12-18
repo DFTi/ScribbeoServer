@@ -129,7 +129,7 @@ int main(int argc, char **argv)
   config.start_segment = (argv[5]) ? atoi(argv[5]) : 1;
   config.input_filename = "pipe://1";
     
-  printf("start segment has been set to: %d", config.start_segment);
+  printf("\nStart segment has been set to: %d\n", config.start_segment);
   
   char *output_filename = malloc(sizeof(char) * (strlen(config.temp_directory) + 1 + strlen(config.filename_prefix) + 10));
   if (!output_filename) 

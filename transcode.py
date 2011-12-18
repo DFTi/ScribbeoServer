@@ -48,13 +48,14 @@ class TranscodeSession(object):
     "-b $bitrate -bt $bitrate "
     "-vf \"crop=iw:ih:0:0,scale=$frameWidth:$frameHeight\" -aspect \"$frameWidth:$frameHeight\" "
     "-acodec libmp3lame -ab 48k -ar 48000 -ac 2 "
-    "-bufsize 1024k -threads 4 -preset ultrafast -tune film "
+    "-bufsize 1024k -threads 4 -preset fast -tune film,grain "
     "-loglevel quiet "
     "-f mpegts - "
     "| ./live_segmenter 10 "+shellquote(self.tmp_dir)+" $segmentPrefix mpegts $startSegment")
       # FIXME: Detect CPU's for optimized transcoding (threads)
     self.cached_segments = [0]*int(math.ceil(self.duration/10)) # init list with 10 0's ... [seg] = 0:uncached, 1:processing, 2:cached
     self.current_ffmpeg_process = False
+    self.cached_segment_chunk_size = 6
   """    
       /usr/local/bin/ffmpeg -i /Library/WebServer/Documents/Projects/DFT/Test_Movs/Dexter.S06E01.REPACK.720p.HDTV.x264-IMMERSE.mkv -ss 0 -t 60 -vcodec libx264 -y -r 23.976 -acodec libfaac -bufsize 2048k -vf "crop=iw:ih:0:0,scale=640:360" -aspect "640:360" -threads 4 -preset ultrafast -tune film -b 1024000 -f mpegts - | ./live_segmenter 10 /Library/WebServer/Documents/Projects/DFT/Test_Movs/tmp/ namePrefix mpegts
   """
@@ -119,9 +120,9 @@ class TranscodeSession(object):
       print "Making a non-blocking call to FFMPEG: %s" % cmd
       self.current_ffmpeg_process = Popen(cmd, shell=True)
   
-  def transcode(self, seg, br):
+  def transcode(self, seg, br, do_block=True):
     print "TRANSCODE REQUESTED FOR SEGMENT "+seg+" with bitrate "+br
-    seg = int(seg)-1
+    seg = int(seg)
     cache_status = self.cached_segments[seg]
     
     self.ts_file = self.ts_filename_tmpl.substitute(md5hash=self.md5, bitrate=br, segment=seg)
@@ -129,22 +130,22 @@ class TranscodeSession(object):
     
     # if unprocessed segment begin processing next chunk of segments in
     if cache_status == 0:#unprocessed
-      segments_to_process = 10
+      segments_to_process = self.cached_segment_chunk_size
       
       #find range of chunks to process
       for i in range(0, segments_to_process):
-        cache_i_statues = self.cached_segments[i]
-        if cache_i_statues == 1 or cache_i_statues == 2:
+        cache_i_status = self.cached_segments[i]
+        if cache_i_status == 1 or cache_i_status == 2:
           segments_to_process = i-1
          
       # prepare a few segments immediately   
-      self.call_ffmpeg(block=True, start_segment=seg, num_segments=3, bitrate=br)
+      #self.call_ffmpeg(block=do_block, start_segment=seg, num_segments=1, bitrate=br)
       
-      for i in range(seg+1, seg+segments_to_process):
+      for i in range(seg, seg+segments_to_process):
         self.cached_segments[i] = 1
       
       # prepare the next 10 segments
-      self.call_ffmpeg(start_segment=seg+1, num_segments=10, bitrate=br)
+      self.call_ffmpeg(start_segment=seg, num_segments=segments_to_process, bitrate=br)
               
     elif cache_status == 1:#processing
     
@@ -160,7 +161,13 @@ class TranscodeSession(object):
       
       self.current_ffmpeg_process = False
     
-    #elif cache_status == 2:#cached
+    # start processing next chunk before this chunk ends
+    """elif cache_status == 2:#cached
+      for i in range(1, 1+(self.cached_segment_chunk_size/2)):
+        if self.cached_segments[i + seg] != 2:
+          self.transcode(i+seg, br, False)
+    """
+          
     return self.ts_path
 
 class Transcoder(object):
@@ -184,9 +191,9 @@ class Transcoder(object):
     segment = string.Template("#EXTINF:$length,\n$md5hash-$bitrate-$segment.ts\n")
     partCount = math.floor(self.sessions[md5_hash].duration / 10)
     m3u8_segment_file = "#EXTM3U\n#EXT-X-TARGETDURATION:10\n"
-    for i in range(1, int(partCount)+1):
+    for i in range(0, int(partCount)):
       m3u8_segment_file += segment.substitute(length=10, md5hash=md5_hash, bitrate=video_bitrate, segment=i)
-    last_segment_length = int(math.ceil((self.sessions[md5_hash].duration - (partCount * 10))))
+    last_segment_length = math.ceil((self.sessions[md5_hash].duration - (partCount * 10)))
     m3u8_segment_file += segment.substitute(length=last_segment_length, md5hash=md5_hash, bitrate=video_bitrate, segment=i)
     m3u8_segment_file += "#EXT-X-ENDLIST"
     return m3u8_segment_file
@@ -194,14 +201,14 @@ class Transcoder(object):
   def m3u8_bitrates_for(self, md5_hash):
     m3u8_fudge = string.Template(
       "#EXTM3U\n"
-      "#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=384000\n"
-      "$hash-384-segments.m3u8\n"
-      "#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=512000\n"
-      "$hash-512-segments.m3u8\n"
+     # "#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=384000\n"
+     # "$hash-384-segments.m3u8\n"
+     # "#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=512000\n"
+     # "$hash-512-segments.m3u8\n"
       "#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=768000\n"
       "$hash-768-segments.m3u8\n"
-      "#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=1024000\n"
-      "$hash-1024-segments.m3u8\n"
+     # "#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=1024000\n"
+     # "$hash-1024-segments.m3u8\n"
     )
     return m3u8_fudge.substitute(hash=md5_hash)
 
