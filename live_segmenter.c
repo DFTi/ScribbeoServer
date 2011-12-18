@@ -30,7 +30,7 @@ struct config_info
   const char *temp_directory;
   const char *filename_prefix;
   const char *encoding_profile;
-  unsigned int start_segment;
+  int start_segment;
 };
 
 static AVStream *add_output_stream(AVFormatContext *output_format_context, AVStream *input_stream) 
@@ -100,7 +100,7 @@ static AVStream *add_output_stream(AVFormatContext *output_format_context, AVStr
   return output_stream;
 }
 
-void output_transfer_command(const unsigned int first_segment, const unsigned int last_segment, const int end, const char *encoding_profile)
+void output_transfer_command(const int first_segment, const unsigned int last_segment, const int end, const char *encoding_profile)
 {
   char buffer[1024 * 10];
   memset(buffer, 0, sizeof(char) * 1024 * 10);
@@ -126,20 +126,11 @@ int main(int argc, char **argv)
   config.temp_directory = argv[2];
   config.filename_prefix = argv[3];
   config.encoding_profile = argv[4];
+  config.start_segment = (argv[5]) ? atoi(argv[5]) : 1;
   config.input_filename = "pipe://1";
+    
+  printf("start segment has been set to: %d", config.start_segment);
   
-  if(argc == 5)
-  {
-  	config.start_segment = 0;
-  }
-  else
-  {
-	sscanf(argv[5], "%u", &config.start_segment);
-  }
-  
-  config.start_segment = argv[5];
-  
-
   char *output_filename = malloc(sizeof(char) * (strlen(config.temp_directory) + 1 + strlen(config.filename_prefix) + 10));
   if (!output_filename) 
   {
@@ -240,8 +231,8 @@ int main(int argc, char **argv)
     }
   }
 
-  unsigned int output_index = 1;
-  snprintf(output_filename, strlen(config.temp_directory) + 1 + strlen(config.filename_prefix) + 10, "%s/%s-%u.ts", config.temp_directory, config.filename_prefix, config.start_segment + output_index++);
+  int output_index = config.start_segment;
+  snprintf(output_filename, strlen(config.temp_directory) + 1 + strlen(config.filename_prefix) + 10, "%s/%s-%d.ts", config.temp_directory, config.filename_prefix, output_index++);
   if (url_fopen(&output_context->pb, output_filename, URL_WRONLY) < 0) 
   {
     fprintf(stderr, "Segmenter error: Could not open '%s'\n", output_filename);
@@ -254,8 +245,8 @@ int main(int argc, char **argv)
     exit(1);
   }
 
-  unsigned int first_segment = 1;
-  unsigned int last_segment = 0;
+  int first_segment = 1;
+  int last_segment = 0;
 
   double prev_segment_time = 0;
   int decode_done;
@@ -298,7 +289,7 @@ int main(int argc, char **argv)
 
       output_transfer_command(first_segment, ++last_segment, 0, config.encoding_profile);
 
-      snprintf(output_filename, strlen(config.temp_directory) + 1 + strlen(config.filename_prefix) + 10, "%s/%s-%u.ts", config.temp_directory, config.filename_prefix, config.start_segment + output_index++);
+      snprintf(output_filename, strlen(config.temp_directory) + 1 + strlen(config.filename_prefix) + 10, "%s/%s-%d.ts", config.temp_directory, config.filename_prefix, output_index++);
       if (url_fopen(&output_context->pb, output_filename, URL_WRONLY) < 0) 
       {
         fprintf(stderr, "Segmenter error: Could not open '%s'\n", output_filename);

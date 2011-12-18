@@ -7,22 +7,16 @@ import aditc
 import re
 from transcode import Transcoder
 
-hidden_names = {
-  ".DS_Store":True,
-  ".bash_history":True,
-  "Notes":True
-}
-hidden_exts = {
-  ".tc":True
+hidden = {
+  'names':{
+    "Notes":True, # Where note archives are saved from iOS app
+    "tmp":True # Where we store transcoded .ts files
+  },
+  'exts':{
+    ".tc":True # Legacy timecode file. Can delete.
+  }
 }
 
-def POST():
-  return cherrypy.request.method == 'POST'
-def POST():
-  return cherrypy.request.method == 'PUT'  
-def GET():
-  return cherrypy.request.method == 'GET'
-  
 ### Helpers ###
 def check_dirpath(*arg):
   for piece in arg:
@@ -179,10 +173,12 @@ class Webserver(object):
       # Start making the dictionary of content
       entries = {'files':[], 'folders':[]}
       for filename in os.listdir(dirpath):
-        name, ext = os.path.splitext(filename)
-        if filename in hidden_names:
+        if filename.startswith('.'):
           continue
-        if ext in hidden_exts:
+        name, ext = os.path.splitext(filename)
+        if filename in hidden['names']:
+          continue
+        if ext in hidden['exts']:
           continue
         entry = {'name':filename, 'ext':ext[1:]}
         relpath = os.path.join(subdirpath, filename) # .replace(' ', '%20')
@@ -233,7 +229,7 @@ class Webserver(object):
     @cherrypy.tools.json_out()
     def api(self, *arg):
       if arg[0] == 'config':
-        if GET():
+        if cherrypy.request.method == 'GET':
           return {
             "alive":self.owner.alive,
             "app_config":self.owner.app_config,
