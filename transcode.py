@@ -37,6 +37,7 @@ class TranscodeSession(object):
     self.inspection = self.inspect()
     self.fps = self.getFps()
     self.duration = self.getDuration()
+    self.segment_duration = 10
     self.frame_size = 640,360#self.getFrameSize()
     self.md5 = md5.new(videoPath).hexdigest()
     self.tmp_dir = transcoder.tmp_dir
@@ -48,7 +49,7 @@ class TranscodeSession(object):
     "-vf \"crop=iw:ih:0:0,scale=$frameWidth:$frameHeight\" -aspect \"$frameWidth:$frameHeight\" "
     "-acodec libmp3lame -ab 48k -ar 48000 -ac 2 "
     "-bufsize 1024k -threads 4 -preset ultrafast -tune film "
-    #"-loglevel quiet "
+    "-loglevel quiet "
     "-f mpegts - "
     "| ./live_segmenter 10 "+shellquote(self.tmp_dir)+" $segmentPrefix mpegts $startSegment")
       # FIXME: Detect CPU's for optimized transcoding (threads)
@@ -99,15 +100,34 @@ class TranscodeSession(object):
       return float(fpsString)
     else:
       raise 'Problem grabbing FPS'
+      
+  def call_ffmpeg(self, **kwargs):
+    cmd = self.ffmpeg_cmd_tmpl.substitute(
+      startSegment=kwargs['start_segment'],
+      startTime=int(kwargs['start_segment'])*self.segment_duration,
+      duration=kwargs['num_segments']*self.segment_duration,
+      segmentPrefix=self.md5+"-"+kwargs['bitrate'],
+      frameWidth=self.frame_size[0],
+      frameHeight=self.frame_size[1],
+      bitrate=int(kwargs['bitrate'])*1000,
+    )
+    blocking_call = kwargs['block'] if kwargs.has_key('block') else False
+    if blocking_call:
+      print "Making a blocking call to FFMPEG: %s" % cmd
+      os.popen(cmd)
+    else:
+      print "Making a non-blocking call to FFMPEG: %s" % cmd
+      self.current_ffmpeg_process = Popen(cmd, shell=True)
   
   def transcode(self, seg, br):
-    seg = int(seg) - 1
+    print "TRANSCODE REQUESTED FOR SEGMENT "+seg+" with bitrate "+br
+    seg = int(seg)-1
     cache_status = self.cached_segments[seg]
     
     self.ts_file = self.ts_filename_tmpl.substitute(md5hash=self.md5, bitrate=br, segment=seg)
     self.ts_path = os.path.join(self.tmp_dir, self.ts_file)
     
-    # if unprocessed segment begin processing next chunk of segments
+    # if unprocessed segment begin processing next chunk of segments in
     if cache_status == 0:#unprocessed
       segments_to_process = 10
       
@@ -116,24 +136,16 @@ class TranscodeSession(object):
         cache_i_statues = self.cached_segments[i]
         if cache_i_statues == 1 or cache_i_statues == 2:
           segments_to_process = i-1
-          
-      cmd = self.ffmpeg_cmd_tmpl.substitute(startTime=seg*10, duration=10, segmentPrefix=self.md5+"-"+br,
-        frameWidth=self.frame_size[0], frameHeight=self.frame_size[1], bitrate=int(br)*1000, startSegment=seg
-      )
-      
-      print "FFMPEG: %s" % cmd
-      
-      os.popen(cmd)
-      
-      cmd2 = self.ffmpeg_cmd_tmpl.substitute(startTime=(seg+1)*10, duration=(segments_to_process-1)*10, segmentPrefix=self.md5+"-"+br,
-        frameWidth=self.frame_size[0], frameHeight=self.frame_size[1], bitrate=int(br)*1000, startSegment=seg+1
-      )
+         
+      # prepare a few segments immediately   
+      self.call_ffmpeg(block=True, start_segment=seg, num_segments=3, bitrate=br)
       
       for i in range(seg+1, seg+segments_to_process):
         self.cached_segments[i] = 1
       
-      self.current_ffmpeg_process = Popen(cmd2, shell=True)
-        
+      # prepare the next 10 segments
+      self.call_ffmpeg(start_segment=seg+1, num_segments=10, bitrate=br)
+              
     elif cache_status == 1:#processing
     
       #TODO: check current_ffmpeg_process for errors
@@ -150,6 +162,57 @@ class TranscodeSession(object):
     
     #elif cache_status == 2:#cached
     return self.ts_path
+
+class Transcoder(object):
+  def __init__(self, config):
+    self.rootdir = config['rootdir']
+    self.ffmpeg_path = config['ffmpeg_path'] if config.has_key('ffmpeg_path') else None
+    self.tmp_dir = os.path.join(self.rootdir, 'tmp')
+    if not os.path.exists(self.tmp_dir):
+      os.makedirs(self.tmp_dir)
+    self.sessions = {}
+      
+  def start_transcoding(self, videoPath):
+    video_md5 = md5.new(videoPath).hexdigest()
+    if self.sessions.has_key(video_md5): # Session already exists?
+      return self.m3u8_bitrates_for(video_md5)
+    transcodingSession = TranscodeSession(self, videoPath)
+    self.sessions[transcodingSession.md5] = transcodingSession
+    return self.m3u8_bitrates_for(transcodingSession.md5)
+    
+  def m3u8_segments_for(self, md5_hash, video_bitrate):
+    segment = string.Template("#EXTINF:$length,\n$md5hash-$bitrate-$segment.ts\n")
+    partCount = math.floor(self.sessions[md5_hash].duration / 10)
+    m3u8_segment_file = "#EXTM3U\n#EXT-X-TARGETDURATION:10\n"
+    for i in range(1, int(partCount)+1):
+      m3u8_segment_file += segment.substitute(length=10, md5hash=md5_hash, bitrate=video_bitrate, segment=i)
+    last_segment_length = int(math.ceil((self.sessions[md5_hash].duration - (partCount * 10))))
+    m3u8_segment_file += segment.substitute(length=last_segment_length, md5hash=md5_hash, bitrate=video_bitrate, segment=i)
+    m3u8_segment_file += "#EXT-X-ENDLIST"
+    return m3u8_segment_file
+    
+  def m3u8_bitrates_for(self, md5_hash):
+    m3u8_fudge = string.Template(
+      "#EXTM3U\n"
+      "#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=384000\n"
+      "$hash-384-segments.m3u8\n"
+      "#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=512000\n"
+      "$hash-512-segments.m3u8\n"
+      "#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=768000\n"
+      "$hash-768-segments.m3u8\n"
+      "#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=1024000\n"
+      "$hash-1024-segments.m3u8\n"
+    )
+    return m3u8_fudge.substitute(hash=md5_hash)
+
+  def segment_path(self, md5_hash, the_bitrate, segment_number):
+    path = self.sessions[md5_hash].transcode(segment_number, the_bitrate)
+    if path:
+      return path
+    else:
+      raise "Segment path not found"
+
+
 """
 ScribbeoServer git:(live_transcode)  ffmpeg -i clips/Cuts/311\ PC01\ 111411.mov 
 ffmpeg version 0.8.7, Copyright (c) 2000-2011 the FFmpeg developers
@@ -232,54 +295,3 @@ At least one output file must be specified
 
 
 """
-
-
-
-class Transcoder(object):
-  def __init__(self, config):
-    self.rootdir = config['rootdir']
-    self.ffmpeg_path = config['ffmpeg_path'] if config.has_key('ffmpeg_path') else None
-    self.tmp_dir = os.path.join(self.rootdir, 'tmp')
-    if not os.path.exists(self.tmp_dir):
-      os.makedirs(self.tmp_dir)
-    self.sessions = {}
-      
-  def start_transcoding(self, videoPath):
-    video_md5 = md5.new(videoPath).hexdigest()
-    if self.sessions.has_key(video_md5): # Session already exists?
-      return self.m3u8_bitrates_for(video_md5)
-    transcodingSession = TranscodeSession(self, videoPath)
-    self.sessions[transcodingSession.md5] = transcodingSession
-    return self.m3u8_bitrates_for(transcodingSession.md5)
-    
-  def m3u8_segments_for(self, md5_hash, video_bitrate):
-    segment = string.Template("#EXTINF:$length,\n$md5hash-$bitrate-$segment.ts\n")
-    partCount = math.floor(self.sessions[md5_hash].duration / 10)
-    m3u8_segment_file = "#EXTM3U\n#EXT-X-TARGETDURATION:10\n"
-    for i in range(1, int(partCount)+1):
-      m3u8_segment_file += segment.substitute(length=10, md5hash=md5_hash, bitrate=video_bitrate, segment=i)
-    last_segment_length = int(math.ceil((self.sessions[md5_hash].duration - (partCount * 10))))
-    m3u8_segment_file += segment.substitute(length=last_segment_length, md5hash=md5_hash, bitrate=video_bitrate, segment=i)
-    m3u8_segment_file += "#EXT-X-ENDLIST"
-    return m3u8_segment_file
-    
-  def m3u8_bitrates_for(self, md5_hash):
-    m3u8_fudge = string.Template(
-      "#EXTM3U\n"
-      "#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=384000\n"
-      "$hash-384-segments.m3u8\n"
-      "#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=512000\n"
-      "$hash-512-segments.m3u8\n"
-      "#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=768000\n"
-      "$hash-768-segments.m3u8\n"
-      "#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=1024000\n"
-      "$hash-1024-segments.m3u8\n"
-    )
-    return m3u8_fudge.substitute(hash=md5_hash)
-
-  def segment_path(self, md5_hash, the_bitrate, segment_number):
-    path = self.sessions[md5_hash].transcode(segment_number, the_bitrate)
-    if path:
-      return path
-    else:
-      raise "Segment path not found"
