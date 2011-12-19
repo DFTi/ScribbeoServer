@@ -42,20 +42,25 @@ class TranscodeSession(object):
     self.md5 = md5.new(videoPath).hexdigest()
     self.tmp_dir = transcoder.tmp_dir
     self.ts_filename_tmpl = string.Template("$md5hash-$bitrate-$segment.ts")
-    self.ffmpeg_cmd_tmpl = string.Template(self.ffmpeg_path+" -i "+shellquote(videoPath)+" "
-    "-ss $startTime -t $duration "
+    self.ffmpeg_cmd_tmpl = string.Template(self.ffmpeg_path+" "
+     "-ss $startTime -t $duration "
+     "-i "+shellquote(videoPath)+" "
+     
     "-vcodec libx264 -r 23.976 "
     "-b $bitrate -bt $bitrate "
     "-vf \"crop=iw:ih:0:0,scale=$frameWidth:$frameHeight\" -aspect \"$frameWidth:$frameHeight\" "
-    "-acodec libmp3lame -ab 48k -ar 48000 -ac 2 "
-    "-bufsize 1024k -threads 4 -preset fast -tune film,grain "
-    "-loglevel quiet "
+    "-acodec libmp3lame -ab 48k -ar 48000 -ac 2 -async 1 "
+    "-bufsize 1024k -threads 4 -preset superfast -tune grain "
+    "-flags2 +fast -flags +loop -g 30 -keyint_min 1 -bf 0 -b_strategy 0 "
+    "-sc_threshold 40 -me_range 16 -subq 5 -qmax 48 -qmin 2 "
+    "-deblockalpha 0 -deblockbeta 0 -refs 1 -coder 0 "
+    #"-loglevel quiet "
     "-f mpegts - "
     "| ./live_segmenter 10 "+shellquote(self.tmp_dir)+" $segmentPrefix mpegts $startSegment")
       # FIXME: Detect CPU's for optimized transcoding (threads)
     self.cached_segments = [0]*int(math.ceil(self.duration/10)) # init list with 10 0's ... [seg] = 0:uncached, 1:processing, 2:cached
     self.current_ffmpeg_process = False
-    self.cached_segment_chunk_size = 6
+    self.cached_segment_chunk_size = 10
   """    
       /usr/local/bin/ffmpeg -i /Library/WebServer/Documents/Projects/DFT/Test_Movs/Dexter.S06E01.REPACK.720p.HDTV.x264-IMMERSE.mkv -ss 0 -t 60 -vcodec libx264 -y -r 23.976 -acodec libfaac -bufsize 2048k -vf "crop=iw:ih:0:0,scale=640:360" -aspect "640:360" -threads 4 -preset ultrafast -tune film -b 1024000 -f mpegts - | ./live_segmenter 10 /Library/WebServer/Documents/Projects/DFT/Test_Movs/tmp/ namePrefix mpegts
   """
@@ -125,7 +130,7 @@ class TranscodeSession(object):
     seg = int(seg)
     cache_status = self.cached_segments[seg]
     
-    self.ts_file = self.ts_filename_tmpl.substitute(md5hash=self.md5, bitrate=br, segment=seg)
+    self.ts_file = self.ts_filename_tmpl.substitute(md5hash=self.md5, bitrate=br, segment=seg-1)
     self.ts_path = os.path.join(self.tmp_dir, self.ts_file)
     
     # if unprocessed segment begin processing next chunk of segments in
@@ -139,19 +144,20 @@ class TranscodeSession(object):
           segments_to_process = i-1
          
       # prepare a few segments immediately   
-      #self.call_ffmpeg(block=do_block, start_segment=seg, num_segments=1, bitrate=br)
+      self.call_ffmpeg(block=True, start_segment=seg, num_segments=4, bitrate=br)
       
       for i in range(seg, seg+segments_to_process):
         self.cached_segments[i] = 1
       
       # prepare the next 10 segments
-      self.call_ffmpeg(start_segment=seg, num_segments=segments_to_process, bitrate=br)
+      self.call_ffmpeg(start_segment=seg, num_segments=segments_to_process-4, bitrate=br)
               
     elif cache_status == 1:#processing
     
       #TODO: check current_ffmpeg_process for errors
-    
-      if self.current_ffmpeg_process:
+      next_file = self.ts_filename_tmpl.substitute(md5hash=self.md5, bitrate=br, segment=seg)
+      next_path = os.path.join(self.tmp_dir, self.ts_file)
+      if self.current_ffmpeg_process and not os.path.exists(next_path):
         self.current_ffmpeg_process.wait()
       
       #the last ffmpeg process is finished so clean up the lookup
@@ -162,11 +168,11 @@ class TranscodeSession(object):
       self.current_ffmpeg_process = False
     
     # start processing next chunk before this chunk ends
-    """elif cache_status == 2:#cached
+    elif cache_status == 2:#cached
       for i in range(1, 1+(self.cached_segment_chunk_size/2)):
         if self.cached_segments[i + seg] != 2:
           self.transcode(i+seg, br, False)
-    """
+    
           
     return self.ts_path
 
