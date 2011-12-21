@@ -8,4 +8,5 @@ app.main({
   'port':8080,
   'rootdir':'/Users/keyvan/Code/ScribbeoServer/clips',
   'guipid':None # PID of the program launching the script
+  'ssl':False # If set to True, certs will get generated.
 })

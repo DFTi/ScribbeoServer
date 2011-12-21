@@ -1,16 +1,44 @@
 import os
 import sys
 import socket
-
-# Detect if we're running on Windows
+from optparse import OptionParser
 win32 = sys.platform.startswith("win")
-# Detect if we're running a packed exe created with py2exe
 py2exe = False
 if win32 and hasattr(sys, 'frozen'):
   py2exe = True
-
 if win32:
   import winhelper
+
+def make_config(argc, argv):
+  parser = OptionParser()
+  parser.add_option("-d", dest="dir", help="Location of assets to serve *Required*")
+  parser.add_option("-p", dest="port", help="Port for server to bind to")
+  parser.add_option("-s", action="store_true", dest="ssl", help="Enable SSL encryption")
+  parser.add_option("-k", dest="pid", help="Auto shutdown when this PID is lost")
+  (options, args) = parser.parse_args()
+  options = options.__dict__
+  rootdir = validate_directory(options['dir'])
+  port = validate_port(options['port'])
+  return {
+    "port":port,
+    "rootdir":rootdir,
+    "guipid":options['pid'],
+    "ssl":options['ssl']
+  }
+
+def make_ssl(enabled=True):
+  if not enabled:
+    return False
+  # will need to adjust the paths appropriately (store in app cache dir for os x / win, etc)
+  certpath = 'server.cert'
+  keypath = 'server.key'
+  if create_https_certificates(certpath, keypath):
+    return {
+      "cert":certpath,
+      "key":keypath
+    }
+  else:
+    return False
 
 def pid_alive(pid):
   if not pid:
@@ -35,22 +63,31 @@ def get_ip_port(testPort=0):
   return ip, port
 
 def validate_port(port):
-  if port and port < 65535 and port > 0:
+  try:
+    port = int(port)
+  except Exception:
+    port
+  if not port:
+    return get_ip_port()[1]
+  elif port < 65535 and port > 0:
     try:
-      if get_ip_port(port):
+      if get_ip_port():
         return port
     except Exception:
       print "Port is in use. Setting one automatically"
-      return get_ip_port(port)[1]
+      return get_ip_port()[1]
   else:
     print "Invalid port. Setting one automatically."
-    return get_ip_port(port)[1]
+    return get_ip_port()[1]
 
 def validate_directory(path):
   if path and os.path.exists(path) and os.path.isdir(path):
     return os.path.abspath(path)
   else:
-    print "Invalid directory: "+path
+    if not path:
+      print "Missing directory!\nFor help, run "+sys.argv[0]+" -h "
+    else:
+      print "Invalid directory: "+path
     sys.exit(-1)
     
 def validate_config(config):
@@ -59,22 +96,6 @@ def validate_config(config):
   config['rootdir'] = validate_directory(config["rootdir"])
   return config
     
-def make_config(argc, argv):
-  ip, port = get_ip_port()
-  if argc == 3: # Scriptname, Directory, Port
-    port = validate_port(int(argv[2]))
-  if argc == 2 or argc == 3:
-    rootdir = validate_directory(argv[1])
-  else:
-    print "Usage: ./server.py path/to/clips [port]"
-    sys.exit(-1)
-  return {
-    "port":port,
-    "ip":ip,
-    "rootdir":rootdir,
-    "guipid":None
-  }
-  
 def disableFrozenLogging():
   # Disable py2exe log feature by routing stdout/sterr to the special nul file
   if win32 and py2exe:
@@ -86,3 +107,35 @@ def disableFrozenLogging():
       sys.stderr = open("nul", "w")
     except:
       print('Failed to close stderr')
+    
+
+def create_https_certificates(ssl_cert, ssl_key):
+    """ Create self-signed HTTPS certificates and store in paths 'ssl_cert' and 'ssl_key'
+    """
+    try:
+        from OpenSSL import crypto
+        from certgen import createKeyPair, createCertRequest, createCertificate, TYPE_RSA, serial
+    except:
+        print 'pyopenssl module missing, please install for https access'
+        return False
+
+    # Create the CA Certificate
+    cakey = createKeyPair(TYPE_RSA, 1024)
+    careq = createCertRequest(cakey, CN='Certificate Authority')
+    cacert = createCertificate(careq, (careq, cakey), serial, (0, 60*60*24*365*10)) # ten years
+
+    cname = 'ScribbeoServer'
+    pkey = createKeyPair(TYPE_RSA, 1024)
+    req = createCertRequest(pkey, CN=cname)
+    cert = createCertificate(req, (cacert, cakey), serial, (0, 60*60*24*365*10)) # ten years
+
+    # Save the key and certificate to disk
+    try:
+        open(ssl_key, 'w').write(crypto.dump_privatekey(crypto.FILETYPE_PEM, pkey))
+        open(ssl_cert, 'w').write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
+    except:
+        print 'Error creating SSL key and certificate'
+        return False
+
+    return True
+

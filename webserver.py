@@ -5,6 +5,7 @@ import subprocess
 import cherrypy
 import aditc
 import re
+import helper
 
 hidden = {
   'names':{
@@ -31,9 +32,18 @@ class Webserver(object):
     self.web_config = {
       'global': {
         'server.socket_host': '0.0.0.0', # Bind on all interfaces in this version.
-        'server.socket_port': self.port
+        'server.socket_port': self.port,
       }
     }
+    if config['ssl']:
+      config['ssl'] = helper.make_ssl()
+      self.web_config['global']['server.ssl_module'] = 'pyopenssl'
+      self.web_config['global']['server.ssl_certificate'] = config['ssl']['cert']
+      self.web_config['global']['server.ssl_private_key'] = config['ssl']['key']
+      # 'server.ssl_module':'ssl',
+      # 'server.ssl_certificate':'certs/my_cert.crt',
+      # 'server.ssl_private_key':'certs/my_cert.key',
+      # 'server.ssl_certificate_chain':'certs/gd_bundle.crt'
     
   def start(self):
     cherrypy.engine.timeout_monitor.unsubscribe()
