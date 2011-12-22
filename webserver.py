@@ -3,7 +3,13 @@ import sys
 import threading
 import subprocess
 import cherrypy
-import aditc
+try:
+  import aditc
+except Exception:
+  class aditc(object):
+    def get(self):
+      return '00:00:00:00'
+  aditc = aditc()
 import re
 import helper
 
