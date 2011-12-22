@@ -6,7 +6,8 @@ import app
 # If the app updates a config setting, it should rewrite this file
 app.main({
   'port':8080,
-  'rootdir':'/Users/keyvan/Code/ScribbeoServer/clips',
+  'rootdir':'clips', # Where your assets are
   'guipid':None # PID of the program launching the script
   'ssl':False # If set to True, certs will get generated.
+  'certdir':'certs', # Where to put generated certs
 })

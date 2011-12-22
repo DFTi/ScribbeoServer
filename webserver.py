@@ -36,7 +36,7 @@ class Webserver(object):
       }
     }
     if config['ssl']:
-      config['ssl'] = helper.make_ssl()
+      config['ssl'] = helper.make_ssl(config)
       self.web_config['global']['server.ssl_module'] = 'pyopenssl'
       self.web_config['global']['server.ssl_certificate'] = config['ssl']['cert']
       self.web_config['global']['server.ssl_private_key'] = config['ssl']['key']

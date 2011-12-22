@@ -14,6 +14,7 @@ def make_config(argc, argv):
   parser.add_option("-d", dest="dir", help="Location of assets to serve *Required*")
   parser.add_option("-p", dest="port", help="Port for server to bind to")
   parser.add_option("-s", action="store_true", dest="ssl", help="Enable SSL encryption")
+  parser.add_option("-c", dest="certdir", help="Directory in which to store SSL certificates")
   parser.add_option("-k", dest="pid", help="Auto shutdown when this PID is lost")
   (options, args) = parser.parse_args()
   options = options.__dict__
@@ -23,15 +24,17 @@ def make_config(argc, argv):
     "port":port,
     "rootdir":rootdir,
     "guipid":options['pid'],
-    "ssl":options['ssl']
+    "ssl":options['ssl'],
+    'certdir':options['certdir']
   }
 
-def make_ssl(enabled=True):
-  if not enabled:
-    return False
-  # will need to adjust the paths appropriately (store in app cache dir for os x / win, etc)
-  certpath = 'server.cert'
-  keypath = 'server.key'
+def make_ssl(config):
+  certdir = config['certdir']
+  certdir = certdir if certdir else 'certs'
+  if not os.path.exists(certdir):
+    os.makedirs(certdir)
+  certpath = os.path.join(certdir, 'server.cert')
+  keypath = os.path.join(certdir, 'server.key')
   if create_https_certificates(certpath, keypath):
     return {
       "cert":certpath,
