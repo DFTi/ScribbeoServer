@@ -12,6 +12,7 @@ except Exception:
   aditc = aditc()
 import re
 import helper
+from transcode import Transcoder
 
 hidden = {
   'names':{
@@ -55,6 +56,7 @@ class Webserver(object):
     cherrypy.engine.timeout_monitor.unsubscribe()
     cherrypy.engine.autoreload.unsubscribe()
     self.router = self.Router(self.rootdir)
+    self.router.encoder = Transcoder(self.app_config)
     self.router.owner = self
     self.alive = True
     cherrypy.quickstart(self.router, '/', self.web_config)
@@ -102,6 +104,41 @@ class Webserver(object):
         return cherrypy.lib.static.serve_file(path)
       else:
         return ''
+        
+    @cherrypy.expose
+    def transcoder(self, *arg): 
+      """ live transcode videos, api:
+        transcoder/start/path/to/file.mov.m3u8
+        transcoder/$hash/$bitrate/segments.m3u8
+        transcoder/$hash/$bitrate/$segment.ts
+      """
+      # FIXME: get paths that have slashes working /transcoder/Cuts/blah/foo.mov
+      # CACHE AND PRE TRANSCODE!
+      #arg = list(arg)
+      fileName, fileExt = os.path.splitext(arg[-1])
+      if fileExt == '.m3u8': # Requesting a playlist of segments
+        md5, bitrate, name = str.split(arg[0], '-')
+        cherrypy.response.headers['Content-Type'] = 'application/x-mpegURL'
+        # airvideo uses content-type "application/vnd.apple.mpegurl"
+        return self.encoder.m3u8_segments_for(md5, bitrate)
+      elif fileExt == '.ts': # Requesting a segment.
+        md5, bitrate, seg = str.split(arg[0], '-')
+        partPath = self.encoder.segment_path(md5, bitrate, os.path.splitext(seg)[0])
+        if not partPath:
+          raise cherrypy.HTTPError("404 Segment not found")
+        else:
+          cherrypy.response.headers['Content-Type'] = 'video/MP2T'
+          return cherrypy.lib.static.serve_file(partPath)
+      else: # Requesting the video as a live transcode session
+        check_dirpath(*arg)
+        path = os.path.join(self.rootdir, *arg)
+        if os.path.exists(path) and not os.path.isdir(path):
+          # Send the available bitrates
+          cherrypy.response.headers['Content-Type'] = 'application/x-mpegURL'
+          cherrypy.response.headers['Content-Disposition'] = 'attachment; filename=bitrates.m3u8'
+          return self.encoder.start_transcoding(path)
+        else:
+          raise cherrypy.HTTPError("404 File not found")        
         
     @cherrypy.expose
     def email(self, name=''):
