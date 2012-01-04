@@ -206,6 +206,11 @@ class Webserver(object):
         else:
           # Files
           entry['asset_url'] = '/asset/'+relpath
+
+          # This line is temporary. For the iOS app, we'll be seeding asset_url
+          # accordingly depending if the asset is natively streamable or not.
+          entry['live_transcode'] = '/transcoder/'+relpath
+
           entries['files'].append(entry)
       return entries
 
