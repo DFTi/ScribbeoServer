@@ -1,5 +1,8 @@
 *.cert
 *.key
+certs/
+live_segmenter
+live_segmenter.dSYM/
 dist/
 build/
 ScribbeoServerSetup.exe
