@@ -5,12 +5,13 @@ import re
 import md5
 import math
 import time
+import shlex
 from subprocess import call, Popen, PIPE
 
 WIN32 = True if sys.platform.startswith('win32') else False
 
 def shellquote(path):
-  return path # temp
+  return path
   if WIN32:
     return '"'+path+'"'
   else:
@@ -53,12 +54,12 @@ class TranscodeSession(object):
     "-vf \"crop=iw:ih:0:0,scale=$frameWidth:$frameHeight\" -aspect \"$frameWidth:$frameHeight\" "
     "-acodec libmp3lame -ab 48k -ar 48000 -ac 2 -async 1 "
     "-bufsize 1024k -threads 4 -preset superfast -tune grain "
-    "-flags2 +fast -flags +loop -g 30 -keyint_min 1 -bf 0 -b_strategy 0 "
-    "-sc_threshold 40 -me_range 16 -subq 5 -qmax 48 -qmin 2 "
-    "-deblockalpha 0 -deblockbeta 0 -refs 1 -coder 0 "
+    #"-flags2 +fast -flags +loop -g 30 -keyint_min 1 -bf 0 -b_strategy 0 "
+    #"-sc_threshold 40 -me_range 16 -subq 5 -qmax 48 -qmin 2 "
+    #"-deblockalpha 0 -deblockbeta 0 -refs 1 -coder 0 "
     #"-loglevel quiet "
-    "-f mpegts - "
-    "| ./live_segmenter 10 "+shellquote(self.tmp_dir)+" $segmentPrefix mpegts $startSegment")
+    "-f mpegts - ")
+    self.segmenter_cmd_tmpl = string.Template("./live_segmenter 10 "+shellquote(self.tmp_dir)+" $segmentPrefix mpegts $startSegment")
       # FIXME: Detect CPU's for optimized transcoding (threads)
     #self.cached_segments = [0]*int(math.ceil(self.duration/10)) # init list with 10 0's ... [seg] = 0:uncached, 1:processing, 2:cached
     #self.current_ffmpeg_process = False
@@ -69,27 +70,20 @@ class TranscodeSession(object):
     
   def inspect(self):
     proc = Popen([self.ffmpeg_path, '-i', self.videoPath], stderr=PIPE)
+    time.sleep(1)
     return proc.stderr.read()
     
     
   def getDuration(self):
+    print "INSPECTION FROM getDURATION IS CURRENTLY: "+self.inspection 
     pattern = re.compile('Duration:\s([0-9]{2}):([0-9]{2}):([0-9]{2}).([0-9]{2})');
     durationMatch = pattern.search(self.inspection)
-    try:
-      self.durationStamp = "%s:%s:%s.%s" % (
-        durationMatch.group(1),
-        durationMatch.group(2),
-        durationMatch.group(3),
-        durationMatch.group(4)
-      )
-      seconds = 0
-      seconds += 3600 * int(durationMatch.group(1))
-      seconds += 60   * int(durationMatch.group(2))
-      seconds += int(durationMatch.group(3))
-      seconds += 1/self.fps * int(durationMatch.group(4))
-      return seconds
-    except Exception:
-      raise 'Problem grabbing duraton'
+    seconds = 0
+    seconds += 3600 * int(durationMatch.group(1))
+    seconds += 60   * int(durationMatch.group(2))
+    seconds += int(durationMatch.group(3))
+    seconds += 1/self.fps * int(durationMatch.group(4))
+    return seconds
 
   def getFrameSize(self):
     pattern = re.compile('Video:\s(.*),(.*),\s(\d*)x(\d*),');
@@ -110,18 +104,27 @@ class TranscodeSession(object):
       raise 'Problem grabbing FPS'
       
   def call_ffmpeg(self, **kwargs):
+    if self.current_ffmpeg_process:
+      self.current_segmenter_process.terminate()
+      self.current_ffmpeg_process.terminate()
     cmd = self.ffmpeg_cmd_tmpl.substitute(
-      startSegment=kwargs['start_segment'],
       startTime=int(kwargs['start_segment'])*self.segment_duration,
       #duration=kwargs['num_segments']*self.segment_duration,
-      segmentPrefix=self.md5+"-"+kwargs['bitrate'],
       frameWidth=self.frame_size[0],
       frameHeight=self.frame_size[1],
       bitrate=int(kwargs['bitrate'])*1000,
     )
     
-    self.current_ffmpeg_process = Popen(cmd, shell=True)
-  
+    segmenter_cmd = self.segmenter_cmd_tmpl.substitute(
+      startSegment=kwargs['start_segment'],
+      segmentPrefix=self.md5+"-"+kwargs['bitrate'],
+    )
+    
+    print cmd
+    
+    self.current_ffmpeg_process = Popen(shlex.split(cmd), stdout=PIPE)
+    self.current_segmenter_process = Popen(shlex.split(segmenter_cmd), stdin=self.current_ffmpeg_process.stdout)
+    
   def transcode(self, seg, br, do_block=True):
     seg = int(seg)
     
@@ -132,15 +135,12 @@ class TranscodeSession(object):
       
     print "TRANSCODE REQUESTED FOR SEGMENT "+str(seg)+" with bitrate "+br+" at path:"+self.ts_path
       
-    if not os.path.exists(self.ts_path):
-        if self.current_ffmpeg_process:
-            self.current_ffmpeg_process.terminate()
-        
-        self.call_ffmpeg(start_segment = seg, bitrate=br)
-        while not os.path.exists(ts_path_5):
-            continue
+    if not os.path.exists(self.ts_path):        
+      self.call_ffmpeg(start_segment = seg, bitrate=br)
+      while not os.path.exists(ts_path_5):
+        continue
       
-        #time.sleep(20)
+      #time.sleep(20)
       
     return self.ts_path
 
