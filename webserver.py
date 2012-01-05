@@ -12,6 +12,7 @@ except Exception:
   aditc = aditc()
 import re
 import helper
+import string
 from transcode import Transcoder
 
 hidden = {
@@ -23,6 +24,9 @@ hidden = {
     ".tc":True # Legacy timecode file. Can delete.
   }
 }
+
+def slashquote(stri):
+  return string.replace(stri, '/', 'do.ob')
 
 ### Helpers ###
 def check_dirpath(*arg):
@@ -130,8 +134,11 @@ class Webserver(object):
           cherrypy.response.headers['Content-Type'] = 'video/MP2T'
           return cherrypy.lib.static.serve_file(partPath)
       else: # Requesting the video as a live transcode session
+      # Here
+      # replace / with %2f
         check_dirpath(*arg)
         path = os.path.join(self.rootdir, *arg)
+        path = string.replace(path, 'do.ob', '/')
         if os.path.exists(path) and not os.path.isdir(path):
           # Send the available bitrates
           cherrypy.response.headers['Content-Type'] = 'application/x-mpegURL'
@@ -209,7 +216,7 @@ class Webserver(object):
 
           # This line is temporary. For the iOS app, we'll be seeding asset_url
           # accordingly depending if the asset is natively streamable or not.
-          entry['live_transcode'] = '/transcoder/'+relpath
+          entry['live_transcode'] = '/transcoder/'+slashquote(relpath)
 
           entries['files'].append(entry)
       return entries

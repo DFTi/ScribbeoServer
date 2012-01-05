@@ -6,12 +6,13 @@ import md5
 import math
 import time
 import shlex
+from urllib import unquote
 from subprocess import call, Popen, PIPE
 
 WIN32 = True if sys.platform.startswith('win32') else False
 
 def shellquote(path):
-  return path
+  #return path
   if WIN32:
     return '"'+path+'"'
   else:
@@ -37,7 +38,7 @@ class TranscodeSession(object):
       self.ffmpeg_path = string.strip(os.popen('which ffmpeg').read())
     self.videoPath = videoPath
     self.inspection = self.inspect()
-    self.fps = self.getFps()
+    #self.fps = self.getFps()
     self.duration = self.getDuration()
     self.segment_duration = 10
     self.frame_size = 640,360#self.getFrameSize()
@@ -47,7 +48,7 @@ class TranscodeSession(object):
     self.current_ffmpeg_process = False
     self.ffmpeg_cmd_tmpl = string.Template(self.ffmpeg_path+" "
     "-ss $startTime "
-    "-i "+shellquote(videoPath)+" "
+    "-i \""+videoPath+"\" "
     #"-analyzeduration 100000000 "
     "-vcodec libx264 -r 23.976 "
     "-b $bitrate -bt $bitrate "
@@ -75,14 +76,14 @@ class TranscodeSession(object):
     
     
   def getDuration(self):
-    print "INSPECTION FROM getDURATION IS CURRENTLY: "+self.inspection 
+    #print "INSPECTION FROM getDURATION IS CURRENTLY: "+self.inspection 
     pattern = re.compile('Duration:\s([0-9]{2}):([0-9]{2}):([0-9]{2}).([0-9]{2})');
     durationMatch = pattern.search(self.inspection)
     seconds = 0
     seconds += 3600 * int(durationMatch.group(1))
     seconds += 60   * int(durationMatch.group(2))
     seconds += int(durationMatch.group(3))
-    seconds += 1/self.fps * int(durationMatch.group(4))
+    seconds += 1#/self.fps * int(durationMatch.group(4))
     return seconds
 
   def getFrameSize(self):
@@ -101,6 +102,7 @@ class TranscodeSession(object):
     if fpsString:
       return float(fpsString)
     else:
+      return float(24)
       raise 'Problem grabbing FPS'
       
   def call_ffmpeg(self, **kwargs):
@@ -154,6 +156,8 @@ class Transcoder(object):
     self.sessions = {}
       
   def start_transcoding(self, videoPath):
+    videoPath = unquote(videoPath)
+    print "VIDEOPATH: "+videoPath
     video_md5 = md5.new(videoPath).hexdigest()
     if self.sessions.has_key(video_md5): # Session already exists?
       return self.m3u8_bitrates_for(video_md5)
