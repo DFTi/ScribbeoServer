@@ -107,8 +107,8 @@ class TranscodeSession(object):
       
   def call_ffmpeg(self, **kwargs):
     if self.current_ffmpeg_process:
-      self.current_segmenter_process.terminate()
-      self.current_ffmpeg_process.terminate()
+      self.current_segmenter_process.kill()
+      self.current_ffmpeg_process.kill()
     cmd = self.ffmpeg_cmd_tmpl.substitute(
       startTime=int(kwargs['start_segment'])*self.segment_duration,
       #duration=kwargs['num_segments']*self.segment_duration,
@@ -156,8 +156,8 @@ class Transcoder(object):
     self.sessions = {}
       
   def start_transcoding(self, videoPath):
+    print "Initiating transcode for "+videoPath
     videoPath = unquote(videoPath)
-    print "VIDEOPATH: "+videoPath
     video_md5 = md5.new(videoPath).hexdigest()
     if self.sessions.has_key(video_md5): # Session already exists?
       return self.m3u8_bitrates_for(video_md5)
