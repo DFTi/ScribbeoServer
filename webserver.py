@@ -13,6 +13,7 @@ except Exception:
 import re
 import helper
 import string
+import md5
 from transcode import Transcoder
 
 hidden = {
@@ -25,9 +26,6 @@ hidden = {
   }
 }
 
-def slashquote(stri):
-  return string.replace(stri, '/', 'do.ob')
-
 ### Helpers ###
 def check_dirpath(*arg):
   for piece in arg:
@@ -36,6 +34,7 @@ def check_dirpath(*arg):
       
 class Webserver(object):
   def __init__(self, config):
+    self.table = {}
     self.app_config = config
     self.rootdir = config["rootdir"]
     self.port = config["port"]
@@ -51,10 +50,6 @@ class Webserver(object):
       self.web_config['global']['server.ssl_module'] = 'pyopenssl'
       self.web_config['global']['server.ssl_certificate'] = config['ssl']['cert']
       self.web_config['global']['server.ssl_private_key'] = config['ssl']['key']
-      # 'server.ssl_module':'ssl',
-      # 'server.ssl_certificate':'certs/my_cert.crt',
-      # 'server.ssl_private_key':'certs/my_cert.key',
-      # 'server.ssl_certificate_chain':'certs/gd_bundle.crt'
     
   def start(self):
     cherrypy.engine.timeout_monitor.unsubscribe()
@@ -121,13 +116,13 @@ class Webserver(object):
       #arg = list(arg)
       fileName, fileExt = os.path.splitext(arg[-1])
       if fileExt == '.m3u8': # Requesting a playlist of segments
-        md5, bitrate, name = str.split(arg[0], '-')
+        md5hash, bitrate, name = str.split(arg[0], '-')
         cherrypy.response.headers['Content-Type'] = 'application/x-mpegURL'
         # airvideo uses content-type "application/vnd.apple.mpegurl"
-        return self.encoder.m3u8_segments_for(md5, bitrate)
+        return self.encoder.m3u8_segments_for(md5hash, bitrate)
       elif fileExt == '.ts': # Requesting a segment.
-        md5, bitrate, seg = str.split(arg[0], '-')
-        partPath = self.encoder.segment_path(md5, bitrate, os.path.splitext(seg)[0])
+        md5hash, bitrate, seg = str.split(arg[0], '-')
+        partPath = self.encoder.segment_path(md5hash, bitrate, os.path.splitext(seg)[0])
         if not partPath:
           raise cherrypy.HTTPError("404 Segment not found")
         else:
@@ -137,15 +132,14 @@ class Webserver(object):
       # Here
       # replace / with %2f
         check_dirpath(*arg)
-        path = os.path.join(self.rootdir, *arg)
-        path = string.replace(path, 'do.ob', '/')
+        cherrypy.response.headers['Content-Type'] = 'application/x-mpegURL'
+        cherrypy.response.headers['Content-Disposition'] = 'attachment; filename=bitrates.m3u8'
+        if self.owner.table.has_key(arg[-1]): # Finding based on hash key
+          path = self.owner.table[arg[-1]] # Get the video path from the md5key
+        else: # Finding based on direct route
+          path = os.path.join(self.rootdir, *arg)
         if os.path.exists(path) and not os.path.isdir(path):
-          # Send the available bitrates
-          cherrypy.response.headers['Content-Type'] = 'application/x-mpegURL'
-          cherrypy.response.headers['Content-Disposition'] = 'attachment; filename=bitrates.m3u8'
-          return self.encoder.start_transcoding(path)
-        else:
-          raise cherrypy.HTTPError("404 File not found")        
+          return self.encoder.start_transcoding(path) # Send the available bitrates
         
     @cherrypy.expose
     def email(self, name=''):
@@ -216,7 +210,9 @@ class Webserver(object):
 
           # This line is temporary. For the iOS app, we'll be seeding asset_url
           # accordingly depending if the asset is natively streamable or not.
-          entry['live_transcode'] = '/transcoder/'+slashquote(relpath)
+          md5hash = md5.new(abspath).hexdigest()
+          self.owner.table[md5hash] = abspath
+          entry['live_transcode'] = '/transcoder/'+md5hash
 
           entries['files'].append(entry)
       return entries
