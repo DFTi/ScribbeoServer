@@ -125,22 +125,27 @@ class Window(QtGui.QDialog):
         self.serverOn = False
 
     def start_server(self):
+        ssl = '-s' if self.sslCheckbox.isChecked() else ''
         if self.serverOn:
             self.kill_server()
-        if DEBUG
-        self.app = subprocess.Popen([APP_PATH, self.directory, str(self.port)])
+        if DEBUG:
+            args = ['python', APP_SCRIPT_PATH, '-d', self.directory, '-p', str(self.port), ssl]
+        else:
+            args = [APP_PATH, '-d', self.directory, '-p', str(self.port), ssl]
+        self.app = subprocess.Popen(args)
         self.serverOn = True
 
     def startStopServer(self):
         if not os.path.exists(APP_PATH) and not DEBUG:
-             QtGui.QMessageBox.warning(self, "Cannot start the server",
-                "Required components could not be found.\n"
-                "Please reinstall or contact us for help.")
+            QtGui.QMessageBox.warning(self, "Cannot start the server",
+            "Required components could not be found.\n"
+            "Please reinstall or contact us for help.")
             return
         if self.serverOn:
             self.kill_server()
             self.portEdit.setEnabled(True)
             self.dirEditButton.setEnabled(True)
+            self.sslCheckbox.setEnabled(True)
             self.startStopButton.setText("Start")
             self.statusLabel.setText("Server is stopped")            
         else:
@@ -156,6 +161,7 @@ class Window(QtGui.QDialog):
             }
             self.portEdit.setEnabled(False)
             self.dirEditButton.setEnabled(False)
+            self.sslCheckbox.setEnabled(False)
             self.startStopButton.setText("Stop")
             self.start_server()
             self.statusLabel.setText("Server is running: "+self.ip+':'+str(self.port))
@@ -280,6 +286,9 @@ class Window(QtGui.QDialog):
         else:
             self.dirEditButton = QtGui.QPushButton("Choose a directory")
 
+        sslLabel = QtGui.QLabel("Use SSL?")
+        self.sslCheckbox = QtGui.QCheckBox()
+
         self.startStopButton = QtGui.QPushButton("Start")
         self.startStopButton.setDefault(True)
 
@@ -292,8 +301,11 @@ class Window(QtGui.QDialog):
 
         messageLayout.addWidget(dirLabel, 3, 0)
         messageLayout.addWidget(self.dirEditButton, 3, 1, 1, 4)
+        
+        messageLayout.addWidget(sslLabel, 4, 0)
+        messageLayout.addWidget(self.sslCheckbox, 4, 1, 1, 4)
 
-        messageLayout.addWidget(self.statusLabel, 4, 1, 1, 5)
+        messageLayout.addWidget(self.statusLabel, 4, 3, 1, 5)
 
         messageLayout.addWidget(self.startStopButton, 5, 4)
         messageLayout.addWidget(self.hideButton, 5, 3)
