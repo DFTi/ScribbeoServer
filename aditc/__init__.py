@@ -8,7 +8,7 @@ zeros = '00:00:00:00'
 def get(path):
   if path == None:
     return zeros
-  if sys.platform == 'win32':
+  if sys.platform != 'darwin':
     return zeros
   script_dir = os.path.dirname(os.path.realpath(__file__))
   aditc = os.path.join(script_dir, 'aditc')
