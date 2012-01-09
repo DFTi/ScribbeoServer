@@ -10,6 +10,7 @@ import subprocess
 import winhelper
 import time
 
+DEBUG = False
 UPDATEURL = 'http://update.scribbeo.com/windows'
 GUI_NAME = 'ScribbeoServerGUI.exe' # this script
 VERSION = '1.0'
@@ -20,10 +21,10 @@ SETTINGSFILEPATH = os.path.join(DATADIR, 'settings.json')
 #APP_PATH = os.path.join(DATADIR,'ScribbeoServer.exe') # app.py
 
 APP_PATH = 'ScribbeoServer.exe'
-
-#print APP_PATH
-#print SETTINGSFILEPATH
-
+APP_SCRIPT_PATH = 'app.py'
+if os.path.exists(APP_SCRIPT_PATH) and not os.path.exists(APP_PATH):
+    DEBUG = True # Use alternate startup commands for easier debug
+    
 class LicenseWindow(QtGui.QDialog):
     def __init__(self):
         super(LicenseWindow, self).__init__()
@@ -126,12 +127,13 @@ class Window(QtGui.QDialog):
     def start_server(self):
         if self.serverOn:
             self.kill_server()
+        if DEBUG
         self.app = subprocess.Popen([APP_PATH, self.directory, str(self.port)])
         self.serverOn = True
 
     def startStopServer(self):
-        if not os.path.exists(APP_PATH):
-            QtGui.QMessageBox.warning(self, "Cannot start the server",
+        if not os.path.exists(APP_PATH) and not DEBUG:
+             QtGui.QMessageBox.warning(self, "Cannot start the server",
                 "Required components could not be found.\n"
                 "Please reinstall or contact us for help.")
             return
