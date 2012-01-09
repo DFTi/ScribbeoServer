@@ -5,6 +5,9 @@ import sys
 import shutil
 import subprocess
 
+# Path to Nullsoft installer
+NSIS = "\"C:\Program Files (x86)\NSIS\makensis.exe\""
+
 exe = False
 build = False
 for arg in sys.argv:
@@ -21,12 +24,21 @@ if not sys.platform.startswith("win"):
     sys.exit(0)
     
 def cleanup():
-    try:
-        shutil.rmtree('dist/')
-        shutil.rmtree('build/')
-        shutil.rm('ScribbeoServerSetup.exe')
-    except:
-        pass
+  expired_files = [
+    'dist',
+    'build',
+    'ScribbeoServerSetup.exe'
+  ]
+  try:
+    for path in expired_files:
+      if os.path.exists(path):
+        if os.path.isdir(path):
+          shutil.rmtree(path)
+        else:
+          os.remove(path)
+  except Exception, ex:
+    print "Failed to cleanup "+str(ex)
+    sys.exit(1)
 
 print "Cleaning up first."
 cleanup()
@@ -35,7 +47,7 @@ setup(
     # The first three parameters are not required, if at least a
     # 'version' is given, then a versioninfo resource is built from
     # them and added to the executables.
-    version = "0.1.0",
+    version = "0.1.1",
     description = "Scribbeo Server for Windows",
     name = "ScribbeoServer",
 
@@ -49,12 +61,10 @@ setup(
 
     data_files = [
         'icon.ico',
-        'icon.bmp', # yeah we actually need both >.<
+        'icon.bmp',
         'ScribbeoServerEULA.txt'
     ],
 
-    # Exclude OpenSSL, unless we are building a https server
-    #options = { 'py2exe': { 'excludes': 'OpenSSL', "packages": ["encodings", "email"] }},
     options = {
         'py2exe':
             {
@@ -102,10 +112,10 @@ def post_process():
     print "Renaming executables and verifying..."
     renameExecutablesAndVerify()
 
-NSIS = "C:\Program Files (x86)\NSIS\makensis.exe"
-
 def makeNSIS():
-  proc = subprocess.Popen([NSIS, "/V3", "make_installer.nsi"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-  proc.wait()
+  print "Creating NSIS installation executable."
+  os.system(NSIS+' /V3 make_installer.nsi')
+  print "Installer created!"
     
 post_process()
+makeNSIS()
