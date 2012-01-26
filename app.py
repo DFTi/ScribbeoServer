@@ -55,6 +55,7 @@ class App(object):
 
 def main(config=None):
   #helper.disableFrozenLogging()
+  print "Scribbeo Server is booting up..."
   if not config:
     config = helper.make_config(len(sys.argv), sys.argv)
   App(config).start()

@@ -1,13 +1,13 @@
 #!/usr/bin/python
+# This is an example of the file generated & executed by the Mac version
 import app
-# Master will store its config here
-# It should read this file to see if there's been an initial config.
-# In which case, it never needs to write to it again until an UPDATE is made to the App.
-# If the app updates a config setting, it should rewrite this file
 app.main({
   'port':8080,
   'rootdir':'clips', # Where your assets are
   'guipid':None # PID of the program launching the script
   'ssl':False # If set to True, certs will get generated.
   'certdir':'certs', # Where to put generated certs
+  'ffmpeg_path':'/path/to/ffmpeg',
+  'segmenter_path':'/path/to/live_segmenter',
+  'notes_path':'/path/to/notes'
 })

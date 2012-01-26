@@ -1,6 +1,7 @@
 import os
 import sys
 import socket
+import subprocess
 from optparse import OptionParser
 win32 = sys.platform.startswith("win")
 py2exe = False
@@ -16,16 +17,25 @@ def make_config(argc, argv):
   parser.add_option("-s", action="store_true", dest="ssl", help="Enable SSL encryption")
   parser.add_option("-c", dest="certdir", help="Directory in which to store SSL certificates")
   parser.add_option("-k", dest="pid", help="Auto shutdown when this PID is lost")
+  parser.add_option("-f", dest="ffmpeg", help="Path to compiled ffmpeg")
+  parser.add_option("-t", dest="segmenter", help="Path to compiled live segmenter")
+  parser.add_option("-n", dest="notes_dir", help="Directory in which to store annotations")
   (options, args) = parser.parse_args()
   options = options.__dict__
   rootdir = validate_directory(options['dir'])
   port = validate_port(options['port'])
+  notes_dir = validate_directory(options['notes_dir']) if options['notes_dir'] else None
+  ffmpeg = validate_exec(options['ffmpeg']) if options['ffmpeg'] else None
+  segmenter = validate_exec(options['segmenter']) if options['segmenter'] else None
   return {
     "port":port,
     "rootdir":rootdir,
+    'notes_dir':options['notes_dir'],
     "guipid":options['pid'],
     "ssl":options['ssl'],
-    'certdir':options['certdir']
+    'certdir':options['certdir'],
+    'ffmpeg_path':ffmpeg,
+    'segmenter_path':segmenter
   }
 
 def make_ssl(config):
@@ -91,8 +101,26 @@ def validate_directory(path):
       print "Missing directory!\nFor help, run "+sys.argv[0]+" -h "
     else:
       print "Invalid directory: "+path
+      print "Please create the directory "+path+" and try again."
     sys.exit(-1)
-    
+
+def validate_file(path):
+  if path and os.path.exists(path):
+    return os.path.abspath(path)
+  else:
+    print path+" not found!\nFor help, run "+sys.argv[0]+" -h "
+    sys.exit(-1)
+
+def validate_exec(path):
+  try:
+    subprocess.check_call(path)
+  except OSError, e:
+    print "Invalid path: "+path
+    return False
+  except subprocess.CalledProcessError, e:
+    pass # This is fine, the executable exists.
+  return path
+
 def validate_config(config):
   config['ip'] = get_ip_port()[0]
   config['port'] = validate_port(config["port"])
@@ -142,3 +170,6 @@ def create_https_certificates(ssl_cert, ssl_key):
 
     return True
 
+
+def shellquote(path):
+    return '"'+path+'"' if sys.platform.startswith('win') else path.replace(' ', '\ ')

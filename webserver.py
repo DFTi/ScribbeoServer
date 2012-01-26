@@ -19,7 +19,9 @@ from transcode import Transcoder
 hidden = {
   'names':{
     "Notes":True, # Where note archives are saved from iOS app
-    "tmp":True # Where we store transcoded .ts files
+    "tmp":True, # Where we store transcoded .ts files
+    "Thumbs.db":True, # windows junk
+    ".DS_Store":True # mac junk
   },
   'exts':{
     ".tc":True # Legacy timecode file. Can delete.
@@ -54,16 +56,19 @@ class Webserver(object):
   def start(self):
     cherrypy.engine.timeout_monitor.unsubscribe()
     cherrypy.engine.autoreload.unsubscribe()
-    self.router = self.Router(self.rootdir)
+    self.router = self.Router(self.app_config)
     self.router.encoder = Transcoder(self.app_config)
     self.router.owner = self
     self.alive = True
     cherrypy.quickstart(self.router, '/', self.web_config)
 
   class Router(object):
-    def __init__(self, rootdir):
-      self.rootdir = rootdir
-      self.notedir = os.path.join(rootdir, 'Notes')
+    def __init__(self, config):
+      self.rootdir = config['rootdir']
+      if config['notes_dir']:
+        self.notedir = os.path.abspath(config['notes_dir'])
+      else:
+        self.notedir = os.path.join(self.rootdir, 'Notes')
       if not os.path.exists(self.notedir):
         os.makedirs(self.notedir)
       

@@ -81,7 +81,6 @@ class LicenseWindow(QtGui.QDialog):
         })
         self.mainAppWindow.unlock()
         self.close()
-        
 
 class Window(QtGui.QDialog):
     def __init__(self):
@@ -138,6 +137,7 @@ class Window(QtGui.QDialog):
             args = ['python', APP_SCRIPT_PATH, '-d', self.directory, '-p', str(self.port), ssl]
         else:
             args = [APP_PATH, '-d', self.directory, '-p', str(self.port), ssl]
+            args += ['-f', FFMPEG_PATH, '-t', SEGMENTER_PATH]
         self.app = subprocess.Popen(args)
         self.serverOn = True
 
@@ -159,13 +159,8 @@ class Window(QtGui.QDialog):
             self.port = int(self.portEdit.text())
             problem = self.validate()
             if problem:
-                QtGui.QMessageBox.information(self, "Error",
-                    problem)
+                QtGui.QMessageBox.information(self, "Error", problem)
                 return
-            self.config = {
-                'port':self.port,
-                'rootdir':self.directory
-            }
             self.portEdit.setEnabled(False)
             self.dirEditButton.setEnabled(False)
             if SHOW_SSL:
@@ -173,7 +168,7 @@ class Window(QtGui.QDialog):
             self.startStopButton.setText("Stop")
             self.start_server()
             self.statusLabel.setText("Server is running: "+self.ip+':'+str(self.port))
-            self.updateConfigFile(self.config)
+            self.updateConfigFile()
         self.trayIcon.setToolTip(self.statusLabel.text()) # Update tooltip with new server status.
 
     def loadConfigFile(self):
@@ -190,13 +185,22 @@ class Window(QtGui.QDialog):
             f.close()
             self.port = self.config["port"] 
             self.directory = self.config["rootdir"]
+            self.ffmpeg_path = self.config["ffmpeg_path"]
+            self.segmenter_path = self.config["segmenter_path"]
             self.acceptedLicense = self.config["acceptedLicense"]
         except:
             pass
 
-    def updateConfigFile(self, config):
+    def updateConfigFile(self, dict=None):
+        # Get changes
+        self.config['port'] = self.port
+        self.config['rootdir'] = self.directory
+        if dict:
+          for key in dict:
+            self.config[key] = dict[key]
+        # Write to the settings file
         f = open(SETTINGSFILEPATH, 'w')
-        f.write(json.dumps(config))
+        f.write(json.dumps(self.config))
         f.close()
 
     def get_ip_port(self, testPort=0):
