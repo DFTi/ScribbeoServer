@@ -113,7 +113,8 @@ def validate_file(path):
 
 def validate_exec(path):
   try:
-    subprocess.check_call(path)
+    with open(os.devnull, 'w') as fp:
+      subprocess.check_call(path, stdout=fp, stderr=fp)
   except OSError, e:
     print "Invalid path: "+path
     return False

@@ -1,31 +1,23 @@
 import os
 import sys
-import subprocess
+from subprocess import Popen, PIPE
 import re
 
 zeros = '00:00:00:00'
+ndftc_pattern = re.compile("timecode: \d{2}:\d{2}:\d{2};\d{2}\\n")
+dftc_pattern = re.compile("timecode: \d{2}:\d{2}:\d{2}:\d{2}\\n")
 
-def get(path):
-  if path == None:
+def ffmbc_tc(vidPath, ffmbcPath):
+  if vidPath == None:
     return zeros
-  if sys.platform != 'darwin':
-    return zeros
-  script_dir = os.path.dirname(os.path.realpath(__file__))
-  aditc = os.path.join(script_dir, 'aditc')
-  proc = subprocess.Popen([aditc, path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  proc = Popen([ffmbcPath, '-i', vidPath], stderr=PIPE)
   proc.wait()
-  for line in proc.stderr:
-    if len(line) > 0:
-      return zeros
-  for line in proc.stdout:
-    timecode = line.rstrip()
-    break
-  ndftc = re.compile("..:..:..:..")
-  # \d{2}:\d{2}:\d{2}:\d{2}
-  dftc = re.compile("..:..:..;..")
-  if ndftc.match(timecode):
-    return timecode[:11]
-  elif dftc.match(timecode):
-    return timecode[:11].replace(';', ':')
-  else:
-    return zeros
+  output = proc.stderr.read()
+  ndftc = ndftc_pattern.search(output)
+  if ndftc:
+    return ndftc.group()[10:-1]
+  dftc = dftc_pattern.search(output)  
+  if dftc:
+    return dftc.group()[10:-1].replace(';', ':')
+  return zeros
+  

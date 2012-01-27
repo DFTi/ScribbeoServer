@@ -33,7 +33,7 @@ class TranscodeSession(object):
     
   def inspect(self):
     proc = Popen([self.transcoder.ffmpeg.path, '-i', self.videoPath], stderr=PIPE)
-    time.sleep(1)
+    proc.wait()
     return proc.stderr.read() 
     
   def getDuration(self):

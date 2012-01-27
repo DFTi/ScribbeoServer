@@ -3,13 +3,7 @@ import sys
 import threading
 import subprocess
 import cherrypy
-try:
-  import aditc
-except Exception:
-  class aditc(object):
-    def get(self):
-      return '00:00:00:00'
-  aditc = aditc()
+import aditc
 import re
 import helper
 import string
@@ -230,7 +224,7 @@ class Webserver(object):
       check_dirpath(*arg)
       path = os.path.join(self.rootdir, *arg)
       if os.path.exists(path) and not os.path.isdir(path):
-        return aditc.get(path)
+        return aditc.ffmbc_tc(path, self.owner.app_config['ffmpeg_path'])
       else:
         return '00:00:00:00'
           
