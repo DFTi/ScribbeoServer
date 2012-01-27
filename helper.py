@@ -174,3 +174,6 @@ def create_https_certificates(ssl_cert, ssl_key):
 
 def shellquote(path):
     return '"'+path+'"' if win32 else path.replace(' ', '\ ')
+    
+def hours_to_seconds(hours):
+  return hours * 3600

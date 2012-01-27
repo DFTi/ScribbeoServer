@@ -4,9 +4,9 @@ import string
 import re
 import md5
 import math
-import time
 import shlex
 import helper
+from time import time
 from urllib import unquote
 from subprocess import call, Popen, PIPE
 
@@ -17,8 +17,14 @@ WIN32 = True if sys.platform.startswith('win') else False
 
 DISABLE_LIVE_TRANSCODE = False
 
+# How long sessions will idle/transcode until killed and cleaned up
+SESSION_EXPIRY = helper.hours_to_seconds(6) 
+
 class TranscodeSession(object):
   def __init__(self, transcoder, videoPath):
+    self.alive = True
+    self.idleTime = 0
+    self.lastRequest = time()
     self.transcoder = transcoder
     self.videoPath = videoPath
     self.inspection = self.inspect()
@@ -30,14 +36,29 @@ class TranscodeSession(object):
     self.tmp_dir = transcoder.tmp_dir
     self.ts_filename_tmpl = string.Template("$md5hash-$bitrate-$segment.ts")
     self.current_ffmpeg_process = False
+    self.current_segmenter_process = False
+  
+  def idle_time(self):
+    self.idleTime = (time() - self.lastRequest)
+    return self.idleTime
     
+  def cleanup(self):
+    if self.idle_time() > SESSION_EXPIRY:
+      if self.current_ffmpeg_process:
+        self.current_segmenter_process.kill()
+        self.current_ffmpeg_process.kill()
+      for ts in os.listdir(self.tmp_dir):
+        if ts.startswith(self.md5):
+          os.remove(os.path.join(self.tmp_dir, ts))
+          self.alive = False
+          
+          
   def inspect(self):
     proc = Popen([self.transcoder.ffmpeg.path, '-i', self.videoPath], stderr=PIPE)
     proc.wait()
     return proc.stderr.read() 
     
   def getDuration(self):
-    #print "INSPECTION FROM getDURATION IS CURRENTLY: "+self.inspection 
     pattern = re.compile('Duration:\s([0-9]{2}):([0-9]{2}):([0-9]{2}).([0-9]{2})');
     durationMatch = pattern.search(self.inspection)
     seconds = 0
@@ -83,17 +104,17 @@ class TranscodeSession(object):
       startSegment=kwargs['start_segment'],
       segmentPrefix=self.md5+"-"+kwargs['bitrate'],
     )
-    #print cmd
-    self.current_ffmpeg_process = Popen(shlex.split(cmd), stdout=PIPE)
-    self.current_segmenter_process = Popen(shlex.split(segmenter_cmd), stdin=self.current_ffmpeg_process.stdout)
+    with open(os.devnull, 'w') as fp:
+      self.current_ffmpeg_process = Popen(shlex.split(cmd), stdout=PIPE, stderr=fp)
+      self.current_segmenter_process = Popen(shlex.split(segmenter_cmd), stdin=self.current_ffmpeg_process.stdout, stdout=fp, stderr=fp)
     
   def transcode(self, seg, br, do_block=True):
+    self.lastRequest = time() # Reset the timer.
     seg = int(seg)
     self.ts_file = self.ts_filename_tmpl.substitute(md5hash=self.md5, bitrate=br, segment=seg)
     self.ts_path = os.path.join(self.tmp_dir, self.ts_file)
     ts_file_5 = self.ts_filename_tmpl.substitute(md5hash=self.md5, bitrate=br, segment=seg+5)
     ts_path_5 = os.path.join(self.tmp_dir, ts_file_5)
-    # print "TRANSCODE REQUESTED FOR SEGMENT "+str(seg)+" with bitrate "+br+" at path:"+self.ts_path
     if not os.path.exists(self.ts_path):        
       self.call_ffmpeg(start_segment = seg, bitrate=br)
       while not os.path.exists(ts_path_5):
@@ -145,6 +166,18 @@ class Transcoder(object):
     if not os.path.exists(self.tmp_dir):
       os.makedirs(self.tmp_dir)
       
+  def cleanup(self):
+    # This method will check self.sessions and ask if they are stale (lastRequest - now)
+    # They get "unstale" because we set the session's lastRequest to time() on every segment request
+    deadSessions = []
+    for md5, session in self.sessions.iteritems():
+      if session.alive:
+        session.cleanup()
+      else:
+        deadSessions.append(md5)
+    for md5 in deadSessions:
+      del self.sessions[md5]
+      
   def start_transcoding(self, videoPath):
     if DISABLE_LIVE_TRANSCODE:
       print "Live transcoding is currently disabled! There is a problem with your configuration."
@@ -184,6 +217,7 @@ class Transcoder(object):
     return m3u8_fudge.substitute(hash=md5_hash)
 
   def segment_path(self, md5_hash, the_bitrate, segment_number):
+    # A segment was requested.
     path = self.sessions[md5_hash].transcode(segment_number, the_bitrate)
     if path:
       return path

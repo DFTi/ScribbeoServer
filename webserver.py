@@ -8,6 +8,7 @@ import re
 import helper
 import string
 import md5
+import time
 from transcode import Transcoder
 
 hidden = {
@@ -20,7 +21,7 @@ hidden = {
   'exts':{
     ".tc":True # Legacy timecode file. Can delete.
   }
-}
+}  
 
 ### Helpers ###
 def check_dirpath(*arg):
@@ -30,6 +31,7 @@ def check_dirpath(*arg):
       
 class Webserver(object):
   def __init__(self, config):
+    self.alive = False
     self.table = {}
     self.app_config = config
     self.rootdir = config["rootdir"]
@@ -46,6 +48,11 @@ class Webserver(object):
       self.web_config['global']['server.ssl_module'] = 'pyopenssl'
       self.web_config['global']['server.ssl_certificate'] = config['ssl']['cert']
       self.web_config['global']['server.ssl_private_key'] = config['ssl']['key']
+    
+  def idle(self):
+    if self.alive:
+      self.router.encoder.cleanup()
+    time.sleep(5)
     
   def start(self):
     cherrypy.engine.timeout_monitor.unsubscribe()

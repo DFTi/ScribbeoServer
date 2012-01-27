@@ -39,7 +39,7 @@ class App(object):
         pid = None
     try:
       while helper.pid_alive(pid):
-        time.sleep(5)
+        self.server.idle()
     finally:
       self.shutdown()
   
