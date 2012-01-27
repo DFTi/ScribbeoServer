@@ -172,4 +172,4 @@ def create_https_certificates(ssl_cert, ssl_key):
 
 
 def shellquote(path):
-    return '"'+path+'"' if sys.platform.startswith('win') else path.replace(' ', '\ ')
+    return '"'+path+'"' if win32 else path.replace(' ', '\ ')

@@ -10,6 +10,9 @@ import helper
 from urllib import unquote
 from subprocess import call, Popen, PIPE
 
+# FIXME Send a CTRL-Z to FFMPEG when we haven't received a part request in X time.
+# When we DO get a request again, we can resume transcode from the same location.
+
 WIN32 = True if sys.platform.startswith('win') else False
 
 DISABLE_LIVE_TRANSCODE = False
@@ -123,7 +126,7 @@ class Ffmpeg(object):
       "-b $bitrate -bt $bitrate "
       "-vf \"crop=iw:ih:0:0,scale=$frameWidth:$frameHeight\" -aspect \"$frameWidth:$frameHeight\" "
       "-acodec libmp3lame -ab 48k -ar 48000 -ac 2 -async 1 "
-      "-bufsize 1024k -threads 4 -preset superfast -tune grain "
+      "-bufsize 1024k -threads 4 -preset fast -tune grain "
       "-f mpegts - ")
     if not helper.validate_exec(self.path):
       DISABLE_LIVE_TRANSCODE = True
@@ -136,7 +139,7 @@ class Transcoder(object):
     self.segmenter = Segmenter(config['segmenter_path'])
     self.rootdir = config['rootdir']
     if config['notes_dir']:
-      self.tmp_dir = os.path.join(self.notes_dir, 'tmp')
+      self.tmp_dir = os.path.join(config['notes_dir'], 'tmp')
     else:
       self.tmp_dir = os.path.join(self.rootdir, 'tmp')
     if not os.path.exists(self.tmp_dir):
@@ -146,7 +149,7 @@ class Transcoder(object):
     if DISABLE_LIVE_TRANSCODE:
       print "Live transcoding is currently disabled! There is a problem with your configuration."
       return
-    print "Initiating transcode for "+videoPath
+    print "Initiating transcode for asset at path: "+videoPath
     videoPath = unquote(videoPath)
     video_md5 = md5.new(videoPath).hexdigest()
     if self.sessions.has_key(video_md5): # Session already exists?
