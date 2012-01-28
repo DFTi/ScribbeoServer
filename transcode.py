@@ -6,19 +6,47 @@ import md5
 import math
 import shlex
 import helper
-from time import time
+from time import time, sleep
 from urllib import unquote
 from subprocess import call, Popen, PIPE
-
-# FIXME Send a CTRL-Z to FFMPEG when we haven't received a part request in X time.
-# When we DO get a request again, we can resume transcode from the same location.
-
 WIN32 = True if sys.platform.startswith('win') else False
-
+if WIN32:
+  import winhelper
 DISABLE_LIVE_TRANSCODE = False
-
 # How long sessions will idle/transcode until killed and cleaned up
 SESSION_EXPIRY = helper.hours_to_seconds(6) 
+
+class Segmenter(object):
+  def __init__(self, path=None):
+    if path:
+      self.path = os.path.abspath(path)
+    else:  
+      name = 'live_segmenter.exe' if WIN32 else 'live_segmenter'
+      self.path = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), name)
+    self.cmd_tmpl = string.Template(self.path+" 10 $tmpDir $segmentPrefix mpegts $startSegment")
+    if not helper.validate_exec(self.path):
+      DISABLE_LIVE_TRANSCODE = True
+      print "Live transcode disabled. Could not find segmenter at path: "+self.path
+  
+class Ffmpeg(object):
+  def __init__(self, path=None):
+    if path:
+      self.path = os.path.abspath(path)
+    else: 
+      name = 'ffmpeg.exe' if WIN32 else 'ffmpeg'
+      self.path = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), name)
+    self.cmd_tmpl = string.Template(self.path+" "
+      "-ss $startTime "
+      "-i \"$videoPath\" "
+      "-vcodec libx264 -r 23.976 "
+      "-b $bitrate -bt $bitrate -loglevel quiet "
+      "-vf \"crop=iw:ih:0:0,scale=$frameWidth:$frameHeight\" -aspect \"$frameWidth:$frameHeight\" "
+      "-acodec libmp3lame -ab 48k -ar 48000 -ac 2 -async 1 "
+      "-bufsize 1024k -threads 4 -preset fast -tune grain "
+      "-f mpegts - ")
+    if not helper.validate_exec(self.path):
+      DISABLE_LIVE_TRANSCODE = True
+      print "Live transcode disabled. Could not find ffmpeg at path: "+self.path
 
 class TranscodeSession(object):
   def __init__(self, transcoder, videoPath):
@@ -35,8 +63,9 @@ class TranscodeSession(object):
     self.md5 = md5.new(videoPath).hexdigest()
     self.tmp_dir = transcoder.tmp_dir
     self.ts_filename_tmpl = string.Template("$md5hash-$bitrate-$segment.ts")
-    self.current_ffmpeg_process = False
-    self.current_segmenter_process = False
+    self.current_ffmpeg_process = None
+    self.current_segmenter_process = None
+    self.win_batch_process = None
   
   def idle_time(self):
     self.idleTime = (time() - self.lastRequest)
@@ -88,9 +117,7 @@ class TranscodeSession(object):
       raise 'Problem grabbing FPS'
       
   def call_ffmpeg(self, **kwargs):
-    if self.current_ffmpeg_process:
-      self.current_segmenter_process.kill()
-      self.current_ffmpeg_process.kill()
+    self.killProcessing()
     cmd = self.transcoder.ffmpeg.cmd_tmpl.substitute(
       startTime=int(kwargs['start_segment'])*self.segment_duration,
       videoPath=self.videoPath,
@@ -104,10 +131,23 @@ class TranscodeSession(object):
       startSegment=kwargs['start_segment'],
       segmentPrefix=self.md5+"-"+kwargs['bitrate'],
     )
-    with open(os.devnull, 'w') as fp:
-      self.current_ffmpeg_process = Popen(shlex.split(cmd), stdout=PIPE, stderr=fp)
-      self.current_segmenter_process = Popen(shlex.split(segmenter_cmd), stdin=self.current_ffmpeg_process.stdout, stdout=fp, stderr=fp)
-    
+    print "About to start processes....."
+    if WIN32:
+      winCmd = cmd+' | '+segmenter_cmd
+      self.win_batch_process_pid = winhelper.runCmdViaBatchFile(winCmd, os.path.join(self.tmp_dir, 'transcode.bat'))
+    else:
+      with open(os.devnull, 'w') as fp:
+        self.current_ffmpeg_process = Popen(shlex.split(cmd), stdout=PIPE, stderr=fp)
+        self.current_segmenter_process = Popen(shlex.split(segmenter_cmd), stdin=self.current_ffmpeg_process.stdout, stdout=fp, stderr=fp)
+    print "Launched ffmbc and such!"
+   
+  def killProcessing(self):
+    if WIN32 and self.win_batch_process:
+      self.win_batch_process.kill()
+    elif self.current_ffmpeg_process:
+      self.current_segmenter_process.kill()
+      self.current_ffmpeg_process.kill()
+          
   def transcode(self, seg, br, do_block=True):
     self.lastRequest = time() # Reset the timer.
     seg = int(seg)
@@ -118,40 +158,9 @@ class TranscodeSession(object):
     if not os.path.exists(self.ts_path):        
       self.call_ffmpeg(start_segment = seg, bitrate=br)
       while not os.path.exists(ts_path_5):
+        sleep(5)
         continue      
     return self.ts_path
-
-class Segmenter(object):
-  def __init__(self, path=None):
-    if path:
-      self.path = path
-    else:  
-      name = 'live_segmenter.exe' if WIN32 else 'live_segmenter'
-      self.path = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), name)
-    self.cmd_tmpl = string.Template(self.path+" 10 $tmpDir $segmentPrefix mpegts $startSegment")
-    if not helper.validate_exec(self.path):
-      DISABLE_LIVE_TRANSCODE = True
-      print "Live transcode disabled. Could not find segmenter at path: "+self.path
-  
-class Ffmpeg(object):
-  def __init__(self, path=None):
-    if path:
-      self.path = path
-    else: 
-      name = 'ffmpeg.exe' if WIN32 else 'ffmpeg'
-      self.path = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), name)
-    self.cmd_tmpl = string.Template(self.path+" "
-      "-ss $startTime "
-      "-i \"$videoPath\" "
-      "-vcodec libx264 -r 23.976 "
-      "-b $bitrate -bt $bitrate "
-      "-vf \"crop=iw:ih:0:0,scale=$frameWidth:$frameHeight\" -aspect \"$frameWidth:$frameHeight\" "
-      "-acodec libmp3lame -ab 48k -ar 48000 -ac 2 -async 1 "
-      "-bufsize 1024k -threads 4 -preset fast -tune grain "
-      "-f mpegts - ")
-    if not helper.validate_exec(self.path):
-      DISABLE_LIVE_TRANSCODE = True
-      print "Live transcode disabled. Could not find ffmpeg at path: "+self.path
 
 class Transcoder(object):
   def __init__(self, config):

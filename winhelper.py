@@ -1,8 +1,9 @@
 """ Windows support helper """
-
+import os
 import wmi
 import requests
 import json
+from subprocess import Popen
 c = wmi.WMI()
 
 def listProcesses():
@@ -54,3 +55,12 @@ def checkForUpdate(currentVersion, updateURL):
 	except:
 		return False
 	return False
+
+def runCmdViaBatchFile(cmd, batPath):
+	batFile = open(batPath, 'w')
+	batFile.write(cmd)
+	batFile.close()
+	return Popen(batPath)
+	
+	
+	
