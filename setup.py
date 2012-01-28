@@ -50,7 +50,6 @@ setup(
     version = "1.0",
     description = "Scribbeo Server for Windows",
     name = "ScribbeoServer",
-
     windows = [
         {
             "script":"wininit.py",
@@ -58,13 +57,11 @@ setup(
         },
         "app.py",
     ],
-
     data_files = [
         'icon.ico',
         'icon.bmp',
         'ScribbeoServerEULA.txt'
     ],
-
     options = {
         'py2exe':
             {
@@ -99,23 +96,21 @@ def renameExecutablesAndVerify():
                 os.path.join('dist',filename),
                 os.path.join('dist','ScribbeoServerGUI.exe')
             )
-
     app = os.path.join('dist','ScribbeoServer.exe')
     gui = os.path.join('dist','ScribbeoServerGUI.exe')
-
     if not os.path.exists(app):
         raise "Missing "+app
     if not os.path.exists(gui):
         raise "Missing "+gui
-
-def post_process():
-    copyDependencies()
-    renameExecutablesAndVerify()
-    makeNSIS()
     
 def makeNSIS():
   print "Creating NSIS installation executable."
   os.system(NSIS+' /V3 make_installer.nsi')
   print "Installer created!"
-    
-post_process()
+
+###################
+# POST PROCESSING #
+###################   
+
+renameExecutablesAndVerify()
+makeNSIS()

@@ -49,7 +49,7 @@ File win_deps\live_segmenter.exe
 File win_deps\pthreadGC2.dll
 
 ; Needed for Python/Windows interfacing
-File vcredist_x86.exe
+File win_deps\vcredist_x86.exe
 
 ; Install the VisualC++ Redist package
 ExecWait '"$INSTDIR\vcredist_x86.exe" /q:a /c:"VCREDI~1.EXE /q:a /c:""msiexec /i vcredist.msi /qb!"" "'
@@ -97,6 +97,13 @@ Delete $INSTDIR\ScribbeoServer.exe
 Delete $INSTDIR\ScribbeoServerEULA.txt
 Delete $INSTDIR\ScribbeoServerGUI.exe
 Delete $INSTDIR\w9xpopen.exe
+
+Delete $INSTDIR\avcodec-52.dll
+Delete $INSTDIR\avformat-52.dll
+Delete $INSTDIR\avutil-50.dll
+Delete $INSTDIR\ffmbc.exe
+Delete $INSTDIR\live_segmenter.exe
+Delete $INSTDIR\pthreadGC2.dll
 
 RMDir $INSTDIR
 
