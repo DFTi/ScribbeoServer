@@ -3,7 +3,6 @@ import sys
 import threading
 import subprocess
 import cherrypy
-import aditc
 import re
 import helper
 import string
@@ -231,7 +230,7 @@ class Webserver(object):
       check_dirpath(*arg)
       path = os.path.join(self.rootdir, *arg)
       if os.path.exists(path) and not os.path.isdir(path):
-        return aditc.ffmbc_tc(path, self.owner.app_config['ffmpeg_path'])
+        return helper.get_timecode(path, self.owner.app_config['ffmpeg_path'])
       else:
         return '00:00:00:00'
           

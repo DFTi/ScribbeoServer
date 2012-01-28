@@ -21,11 +21,14 @@ VERSION = '1.0'
 PROGRAMDATADIR = os.environ['ALLUSERSPROFILE']
 DATADIR = os.path.join(PROGRAMDATADIR, 'ScribbeoServer')
 SETTINGSFILEPATH = os.path.join(DATADIR, 'settings.json')
-#APP_PATH = os.path.join(DATADIR,'ScribbeoServer.exe') # app.py
 
-APP_PATH = 'ScribbeoServer.exe'
-APP_SCRIPT_PATH = 'app.py'
-if os.path.exists(APP_SCRIPT_PATH) and not os.path.exists(APP_PATH):
+APP_PATH = os.path.abspath('ScribbeoServer.exe')
+FFMPEG_PATH = os.path.abspath('ffmbc.exe')
+
+SEGMENTER_PATH = os.path.abspath('live_segmenter.exe')
+print FFMPEG_PATH
+
+if not os.path.exists(APP_PATH) and os.path.exists('app.py'):
     DEBUG = True # Use alternate startup commands for easier debug
     
 class LicenseWindow(QtGui.QDialog):
@@ -185,8 +188,6 @@ class Window(QtGui.QDialog):
             f.close()
             self.port = self.config["port"] 
             self.directory = self.config["rootdir"]
-            self.ffmpeg_path = self.config["ffmpeg_path"]
-            self.segmenter_path = self.config["segmenter_path"]
             self.acceptedLicense = self.config["acceptedLicense"]
         except:
             pass

@@ -47,7 +47,7 @@ setup(
     # The first three parameters are not required, if at least a
     # 'version' is given, then a versioninfo resource is built from
     # them and added to the executables.
-    version = "0.1.1",
+    version = "1.0",
     description = "Scribbeo Server for Windows",
     name = "ScribbeoServer",
 
@@ -75,11 +75,17 @@ setup(
                     'PySide'
                 ],
                 'bundle_files':1,
-                'dll_excludes': [ "mswsock.dll", "powrprof.dll", "MSVCP90.dll", "MSVCR90.dll"]
+                'dll_excludes': [
+                    "mswsock.dll",
+                    "powrprof.dll",
+                    "MSVCP90.dll",
+                    "MSVCR90.dll"
+                ]
             },
     })
 
 def renameExecutablesAndVerify():
+    print "Renaming executables and verifying..."
     if not os.path.exists('dist'):
         return
     for filename in os.listdir("dist"):
@@ -102,20 +108,14 @@ def renameExecutablesAndVerify():
     if not os.path.exists(gui):
         raise "Missing "+gui
 
-def copyDLLs():
-    shutil.copy("c:\Python27\lib\site-packages\Pythonwin\mfc90.dll",
-        os.path.join('dist', 'mfc90.dll'))
-    shutil.copy("c:\Python27\DLLs\MSVCP90.dll",
-        os.path.join('dist', 'MSVCP90.dll'))
-
 def post_process():
-    print "Renaming executables and verifying..."
+    copyDependencies()
     renameExecutablesAndVerify()
-
+    makeNSIS()
+    
 def makeNSIS():
   print "Creating NSIS installation executable."
   os.system(NSIS+' /V3 make_installer.nsi')
   print "Installer created!"
     
 post_process()
-makeNSIS()

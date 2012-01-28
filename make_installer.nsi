@@ -31,15 +31,24 @@ SetShellVarContext all
 ; Set output path to the installation directory.
 SetOutPath $INSTDIR
 
-; Put a file there
+; Required files.
 File dist\icon.bmp
 File dist\icon.ico
 File dist\library.zip
-File dist\ScribbeoServer.exe
 File dist\ScribbeoServerEULA.txt
 File dist\ScribbeoServerGUI.exe
 File dist\w9xpopen.exe
 File dist\ScribbeoServer.exe
+
+; Needed for Timecode & Live Transcode
+File win_deps\avcodec-52.dll
+File win_deps\avformat-52.dll
+File win_deps\avutil-50.dll
+File win_deps\ffmbc.exe
+File win_deps\live_segmenter.exe
+File win_deps\pthreadGC2.dll
+
+; Needed for Python/Windows interfacing
 File vcredist_x86.exe
 
 ; Install the VisualC++ Redist package

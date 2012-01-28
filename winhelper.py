@@ -60,7 +60,6 @@ def runCmdViaBatchFile(cmd, batPath):
 	batFile = open(batPath, 'w')
 	batFile.write(cmd)
 	batFile.close()
-	return Popen(batPath)
-	
-	
-	
+	proc = Popen(batPath)
+	os.remove(batFile)
+	return proc

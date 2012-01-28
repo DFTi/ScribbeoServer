@@ -1,7 +1,8 @@
 import os
 import sys
+import re
 import socket
-import subprocess
+from subprocess import check_call, Popen, PIPE
 from optparse import OptionParser
 win32 = sys.platform.startswith("win")
 py2exe = False
@@ -114,7 +115,7 @@ def validate_file(path):
 def validate_exec(path):
   try:
     with open(os.devnull, 'w') as fp:
-      subprocess.check_call(path, stdout=fp, stderr=fp)
+      check_call(path, stdout=fp, stderr=fp)
   except OSError, e:
     print "Invalid path: "+path
     return False
@@ -177,3 +178,20 @@ def shellquote(path):
     
 def hours_to_seconds(hours):
   return hours * 3600
+  
+def get_timecode(vidPath, ffmbcPath):
+  zeros = '00:00:00:00'
+  ndftc_pattern = re.compile("timecode: \d{2}:\d{2}:\d{2}:\d{2}")
+  dftc_pattern = re.compile("timecode: \d{2}:\d{2}:\d{2};\d{2}")
+  if vidPath == None:
+    return zeros
+  proc = Popen([ffmbcPath, '-i', vidPath], stderr=PIPE)
+  proc.wait()
+  output = proc.stderr.read()
+  ndftc = ndftc_pattern.search(output)
+  if ndftc:
+    return ndftc.group()[10:]
+  dftc = dftc_pattern.search(output)  
+  if dftc:
+    return dftc.group()[10:].replace(';', ':')
+  return zeros  
