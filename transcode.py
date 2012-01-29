@@ -23,11 +23,13 @@ class Segmenter(object):
     else:  
       name = 'live_segmenter.exe' if WIN32 else 'live_segmenter'
       self.path = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), name)
+    if WIN32 and winhelper.needsQuoteWrap(self.path):
+      self.path = '"'+self.path+'"'
     self.cmd_tmpl = string.Template(self.path+" 10 $tmpDir $segmentPrefix mpegts $startSegment")
     if not helper.validate_exec(self.path):
       DISABLE_LIVE_TRANSCODE = True
       print "Live transcode disabled. Could not find segmenter at path: "+self.path
-  
+    
 class Ffmpeg(object):
   def __init__(self, path=None):
     if path:
@@ -35,6 +37,8 @@ class Ffmpeg(object):
     else: 
       name = 'ffmpeg.exe' if WIN32 else 'ffmpeg'
       self.path = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), name)
+    if WIN32 and winhelper.needsQuoteWrap(self.path):
+      self.path = '"'+self.path+'"'
     self.cmd_tmpl = string.Template(self.path+" "
       "-ss $startTime "
       "-i \"$videoPath\" "
@@ -47,7 +51,7 @@ class Ffmpeg(object):
     if not helper.validate_exec(self.path):
       DISABLE_LIVE_TRANSCODE = True
       print "Live transcode disabled. Could not find ffmpeg at path: "+self.path
-
+    
 class TranscodeSession(object):
   def __init__(self, transcoder, videoPath):
     self.alive = True
@@ -83,7 +87,11 @@ class TranscodeSession(object):
           
           
   def inspect(self):
-    proc = Popen([self.transcoder.ffmpeg.path, '-i', self.videoPath], stderr=PIPE)
+    if WIN32:
+      cmd = self.transcoder.ffmpeg.path+' -i '+helper.shellquote(self.videoPath)
+      proc = runCmdViaBatchFile(cmd, os.path.join(self.tmp_dir, 'inspect.bat'))
+    else:
+      proc = Popen([self.transcoder.ffmpeg.path, '-i', self.videoPath], stderr=PIPE)
     proc.wait()
     return proc.stderr.read() 
     

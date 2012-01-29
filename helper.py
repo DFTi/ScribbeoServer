@@ -2,7 +2,7 @@ import os
 import sys
 import re
 import socket
-from subprocess import check_call, Popen, PIPE
+from subprocess import CalledProcessError, check_call, Popen, PIPE
 from optparse import OptionParser
 win32 = sys.platform.startswith("win")
 py2exe = False
@@ -119,7 +119,7 @@ def validate_exec(path):
   except OSError, e:
     print "Invalid path: "+path
     return False
-  except subprocess.CalledProcessError, e:
+  except CalledProcessError, e:
     pass # This is fine, the executable exists.
   return path
 

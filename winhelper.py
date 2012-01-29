@@ -3,7 +3,7 @@ import os
 import wmi
 import requests
 import json
-from subprocess import Popen
+from subprocess import Popen, PIPE
 c = wmi.WMI()
 
 def listProcesses():
@@ -60,6 +60,13 @@ def runCmdViaBatchFile(cmd, batPath):
 	batFile = open(batPath, 'w')
 	batFile.write(cmd)
 	batFile.close()
-	proc = Popen(batPath)
+	proc = Popen(['cmd', '/c', '"'+batPath+'"'], stderr=PIPE, stdout=PIPE)
 	os.remove(batFile)
 	return proc
+
+def needsQuoteWrap(path):
+  if not path.startswith('"') and not path.endswith('"'):
+    return True
+  else:
+    return False
+  
