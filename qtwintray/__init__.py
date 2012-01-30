@@ -9,6 +9,7 @@ import sys
 import subprocess
 import winhelper
 import time
+import helper
 
 # Currently not supporting SSL on the client, so don't show it.
 SHOW_SSL = False
@@ -18,9 +19,8 @@ UPDATEURL = 'http://update.scribbeo.com/windows'
 GUI_NAME = 'ScribbeoServerGUI.exe' # this script
 VERSION = '1.0'
 
-PROGRAMDATADIR = os.environ['ALLUSERSPROFILE']
-DATADIR = os.path.join(PROGRAMDATADIR, 'ScribbeoServer')
-SETTINGSFILEPATH = os.path.join(DATADIR, 'settings.json')
+DATADIR = winhelper.DATADIR
+SETTINGSFILEPATH = winhelper.SETTINGSFILEPATH
 
 APP_PATH = os.path.abspath('ScribbeoServer.exe')
 FFMPEG_PATH = os.path.abspath('ffmbc.exe')
@@ -127,6 +127,8 @@ class Window(QtGui.QDialog):
         if self.serverOn:
             self.app.terminate()
             self.app.wait()
+            winhelper.killProcess("live_segmenter.exe")
+            winhelper.killProcess("ffmbc.exe")
         self.serverOn = False
 
     def start_server(self):
@@ -141,7 +143,7 @@ class Window(QtGui.QDialog):
         else:
             args = [APP_PATH, '-d', self.directory, '-p', str(self.port), ssl]
             args += ['-f', FFMPEG_PATH, '-t', SEGMENTER_PATH]
-        self.app = subprocess.Popen(args)
+        self.app = subprocess.Popen(args, startupinfo=helper.noCmd())
         self.serverOn = True
 
     def startStopServer(self):

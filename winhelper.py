@@ -3,8 +3,12 @@ import os
 import wmi
 import requests
 import json
-from subprocess import Popen, PIPE
+import subprocess
+
 c = wmi.WMI()
+
+DATADIR = os.path.join(os.environ['ALLUSERSPROFILE'], 'ScribbeoServer')
+SETTINGSFILEPATH = os.path.join(DATADIR, 'settings.json')
 
 def listProcesses():
 	for process in c.Win32_Process():
@@ -56,17 +60,8 @@ def checkForUpdate(currentVersion, updateURL):
 		return False
 	return False
 
-def runCmdViaBatchFile(cmd, batPath):
-	batFile = open(batPath, 'w')
-	batFile.write(cmd)
-	batFile.close()
-	proc = Popen(['cmd', '/c', '"'+batPath+'"'], stderr=PIPE, stdout=PIPE)
-	os.remove(batFile)
-	return proc
-
 def needsQuoteWrap(path):
   if not path.startswith('"') and not path.endswith('"'):
     return True
   else:
     return False
-  

@@ -113,8 +113,8 @@ RMDir $APPDATA\ScribbeoServer
 ; Now remove shortcuts too
 Delete "$SMPROGRAMS\Scribbeo Server\Scribbeo Server.lnk"
 Delete "$SMPROGRAMS\Scribbeo Server\Uninstall.lnk"
-Delete "ScribbeoServer.exe.log"
-Delete "ScribbeoServerGUI.exe.log"
+Delete "$SMPROGRAMS\Scribbeo Server\ScribbeoServer.exe.log"
+Delete "$SMPROGRAMS\Scribbeo Server\ScribbeoServerGUI.exe.log"
 RMDIR "$SMPROGRAMS\Scribbeo Server"
 
 Delete "$DESKTOP\Scribbeo Server.lnk"

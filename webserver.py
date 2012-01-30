@@ -18,7 +18,8 @@ hidden = {
     ".DS_Store":True # mac junk
   },
   'exts':{
-    ".tc":True # Legacy timecode file. Can delete.
+    ".tc":True, # Legacy timecode file. Can delete.
+    ".ini":True
   }
 }  
 

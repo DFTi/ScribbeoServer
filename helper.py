@@ -2,7 +2,7 @@ import os
 import sys
 import re
 import socket
-from subprocess import CalledProcessError, check_call, Popen, PIPE
+import subprocess
 from optparse import OptionParser
 win32 = sys.platform.startswith("win")
 py2exe = False
@@ -11,6 +11,14 @@ if win32 and hasattr(sys, 'frozen'):
 if win32:
   import winhelper
 
+def noCmd():
+  if win32:
+    startupinfo = subprocess.STARTUPINFO()
+    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    startupinfo.wShowWindow = subprocess.SW_HIDE
+    return startupinfo
+  return None
+    
 def make_config(argc, argv):
   parser = OptionParser()
   parser.add_option("-d", dest="dir", help="Location of assets to serve *Required*")
@@ -115,11 +123,11 @@ def validate_file(path):
 def validate_exec(path):
   try:
     with open(os.devnull, 'w') as fp:
-      check_call(path, stdout=fp, stderr=fp)
+      subprocess.check_call(path, stdout=fp, stderr=fp, startupinfo=noCmd())
   except OSError, e:
     print "Invalid path: "+path
     return False
-  except CalledProcessError, e:
+  except subprocess.CalledProcessError, e:
     pass # This is fine, the executable exists.
   return path
 
@@ -179,13 +187,16 @@ def shellquote(path):
 def hours_to_seconds(hours):
   return hours * 3600
   
+def minutes_to_seconds(minutes):
+  return minutes * 60
+  
 def get_timecode(vidPath, ffmbcPath):
   zeros = '00:00:00:00'
   ndftc_pattern = re.compile("timecode: \d{2}:\d{2}:\d{2}:\d{2}")
   dftc_pattern = re.compile("timecode: \d{2}:\d{2}:\d{2};\d{2}")
   if vidPath == None:
     return zeros
-  proc = Popen([ffmbcPath, '-i', vidPath], stderr=PIPE)
+  proc = subprocess.Popen([ffmbcPath, '-i', vidPath], stderr=subprocess.PIPE)
   proc.wait()
   output = proc.stderr.read()
   ndftc = ndftc_pattern.search(output)
@@ -195,3 +206,4 @@ def get_timecode(vidPath, ffmbcPath):
   if dftc:
     return dftc.group()[10:].replace(';', ':')
   return zeros  
+  

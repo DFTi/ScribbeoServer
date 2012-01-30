@@ -8,13 +8,16 @@ import shlex
 import helper
 from time import time, sleep
 from urllib import unquote
-from subprocess import call, Popen, PIPE
+import subprocess
+#from subprocess import subprocess.Popen, subprocess.PIPE
 WIN32 = True if sys.platform.startswith('win') else False
 if WIN32:
   import winhelper
 DISABLE_LIVE_TRANSCODE = False
-# How long sessions will idle/transcode until killed and cleaned up
-SESSION_EXPIRY = helper.hours_to_seconds(6) 
+# Maximum length of time we'll keep video chunks on disk 
+MAX_CACHE_TIME = helper.hours_to_seconds(6) 
+# Maximum time we'll continue to transcode without having received a request
+MAX_IDLE_TIME = helper.minutes_to_seconds(30)
 
 class Segmenter(object):
   def __init__(self, path=None):
@@ -23,9 +26,7 @@ class Segmenter(object):
     else:  
       name = 'live_segmenter.exe' if WIN32 else 'live_segmenter'
       self.path = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), name)
-    if WIN32 and winhelper.needsQuoteWrap(self.path):
-      self.path = '"'+self.path+'"'
-    self.cmd_tmpl = string.Template(self.path+" 10 $tmpDir $segmentPrefix mpegts $startSegment")
+    self.cmd_tmpl = string.Template(helper.shellquote(self.path)+" 10 $tmpDir $segmentPrefix mpegts $startSegment")
     if not helper.validate_exec(self.path):
       DISABLE_LIVE_TRANSCODE = True
       print "Live transcode disabled. Could not find segmenter at path: "+self.path
@@ -37,9 +38,7 @@ class Ffmpeg(object):
     else: 
       name = 'ffmpeg.exe' if WIN32 else 'ffmpeg'
       self.path = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), name)
-    if WIN32 and winhelper.needsQuoteWrap(self.path):
-      self.path = '"'+self.path+'"'
-    self.cmd_tmpl = string.Template(self.path+" "
+    self.cmd_tmpl = string.Template(helper.shellquote(self.path)+" "
       "-ss $startTime "
       "-i \"$videoPath\" "
       "-vcodec libx264 -r 23.976 "
@@ -58,6 +57,7 @@ class TranscodeSession(object):
     self.idleTime = 0
     self.lastRequest = time()
     self.transcoder = transcoder
+    self.tmp_dir = transcoder.tmp_dir
     self.videoPath = videoPath
     self.inspection = self.inspect()
     #self.fps = self.getFps()
@@ -65,7 +65,6 @@ class TranscodeSession(object):
     self.segment_duration = 10
     self.frame_size = 640,360 #self.getFrameSize()
     self.md5 = md5.new(videoPath).hexdigest()
-    self.tmp_dir = transcoder.tmp_dir
     self.ts_filename_tmpl = string.Template("$md5hash-$bitrate-$segment.ts")
     self.current_ffmpeg_process = None
     self.current_segmenter_process = None
@@ -76,25 +75,27 @@ class TranscodeSession(object):
     return self.idleTime
     
   def cleanup(self):
-    if self.idle_time() > SESSION_EXPIRY:
+    idle = self.idle_time()
+    if idle > MAX_IDLE_TIME:
       if self.current_ffmpeg_process:
         self.current_segmenter_process.kill()
         self.current_ffmpeg_process.kill()
+    if idle > MAX_CACHE_TIME:
       for ts in os.listdir(self.tmp_dir):
         if ts.startswith(self.md5):
           os.remove(os.path.join(self.tmp_dir, ts))
           self.alive = False
-          
-          
-  def inspect(self):
-    if WIN32:
-      cmd = self.transcoder.ffmpeg.path+' -i '+helper.shellquote(self.videoPath)
-      proc = runCmdViaBatchFile(cmd, os.path.join(self.tmp_dir, 'inspect.bat'))
-    else:
-      proc = Popen([self.transcoder.ffmpeg.path, '-i', self.videoPath], stderr=PIPE)
+  
+  def inspect(self): 
+    proc = subprocess.Popen([self.transcoder.ffmpeg.path, '-i', self.videoPath], stderr=subprocess.PIPE, startupinfo=helper.noCmd())
     proc.wait()
-    return proc.stderr.read() 
-    
+    stderr = proc.stderr.read() 
+    return stderr
+  
+  def can_be_decoded(self):
+    failmsg = re.compile('Unable to find a suitable output format');
+    return not failmsg.search(self.inspection)
+  
   def getDuration(self):
     pattern = re.compile('Duration:\s([0-9]{2}):([0-9]{2}):([0-9]{2}).([0-9]{2})');
     durationMatch = pattern.search(self.inspection)
@@ -128,26 +129,20 @@ class TranscodeSession(object):
     self.killProcessing()
     cmd = self.transcoder.ffmpeg.cmd_tmpl.substitute(
       startTime=int(kwargs['start_segment'])*self.segment_duration,
-      videoPath=self.videoPath,
+      videoPath=self.videoPath, # FIXME last change monday 9:04 aM
       #duration=kwargs['num_segments']*self.segment_duration,
       frameWidth=self.frame_size[0],
       frameHeight=self.frame_size[1],
       bitrate=int(kwargs['bitrate'])*1000,
     )
     segmenter_cmd = self.transcoder.segmenter.cmd_tmpl.substitute(
-      tmpDir=helper.shellquote(self.transcoder.tmp_dir),
+      tmpDir=helper.shellquote(self.transcoder.tmp_dir), # and this ughhh shellex? or what nib
       startSegment=kwargs['start_segment'],
       segmentPrefix=self.md5+"-"+kwargs['bitrate'],
     )
-    print "About to start processes....."
-    if WIN32:
-      winCmd = cmd+' | '+segmenter_cmd
-      self.win_batch_process_pid = winhelper.runCmdViaBatchFile(winCmd, os.path.join(self.tmp_dir, 'transcode.bat'))
-    else:
-      with open(os.devnull, 'w') as fp:
-        self.current_ffmpeg_process = Popen(shlex.split(cmd), stdout=PIPE, stderr=fp)
-        self.current_segmenter_process = Popen(shlex.split(segmenter_cmd), stdin=self.current_ffmpeg_process.stdout, stdout=fp, stderr=fp)
-    print "Launched ffmbc and such!"
+    with open(os.devnull, 'w') as fp:
+      self.current_ffmpeg_process = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=fp, startupinfo=helper.noCmd())
+      self.current_segmenter_process = subprocess.Popen(shlex.split(segmenter_cmd), stdin=self.current_ffmpeg_process.stdout, stdout=fp, stderr=fp, startupinfo=helper.noCmd())
    
   def killProcessing(self):
     if WIN32 and self.win_batch_process:
@@ -205,8 +200,11 @@ class Transcoder(object):
     if self.sessions.has_key(video_md5): # Session already exists?
       return self.m3u8_bitrates_for(video_md5)
     transcodingSession = TranscodeSession(self, videoPath)
-    self.sessions[transcodingSession.md5] = transcodingSession
-    return self.m3u8_bitrates_for(transcodingSession.md5)
+    if transcodingSession.can_be_decoded():  
+      self.sessions[transcodingSession.md5] = transcodingSession
+      return self.m3u8_bitrates_for(transcodingSession.md5)
+    else:
+      return "Cannot decode this file."
     
   def m3u8_segments_for(self, md5_hash, video_bitrate):
     segment = string.Template("#EXTINF:$length,\n$md5hash-$bitrate-$segment.ts\n")
