@@ -55,6 +55,7 @@ def checkForUpdate(currentVersion, updateURL):
 		if info['version'] == currentVersion:
 			return False
 		else:
+			print "found update"
 			return info
 	except:
 		return False

@@ -24,9 +24,9 @@ SETTINGSFILEPATH = winhelper.SETTINGSFILEPATH
 
 APP_PATH = os.path.abspath('ScribbeoServer.exe')
 FFMPEG_PATH = os.path.abspath('ffmbc.exe')
-
 SEGMENTER_PATH = os.path.abspath('live_segmenter.exe')
-print FFMPEG_PATH
+
+UPDATE_CHECK_INTERVAL = helper.hours_to_seconds(24)
 
 if not os.path.exists(APP_PATH) and os.path.exists('app.py'):
     DEBUG = True # Use alternate startup commands for easier debug
@@ -47,7 +47,7 @@ class LicenseWindow(QtGui.QDialog):
         self.setLayout(mainLayout)
         self.setWindowTitle("End User License Agreement")
         self.resize(500, 400)
-
+      
     def createMessageGroupBox(self):
         self.messageGroupBox = QtGui.QGroupBox("Scribbeo Server EULA")
 
@@ -90,8 +90,8 @@ class Window(QtGui.QDialog):
         super(Window, self).__init__()
         self.serverOn = False
         self.acceptedLicense = False
+        self.lastUpdateCheck = None
         self.loadConfigFile()
-        self.updateFound = winhelper.checkForUpdate(VERSION, UPDATEURL)
         # set up the enclosure for Status, Dir, Port, Start/stop btn
         self.createMessageGroupBox() 
         # set up the actions for the tray
@@ -108,13 +108,43 @@ class Window(QtGui.QDialog):
         self.trayIcon.activated.connect(self.iconActivated)
         mainLayout = QtGui.QVBoxLayout()
         mainLayout.addWidget(self.messageGroupBox)
+        
+        self.updateNoticeLabel = QtGui.QLabel()
+        self.updateNoticeLabel.setOpenExternalLinks(True)
+        mainLayout.addWidget(self.updateNoticeLabel)
+        
         self.setLayout(mainLayout)
         self.trayIcon.show()
         self.setWindowTitle("Scribbeo Server")
         #self.resize(400, 100)
-        self.setFixedSize(450,150)
+        self.setFixedSize(450,170)
         self.doBonjourCheck()
+        self.startUpdateTimer()
 
+
+    def startUpdateTimer(self):
+      timer = QtCore.QTimer(self)
+      self.connect(timer, QtCore.SIGNAL("timeout()"), self.checkForUpdate)
+      timer.start(3600)
+    
+    def checkForUpdate(self):
+      theTime = time.time()
+      if self.lastUpdateCheck:
+        firstCheck = False
+        interval = theTime - self.lastUpdateCheck
+      else:
+        firstCheck = True
+        interval = 0.0
+      if firstCheck or interval > UPDATE_CHECK_INTERVAL:
+        self.updateFound = winhelper.checkForUpdate(VERSION, UPDATEURL)
+        if self.updateFound:
+          text = str("<a href='"+self.updateFound['url']+"'>Update available: "
+                      " Download Scribbeo v"+self.updateFound["version"]+".</a>")
+        else:
+          text = "Version "+VERSION
+        self.updateNoticeLabel.setText(text)
+      self.lastUpdateCheck = theTime
+      
     def doBonjourCheck(self):
         if not winhelper.bonjourRunning():
             QtGui.QMessageBox.warning(self, "Bonjour Not Detected",
@@ -250,6 +280,7 @@ class Window(QtGui.QDialog):
                 self.hide()
             else:
                 self.show()
+                self.checkForUpdate()
         elif reason == QtGui.QSystemTrayIcon.MiddleClick:
             self.showMessage()
 
@@ -326,13 +357,9 @@ class Window(QtGui.QDialog):
         messageLayout.addWidget(self.hideButton, 5, 3)
         messageLayout.addWidget(self.quitButton, 5, 2)
         
-        if self.updateFound:
-            print self.updateFound
-            self.updateNoticeLabel = QtGui.QLabel(
-                "<a href='"+self.updateFound['url']+"'>Update available: "
-                " Download Scribbeo v"+self.updateFound["version"]+".</a>")
-            self.updateNoticeLabel.setOpenExternalLinks(True)
-            messageLayout.addWidget(self.updateNoticeLabel, 6, 1)
+        # self.updateNoticeLabel = QtGui.QLabel()
+        # self.updateNoticeLabel.setOpenExternalLinks(True)
+        # messageLayout.addWidget(self.updateNoticeLabel, 0, 3)
 
         messageLayout.setColumnStretch(3, 1)
         messageLayout.setRowStretch(4, 1)
