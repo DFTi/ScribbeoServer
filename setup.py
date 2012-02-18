@@ -4,9 +4,12 @@ import os
 import sys
 import shutil
 import subprocess
+import qtwintray
 
 # Path to Nullsoft installer
 NSIS = "\"C:\Program Files (x86)\NSIS\makensis.exe\""
+
+VERSION = qtwintray.VERSION
 
 exe = False
 build = False
@@ -107,6 +110,7 @@ def makeNSIS():
   print "Creating NSIS installation executable."
   os.system(NSIS+' /V3 make_installer.nsi')
   print "Installer created!"
+  os.rename("ScribbeoServerSetup.exe", "ScribbeoServer-Win-"+VERSION+".exe")
 
 ###################
 # POST PROCESSING #

@@ -17,7 +17,7 @@ SHOW_SSL = False
 DEBUG = False
 UPDATEURL = 'http://update.scribbeo.com/windows'
 GUI_NAME = 'ScribbeoServerGUI.exe' # this script
-VERSION = '1.0'
+VERSION = '1.1'
 
 DATADIR = winhelper.DATADIR
 SETTINGSFILEPATH = winhelper.SETTINGSFILEPATH
