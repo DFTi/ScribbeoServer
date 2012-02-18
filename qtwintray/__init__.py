@@ -30,66 +30,11 @@ UPDATE_CHECK_INTERVAL = helper.hours_to_seconds(24)
 
 if not os.path.exists(APP_PATH) and os.path.exists('app.py'):
     DEBUG = True # Use alternate startup commands for easier debug
-    
-class LicenseWindow(QtGui.QDialog):
-    def __init__(self):
-        super(LicenseWindow, self).__init__()
-        self.setWindowIcon(QtGui.QIcon('icon.bmp'))
-        self.acceptedLicense = None
-        licenseLayout = QtGui.QGridLayout()
-        self.createMessageGroupBox() 
-
-        self.acceptButton.clicked.connect(self.accept)
-        self.denyButton.clicked.connect(self.deny)
-
-        mainLayout = QtGui.QVBoxLayout()
-        mainLayout.addWidget(self.messageGroupBox)
-        self.setLayout(mainLayout)
-        self.setWindowTitle("End User License Agreement")
-        self.resize(500, 400)
-      
-    def createMessageGroupBox(self):
-        self.messageGroupBox = QtGui.QGroupBox("Scribbeo Server EULA")
-
-        self.acceptButton = QtGui.QPushButton("Accept")
-        self.denyButton = QtGui.QPushButton("Deny")
-
-        messageLayout = QtGui.QGridLayout()
-        self.textDocument = QtGui.QTextEdit()
-        self.textDocument.setReadOnly(True)
-        self.textDocument.insertPlainText(open('ScribbeoServerEULA.txt').read())
-        messageLayout.addWidget(self.textDocument, 0, 0, 5, 5)
-        messageLayout.addWidget(self.acceptButton, 5, 4)
-        messageLayout.addWidget(self.denyButton, 5, 2)
-    
-        messageLayout.setColumnStretch(3, 1)
-        messageLayout.setRowStretch(4, 1)
-        self.messageGroupBox.setLayout(messageLayout)
-    
-    def closeEvent(self, event):
-        if self.acceptedLicense:
-            self.close()
-        else:
-            self.deny()
-
-    def deny(self):
-        QtGui.qApp.quit()
-    
-    def accept(self):
-        self.acceptedLicense = True
-        self.mainAppWindow.updateConfigFile({
-            'port':None,
-            'rootdir':None,
-            'acceptedLicense':True
-        })
-        self.mainAppWindow.unlock()
-        self.close()
 
 class Window(QtGui.QDialog):
     def __init__(self):
         super(Window, self).__init__()
         self.serverOn = False
-        self.acceptedLicense = False
         self.lastUpdateCheck = None
         self.loadConfigFile()
         # set up the enclosure for Status, Dir, Port, Start/stop btn
@@ -212,7 +157,6 @@ class Window(QtGui.QDialog):
         if not os.path.exists(SETTINGSFILEPATH):
             self.port = None
             self.directory = None
-            self.acceptedLicense = None
             return
         try:    
             f = open(SETTINGSFILEPATH)
@@ -220,7 +164,6 @@ class Window(QtGui.QDialog):
             f.close()
             self.port = self.config["port"] 
             self.directory = self.config["rootdir"]
-            self.acceptedLicense = self.config["acceptedLicense"]
         except:
             pass
 
@@ -407,11 +350,6 @@ def main(app=None):
     QtGui.QApplication.setQuitOnLastWindowClosed(False)
     window = Window()
     window.show()
-    if not window.acceptedLicense:
-        window.lock()
-        lw = LicenseWindow()
-        lw.mainAppWindow = window
-        lw.show()
     sys.exit(app.exec_())
 
 if __name__ == '__main__':

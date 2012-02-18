@@ -1,9 +1,7 @@
-; This script shows how to make your applicaton uninstallable
 
-;--------------------------------
 
 ; The name of the installer
-Name "Scribbeo Server v1.0"
+Name "Scribbeo Server v1.1"
 
 ; The file to write
 OutFile "ScribbeoServerSetup.exe"
@@ -15,6 +13,9 @@ InstallDir $PROGRAMFILES\ScribbeoServer\
 DirText "This will install Scribbeo Server v1.0 on your computer."
 
 ;--------------------------------
+LicenseData "ScribbeoServerEULA.txt"
+Page license
+Page instfiles
 
 ; ---------------------------------------------------------
 ; INSTALL SECTION
