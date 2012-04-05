@@ -36,6 +36,7 @@
   }
   li.folder {
     .icon {
+      @include pointer-no-select;
       @include icon("/img/folder.png");  
     }
     .userCount {
@@ -43,7 +44,7 @@
       @include icon("/img/users.png");
       font-size:0.8em;
       top:0;
-      right:32px;
+      left:36px;
     }
     .permittedUsers {
       display:none;

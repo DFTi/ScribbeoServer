@@ -39,6 +39,8 @@ $().ready(function () {
     newEntry.fadeToggle('fast');
   });
   
+// --------------------------
+
   $('.submitButton').click(function () {
     var newEntry = $(this).parent();
     var type = newEntry.attr('data-type');
@@ -65,7 +67,7 @@ $().ready(function () {
         html = $(res['html']).css('display', 'none');
         html.insertAfter(newEntry).fadeToggle('slow');
         resetForm(newEntry).hide();
-        // Make the bindings:
+        
         var type = newEntry.attr('data-type');
         if (type == 'folder') {
           bindUserCounterToggle($(html).find('.userCount'));
@@ -74,8 +76,7 @@ $().ready(function () {
         } else
         if (type == 'user') {
           console.log('binding user');
-          makeUserIconDraggable($(html).find('.icon'));
-          bindDeleteButtonPost('user', $(html).find(".deleteButton"));
+          bindUserItem($(html));
         }
       } else {
         newEntry.find(".errors").html(res["errors"]);
@@ -94,9 +95,6 @@ $().ready(function () {
       if (type=="permission") {
         listItem = $(this).parents("li.entry");
         data["folder_id"] = $(this).parents('li.entry.folder').attr('data-id');
-        
-        console.log($(this));
-        console.log($(this).parents('.permittedUsers').size());
         if ($(this).parents('.permittedUsers').children().size() == 1)
           toBeRemoved = $(this).parents('.permittedUsers');
         else
@@ -109,11 +107,13 @@ $().ready(function () {
           if (type=="permission") {
             $(listItem).find('.userCount').text(res["count"]);
           } else if (type == "user") {
-            // they may have been removed from folders
-            // better to reload that whole panel
+            // user has been removed from folders view
+            // better to reload that whole panel then
             $.get($('.panel#folders').attr('data-url'), function (fRes) {
               $('#folders.panel').html(fRes["html"]);
             });
+            console.log('user deleted, folder list updated, rebinding now...');
+            bindFolderItem('.entry.folder');
           }
           console.log(toBeRemoved); // --------
           toBeRemoved.fadeOut('fast', function () {
@@ -133,25 +133,14 @@ $().ready(function () {
         $(this).siblings('.permittedUsers').fadeToggle('fast');
     });
   };
+
+   // all good except: deleting a user leaves folders unbound
   
-  var makeUserIconDraggable = function (li) {
-    $(li).draggable({'revert':true});
-  };
-
-  var replaceFolderEntry = function (old, htmlEl) {
-    var newFolderItem = $(htmlEl);
-    if ($(old).find('.permittedUsers').is(':visible')) {
-      newFolderItem.find('.permittedUsers').
-      show().css('display', 'block');
-    }
-    old.replaceWith(newFolderItem);
-    bindUserCounterToggle(newFolderItem.find('.userCount'));
-    makeFolderItemDroppable(newFolderItem);
-    bindDeleteButtonPost('permission', newFolderItem.find(".revokeButton"));
-  };
-
-  var makeFolderItemDroppable = function (li) {
-    $(li).droppable({
+  var bindFolderItem = function (folderItem) {
+    bindUserCounterToggle($(folderItem).find('.userCount'));
+    bindDeleteButtonPost('folder', $(folderItem).find(' .deleteButton'));
+    bindDeleteButtonPost('permission', $(folderItem).find(' .revokeButton'));
+    $(folderItem).droppable({
       drop: function( event, ui ) {
         var folder = $(this);
         $.post($("#addPermission").val(), {
@@ -159,7 +148,13 @@ $().ready(function () {
           "folder_id":folder.attr('data-id')
         }, function (res) {
           if (res['success']) {
-            replaceFolderEntry(folder, res['html']);
+            var newFolderItem = $(res['html']);
+            if ($(folder).find('.permittedUsers').is(':visible')) {
+              newFolderItem.find('.permittedUsers').
+              show().css('display', 'block');
+            }
+            folder.replaceWith(newFolderItem);
+            bindFolderItem(newFolderItem);
             flash(true, res["message"]);
           } else {
             flash(false, res["errors"]);
@@ -168,14 +163,14 @@ $().ready(function () {
       }
     });
   };
-  
-  makeUserIconDraggable(".entry.user .icon");
-  bindUserCounterToggle(".entry.folder .userCount");
-  makeFolderItemDroppable(".entry.folder");
 
-  bindDeleteButtonPost('user', '.entry.user .deleteButton');
-  bindDeleteButtonPost('folder', '.entry.folder .deleteButton');
-  bindDeleteButtonPost('permission', '.entry.folder .revokeButton');
+  var bindUserItem = function (userItem) {
+    $(userItem).find(".icon").draggable({'revert':true});
+    bindDeleteButtonPost('user', $(userItem).find('.deleteButton'));
+  };
+  
+  bindUserItem('.entry.user');
+  bindFolderItem('.entry.folder');
 
 });
 

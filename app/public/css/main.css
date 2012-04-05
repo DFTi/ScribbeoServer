@@ -589,6 +589,13 @@ footer {
       width: 32px;
       height: 32px; }
     .panel ul li.folder .icon {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      cursor: pointer;
       background-image: url("/img/folder.png");
       position: absolute;
       margin: 3px 8px;
@@ -609,7 +616,7 @@ footer {
       height: 32px;
       font-size: 0.8em;
       top: 0;
-      right: 32px; }
+      left: 36px; }
     .panel ul li.folder .permittedUsers {
       display: none;
       border-style: dashed solid solid;
