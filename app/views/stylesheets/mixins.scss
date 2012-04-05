@@ -1,0 +1,68 @@
+@mixin pointer-no-select {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  cursor:pointer;
+}
+
+@mixin icon($path) {
+  background-image:url($path);
+  position:absolute;
+  margin:3px 8px;
+  width:32px;
+  height:32px;
+}
+
+@mixin dynamic-item-list {
+  li.entry {
+    position:relative;
+    .deleteButton {
+      @include pointer-no-select;
+      @include icon("/img/minus.png");
+      top:0;
+      right:0px;
+    }
+  }
+  li.entry > div.icon {
+    left:0;
+  }
+  li.user {
+    .icon {
+      @include icon("/img/Person.png");
+    }
+  }
+  li.folder {
+    .icon {
+      @include icon("/img/folder.png");  
+    }
+    .userCount {
+      @include pointer-no-select;
+      @include icon("/img/users.png");
+      font-size:0.8em;
+      top:0;
+      right:32px;
+    }
+    .permittedUsers {
+      display:none;
+      border-style: dashed solid solid;
+      border-width:1px;
+      div.permittedUser {
+        position:relative;
+        div.icon {
+          @include icon("/img/user.png");
+          top:0;
+          left:0;
+        }
+        div.revokeButton {
+          @include pointer-no-select;
+          @include icon("/img/minus-white.png");
+          top:0;
+          right:0;          
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,68 @@
+<div id="flash">
+  <input type="hidden" value="<%= url('/admin/permission/set')%>" id="addPermission">
+  <input type="hidden" value="<%= url('/admin/permission/unset')%>" id="rmPermission">
+  <div class="errors" style="text-align:center"></div>
+  <div class="notice" style="text-align:center"></div>
+</div>
+  
+<div style="clear:both"></div>
+
+<div id="folders" class="panel" 
+  data-url="<%= url('/admin/folder/index.html.json') %>">
+  <%= partial(:folders, :folders=>@folders) %>
+</div>
+
+<div class="panel" style="float:right">
+  <h1>Users</h1>
+  <div>
+    <div class="padding" style="height:10px"></div>
+    <ul>
+      <li class="addButton">Add</li>
+      <li data-type="user" class="user entryForm" style="display:none">
+        <div class="errors"></div>
+        <label>Username</label><input type="text" id="username"/>
+        <label>Password</label><input type="password" id="password"/>
+        <label>Confirm</label><input type="password" id="confirmation"/>
+        <div class="submitButton" data-url="<%= url('/admin/user/create') %>">Create</div>
+      </li>
+      <% if @users.empty? %>
+        <li class="placeholder"><em>No users created yet.</em></li>
+      <% else @users.each do |u| %>
+        <%= partial(:user, :user=>u) %>
+      <% end end %>
+    </ul>
+  </div>
+</div>
+
+<div style="clear:both"></div>
+<!-- 
+<div class="panel" style="float:left">
+  <h1>Change Password</h1>
+  <form id="changePasswordForm" action="/user/edit" method="post">
+    <div class="padding" style="height:10px"></div>
+    <label style="width:100px">Old Password:</label><input name="old_password" value="" type="password" />
+    <div class="padding" style="height:10px"></div>
+    <label style="width:100px">New Password:</label><input name="new_password" value="" type="password" />
+    <div class="padding" style="height:10px"></div>
+    <label style="width:100px">New Password Confirmation:</label><input name="new_password_confirmation" value="" type="password" />
+    <div class="padding" style="height:10px"></div>
+
+    <input class="changePasswordSubmit" type="submit" value="Submit" />
+  </form>
+</div>
+
+<div class="panel" style="float:right">
+  <h1>Modify Server</h1>
+  <form id="modifyServerForm" action="/configure" method="post">
+    <div class="padding" style="height:10px"></div>
+    <label style="width:100px">Port:</label><input name="old_password" value="" type="password" />
+    <div class="padding" style="height:10px"></div>
+    <label style="width:100px">New Password:</label><input name="new_password" value="" type="password" />
+    <div class="padding" style="height:10px"></div>
+    <label style="width:100px">New Password Confirmation:</label><input name="new_password_confirmation" value="" type="password" />
+    <div class="padding" style="height:10px"></div>
+
+    <input class="changePasswordSubmit" type="submit" value="Submit" />
+  </form>
+</div>
+ -->

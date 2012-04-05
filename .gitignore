@@ -15,3 +15,9 @@ clips
 dir/*
 *.pyc
 ScribbeoServer-*.exe
+.sass-cache
+db/db.sqlite3
+work/
+log/
+tmp/
+.DS_Store

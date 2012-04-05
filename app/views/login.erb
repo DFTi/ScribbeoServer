@@ -1,0 +1,17 @@
+<div class="panel">
+  <h1>Login</h1>
+  <% unless @error.nil? %>
+    <div class="error"><%= @error %></div>
+  <% end %>
+  <form id="addUserForm" action="/login" method="post">
+    <div class="padding" style="height:10px"></div>
+    <label style="width:100px">Username:</label><input name="username" value="" type="text" />
+    <div class="padding" style="height:10px"></div>
+    <label style="width:100px">Password:</label><input name="password" value="" type="password" />
+    <div class="padding" style="height:10px"></div>
+
+    <input class="addUser" type="submit" value="Submit" />
+  </form>
+</div>
+
+<footer>Default username and password: admin / admin<br><br></footer>

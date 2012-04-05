@@ -1,2 +1,0 @@
-For bonjour support, install avahi-daemon and libavahi-compat-libdnssd1
-On Ubuntu, run sudo apt-get install libavahi-compat-libdnssd1

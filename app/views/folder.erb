@@ -1,0 +1,17 @@
+<li data-id="<%= folder.id %>" data-type="folder" class="entry folder">
+  <%= div :class=>"icon" %>
+  <%= div :class=>"deleteButton", 'data-url'=>url('/admin/folder/destroy') %>
+  <%= folder.name %>
+  <div class="userCount"><%= folder.users.count %></div>
+  <% if folder.users.any? %>
+    <div class="permittedUsers">
+      <% folder.users.each do |u| %>
+        <div data-type="permission" data-id="<%= u.id %>" class="permittedUser">
+          <%= div :class=>"icon" %>
+          <%= u.username %>
+          <%= div :class=>"revokeButton", "data-url"=>url("/admin/permission/unset") %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</li>

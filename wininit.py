@@ -1,2 +1,0 @@
-import qtwintray
-qtwintray.main()
