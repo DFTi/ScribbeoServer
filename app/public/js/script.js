@@ -1,4 +1,4 @@
-$().ready(function () {
+$(function () {
   // ---------------- Global
   var flash = function(notError, message) {
     if (notError) {
@@ -84,45 +84,46 @@ $().ready(function () {
     });
   });
   
+  var deleteHandler = function (res) {
+    var listItem = $('li.entry[data-id="'+res['id']+'"]');
+    var type = listItem.attr('data-type');
+    var toBeRemoved = listItem;
+    console.log('to be removed:');
+    console.log(toBeRemoved);
+    if (res["success"]) {
+      if (type=="permission") {
+        $(listItem).find('.userCount').text(res["count"]);
+        if (listItem.children('.permittedUsers').children().size() == 1)
+          toBeRemoved = listItem.children('.permittedUsers');
+        else
+          toBeRemoved = listItem.children('.permittedUsers');
+      } else
+      if (type == "user") {
+        // user has been removed from folders view
+        // better to reload that whole panel then
+        $.get($('.panel#folders').attr('data-url'), function (fRes) {
+          $('#folders.panel').html(fRes["html"]);
+        });
+        console.log('user deleted, folder list updated, rebinding now...');
+        bindFolderItem('.entry.folder');
+      }
+      console.log(toBeRemoved);
+      toBeRemoved.fadeOut('fast', function () {
+        toBeRemoved.remove();
+      });
+    } else
+      flash(false, 'Could not remove '+type);
+  };
+
   var bindDeleteButtonPost = function (type, div) {
     $(div).click(function () {
       if (!confirm("Are you sure you want to delete this "+type+"? You cannot undo this action.")) return;
-      var listItem;
-      var toBeRemoved;
       var data = {
         "id":$(this).parent().attr('data-id')
       };
-      if (type=="permission") {
-        listItem = $(this).parents("li.entry");
+      if (type=="permission")
         data["folder_id"] = $(this).parents('li.entry.folder').attr('data-id');
-        if ($(this).parents('.permittedUsers').children().size() == 1)
-          toBeRemoved = $(this).parents('.permittedUsers');
-        else
-          toBeRemoved = $(this).parents('.permittedUser');
-      } else {
-        toBeRemoved = $(this).parents("li.entry");
-      }
-      $.post($(this).attr('data-url'), data, function (res) {
-        if (res["success"]) {
-          if (type=="permission") {
-            $(listItem).find('.userCount').text(res["count"]);
-          } else if (type == "user") {
-            // user has been removed from folders view
-            // better to reload that whole panel then
-            $.get($('.panel#folders').attr('data-url'), function (fRes) {
-              $('#folders.panel').html(fRes["html"]);
-            });
-            console.log('user deleted, folder list updated, rebinding now...');
-            bindFolderItem('.entry.folder');
-          }
-          console.log(toBeRemoved); // --------
-          toBeRemoved.fadeOut('fast', function () {
-            toBeRemoved.remove();
-          });
-        } else {
-          flash(false, 'Could not remove '+type);
-        }
-      });
+      $.post($(this).attr('data-url'), data, deleteHandler);
     });
   };
   

@@ -25,7 +25,8 @@ class App < Sinatra::Base
     
       post '/destroy' do
         json({
-          "success"=>(User.destroy(params[:id]) ? true : false)
+          "success"=>(User.destroy(params[:id]) ? true : false),
+          "id"=>params[:id]
         })
       end
     end
@@ -49,7 +50,8 @@ class App < Sinatra::Base
     
       post '/destroy' do
         json({
-          "success"=>(Folder.destroy(params[:id]) ? true : false)
+          "success"=>(Folder.destroy(params[:id]) ? true : false),
+          "id"=>params[:id]
         })
       end
     end
@@ -67,7 +69,8 @@ class App < Sinatra::Base
         u = User.find(params[:id])
         f = Folder.find(params[:folder_id])
         json(f.remove_user(u).merge({
-          'count'=>f.users.count
+          'count'=>f.users.count,
+          'id'=>f.id
         }))
       end
     end
