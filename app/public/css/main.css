@@ -619,8 +619,9 @@ footer {
       left: 36px; }
     .panel ul li.folder .permittedUsers {
       display: none;
-      border-style: dashed solid solid;
-      border-width: 1px; }
+      border-radius: 0 0 16px 16px;
+      background-color: brown;
+      margin: auto 36px; }
       .panel ul li.folder .permittedUsers div.permittedUser {
         position: relative; }
         .panel ul li.folder .permittedUsers div.permittedUser div.icon {

@@ -24,30 +24,36 @@ var refetchFolderPanel = function () {
   });
   console.log('refetch and rebind folder panel');
   setTimeout(function () {
-    bindFolderItem('li.entry.folder');  
+    bindFolderItem('li.entry.folder');
   }, 150);
 };
 
-var deleteHandler = function (res) {
+var deleteResponseHandler = function (res) {
   var listItem = $('li.entry[data-id="'+res['id']+'"]');
   var type = listItem.attr('data-type');
   var toBeRemoved = listItem;
-  console.log('to be removed:');
-  console.log(toBeRemoved);
   if (res["success"]) {
-    if (type=="permission") { // permission
+    if (typeof(res["count"])!="undefined") {
+      console.log('deleted a permission');
       $(listItem).find('.userCount').text(res["count"]);
       if (listItem.children('.permittedUsers').children().size() == 1)
         toBeRemoved = listItem.children('.permittedUsers');
       else
-        toBeRemoved = listItem.children('.permittedUsers');
+       toBeRemoved = listItem.children('.permittedUsers');
     } else
-    if (type == "user") { // user
+    if (type == "folder") {
+      console.log('deleted a folder');
+    } else
+    if (type == "user") {
+      console.log('deleted a user');
       refetchFolderPanel();
     }
     toBeRemoved.fadeOut('fast', function () {
+      console.log('to be removed: ');
+      console.log(toBeRemoved);
       toBeRemoved.remove();
     });
+
   } else
     flash(false, 'Could not remove '+type);
 };
@@ -60,7 +66,7 @@ var bindDeleteButtonPost = function (type, div) {
     };
     if (type=="permission")
       data["folder_id"] = $(this).parents('li.entry.folder').attr('data-id');
-    $.post($(this).attr('data-url'), data, deleteHandler);
+    $.post($(this).attr('data-url'), data, deleteResponseHandler);
   });
 };
 
@@ -72,6 +78,13 @@ var bindUserItem = function (userItem) {
 // ----------------------
 
 var bindFolderItem = function (folderItem) {
+  if ($(folderItem).size() > 1) {// more than one item to bind
+    $(folderItem).each(function(i){
+      bindFolderItem($(folderItem)[i]);
+    });
+    return;
+  }
+  console.log("Binding Folder Item ID: "+$(folderItem).attr('data-id'));
   // user counter toggle
   $($(folderItem).find('.userCount')).click(function () {
     count = parseInt($(this).text(), 10);
@@ -132,6 +145,10 @@ $(function () {
       resetForm(newEntry);
     } else {
       $(this).addClass('cancelButton').text('Cancel');
+      console.log(newEntry.children('input[type=text]').first());
+      setTimeout(function () {
+        newEntry.children('input[type=text]').first().select();
+      }, 20);
     }
     newEntry.fadeToggle('fast');
   });
@@ -161,16 +178,20 @@ $(function () {
       if (res['success']) {
         if (newEntry.siblings('.placeholder'))
           newEntry.siblings('.placeholder').remove();
-        html = $(res['html']).css('display', 'none');
-        html.insertAfter(newEntry).fadeToggle('slow');
+        listItem = $(res['html']).css('display', 'none');
+        listItem.insertAfter(newEntry).fadeToggle('slow');
         resetForm(newEntry).hide();
         var type = newEntry.attr('data-type');
         if (type == 'folder') {
-          bindFolderItem(newEntry);
+          setTimeout(function () {
+            console.log(listItem);
+            bindFolderItem(listItem);
+          }, 150);
+          //
         } else
         if (type == 'user') {
           console.log('binding user');
-          bindUserItem($(html));
+          bindUserItem(listItem);
         }
       } else {
         newEntry.find(".errors").html(res["errors"]);

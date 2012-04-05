@@ -48,8 +48,9 @@
     }
     .permittedUsers {
       display:none;
-      border-style: dashed solid solid;
-      border-width:1px;
+      border-radius: 0 0 16px 16px;
+      background-color:brown;
+      margin:auto 36px;
       div.permittedUser {
         position:relative;
         div.icon {

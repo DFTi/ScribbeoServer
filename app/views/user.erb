@@ -1,5 +1,5 @@
 <li data-id="<%= user.id %>" data-type="user" class="entry user">
-  <%= div :class=>"icon" %>
+  <%= div :class=>"icon", :title=>"Click to see user stats/info" %>
   <%= user.username %>
   <%= div :class=>"deleteButton", "data-url"=>url('/admin/user/destroy') %>  
 </li>
