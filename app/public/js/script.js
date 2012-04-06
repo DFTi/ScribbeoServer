@@ -33,13 +33,13 @@ var deleteResponseHandler = function (res) {
   var type = listItem.attr('data-type');
   var toBeRemoved = listItem;
   if (res["success"]) {
-    if (typeof(res["count"])!="undefined") {
+    if (typeof(res["count"])!="undefined") { // type: permission
       console.log('deleted a permission');
       $(listItem).find('.userCount').text(res["count"]);
       if (listItem.children('.permittedUsers').children().size() == 1)
         toBeRemoved = listItem.children('.permittedUsers');
       else
-       toBeRemoved = listItem.children('.permittedUsers');
+        toBeRemoved = listItem.find('.permittedUser[data-id="'+res['user_id']+'"]');
     } else
     if (type == "folder") {
       console.log('deleted a folder');
@@ -98,6 +98,10 @@ var bindFolderItem = function (folderItem) {
 
   $(folderItem).droppable({
     drop: function( event, ui ) {
+      console.log("Droppable: ");
+
+      console.log(this);
+
       var folder = $(this);
       $.post($("#addPermission").val(), {
         "user_id":$(ui['draggable']).parent().attr('data-id'),
@@ -198,10 +202,8 @@ $(function () {
       }
     });
   });
-  
   bindUserItem('.entry.user');
   bindFolderItem('.entry.folder');
-
 });
 
 

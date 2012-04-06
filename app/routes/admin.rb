@@ -77,7 +77,8 @@ class App < Sinatra::Base
         f = Folder.find(params[:folder_id])
         json(f.remove_user(u).merge({
           'count'=>f.users.count,
-          'id'=>f.id
+          'id'=>f.id,
+          'user_id'=>u.id
         }))
       end
     end
