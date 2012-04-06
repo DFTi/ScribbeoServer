@@ -134,7 +134,16 @@ var resetForm = function (element) {
   return element;
 };
 
+//
+//  READY
+//
+
 $(function () {
+  $('a#changePassword').click(function () {
+    alert('Not yet implemented. You\'re stuck with it for now.');
+    return false;
+  });
+
   // Admin ---------------- Dashboard & Panels
   
   $("li.entryForm input").keydown(function (event){

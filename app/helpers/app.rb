@@ -25,7 +25,12 @@ module AppHelper
       html_opts = body
       body = ''
     end
-    options = html_opts.collect{|k,v| "#{k.to_s}='#{v}'"}.join(' ')
+    options = html_opts.collect{|k,v| "#{k}='#{v}'"}.join(' ')
     %{<div #{options}>#{body}</div>}
+  end
+
+  def a(href, body, html_opts={})
+    options = html_opts.collect{|k,v| "#{k}='#{v}'"}.join(' ')
+    %{<a href="#{href}" #{options}>#{body}</a>}
   end
 end

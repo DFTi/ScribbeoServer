@@ -1,6 +1,8 @@
 TODO
 ====
 
-* Scribbeo routes (/list)
-* Invite user by email
+* Scribbeo routes api (/list)
 * Bonjour
+* Change password (stubbed)
+* Invite URL / Token / Mailer
+* Added security by device token
