@@ -33,4 +33,9 @@ module AppHelper
     options = html_opts.collect{|k,v| "#{k}='#{v}'"}.join(' ')
     %{<a href="#{href}" #{options}>#{body}</a>}
   end
+
+  # Useful for checking routes ending with a single *
+  def base_url?(splat)
+    splat.nil? || splat == '/' || splat == ''
+  end
 end

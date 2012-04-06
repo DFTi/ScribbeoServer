@@ -23,16 +23,12 @@ class App < Sinatra::Base
           raise "File without extension" # dont send any junk!
         end
         out['ext'] = ext
-        out['asset_url'] = File.join("", "asset", relpath)
+        out['asset_url'] = File.join("", "asset", relpath, entry)
         out['live_transcode'] = "Not implemented" # TODO this.
       elsif type == :folder
-        out['list_url'] = File.join("", "list", relpath)
+        out['list_url'] = File.join("", "list", relpath, entry)
       end
       out
-    end
-
-    def base_url?(splat)
-      splat.nil? || splat == '/' || splat == ''
     end
   end
 
@@ -70,42 +66,6 @@ class App < Sinatra::Base
 
     json(res)
   end
-
-  get '/fewafweafwe' do
-    authorize_user!
-    res = {"files"=>[], "folders"=>[]}
-    res["debug_params"] = params
-
-    user.existent_folders.each do |folder|
-      if folder.has_folder?(entry)
-        res["folders"] << hash_for(:folder, folder.name, relpath)
-      else
-        res["files"] << hash_for(:file, entry, relpath) rescue next
-      end
-    end
-
-    json(res)
-  end
-
-  # get '/list/*' do
-  #   authorize_user!
-  #   res = {"files"=>[], "folders"=>[]}
-  #   res["debug_params"] = params
-
-  #   user.existent_folders.each do |folder|
-  #     folder.entries.each do |entry|
-  #       relpath = File.join(params[:splat], entry)
-  #       puts "Relpath: #{relpath}"
-  #       if folder.has_folder?(entry)
-  #         res["folders"] << hash_for(:folder, entry, relpath)
-  #       else
-  #         res["files"] << hash_for(:file, entry, relpath) rescue next
-  #       end
-  #     end
-  #   end
-
-  #   json(res)
-  # end
 
   get '/asset*' do
     json params[:splat]
