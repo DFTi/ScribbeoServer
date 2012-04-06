@@ -500,7 +500,7 @@ footer {
   margin: 10px;
   border-radius: 5px;
   overflow: hidden;
-  padding-bottom: 20px;
+  padding-bottom: 5px;
   margin: 30px auto;
   overflow: visible; }
   .panel h1 {
@@ -529,7 +529,6 @@ footer {
   .panel h2 {
     text-align: center; }
   .panel ul {
-    border: 1px solid rgba(255, 255, 255, 0.35);
     margin: 5px 15px;
     list-style: none;
     padding: 0; }
@@ -564,7 +563,9 @@ footer {
     .panel ul li.entry:nth-child(odd) {
       background-color: rgba(255, 255, 255, 0.1); }
     .panel ul li.entry {
-      position: relative; }
+      background-color: black;
+      position: relative;
+      border-radius: 12px; }
       .panel ul li.entry .deleteButton {
         -webkit-touch-callout: none;
         -webkit-user-select: none;
@@ -575,7 +576,7 @@ footer {
         cursor: pointer;
         background-image: url("/img/minus.png");
         position: absolute;
-        margin: 3px 8px;
+        margin: 6px 8px;
         width: 32px;
         height: 32px;
         top: 0;
@@ -585,7 +586,7 @@ footer {
     .panel ul li.user .icon {
       background-image: url("/img/Person.png");
       position: absolute;
-      margin: 3px 8px;
+      margin: 6px 8px;
       width: 32px;
       height: 32px; }
     .panel ul li.folder .icon {
@@ -598,7 +599,7 @@ footer {
       cursor: pointer;
       background-image: url("/img/folder.png");
       position: absolute;
-      margin: 3px 8px;
+      margin: 6px 8px;
       width: 32px;
       height: 32px; }
     .panel ul li.folder .userCount {
@@ -611,23 +612,27 @@ footer {
       cursor: pointer;
       background-image: url("/img/users.png");
       position: absolute;
-      margin: 3px 8px;
+      margin: 6px 8px;
       width: 32px;
       height: 32px;
+      background-color: #6b3681;
+      border-radius: 12px;
       font-size: 0.8em;
       top: 0;
       left: 36px; }
+    .panel ul li.folder .userCount.showingChildren {
+      border-radius: 12px 12px 0 0; }
     .panel ul li.folder .permittedUsers {
       display: none;
-      border-radius: 0 0 16px 16px;
-      background-color: brown;
-      margin: auto 36px; }
+      border-radius: 0px 12px 12px 12px;
+      background-color: #6b3681;
+      margin: auto auto auto 44px; }
       .panel ul li.folder .permittedUsers div.permittedUser {
         position: relative; }
         .panel ul li.folder .permittedUsers div.permittedUser div.icon {
           background-image: url("/img/user.png");
           position: absolute;
-          margin: 3px 8px;
+          margin: 6px 8px;
           width: 32px;
           height: 32px;
           top: 0;
@@ -642,7 +647,7 @@ footer {
           cursor: pointer;
           background-image: url("/img/minus-white.png");
           position: absolute;
-          margin: 3px 8px;
+          margin: 6px 8px;
           width: 32px;
           height: 32px;
           top: 0;

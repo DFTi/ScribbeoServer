@@ -86,10 +86,17 @@ var bindFolderItem = function (folderItem) {
   }
   console.log("Binding Folder Item ID: "+$(folderItem).attr('data-id'));
   // user counter toggle
-  $($(folderItem).find('.userCount')).click(function () {
-    count = parseInt($(this).text(), 10);
-    if (count > 0)
-      $(this).siblings('.permittedUsers').fadeToggle('fast');
+  userCounts = $(folderItem).find('.userCount');
+  userCounts.click(function () {
+    userCount = $(this);
+    if (userCount.text() == "0") return;
+    userCount.siblings('.permittedUsers').toggle(0, function (){
+      if ($(this).is(':visible')) {
+        console.log(userCount);
+        userCount.addClass('showingChildren');
+      } else
+        userCount.removeClass('showingChildren');
+    });
   });
   
   bindDeleteButtonPost('folder', $(folderItem).find(' .deleteButton'));
@@ -115,8 +122,10 @@ var bindFolderItem = function (folderItem) {
           }
           folder.replaceWith(newFolderItem);
           bindFolderItem(newFolderItem);
+          newFolderItem.animateHighlight('green', 1000);
           flash(true, res["message"]);
         } else {
+          folder.animateHighlight('red', 1000);
           flash(false, res["errors"]);
         }
       });

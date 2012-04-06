@@ -1,3 +1,5 @@
+$purple: #6B3681;
+
 @mixin pointer-no-select {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -11,14 +13,24 @@
 @mixin icon($path) {
   background-image:url($path);
   position:absolute;
-  margin:3px 8px;
+  margin:6px 8px;
   width:32px;
   height:32px;
 }
 
 @mixin dynamic-item-list {
+  li {
+    text-align: center;
+    margin: 0;
+    line-height:2.4em;
+  }
+  li.entry:nth-child(odd) {
+    background-color: rgba(255,255,255,0.1);
+  }
   li.entry {
+    background-color:black;
     position:relative;
+    border-radius:12px;
     .deleteButton {
       @include pointer-no-select;
       @include icon("/img/minus.png");
@@ -42,15 +54,21 @@
     .userCount {
       @include pointer-no-select;
       @include icon("/img/users.png");
+      background-color:$purple;
+      border-radius:12px;
       font-size:0.8em;
+      // margin:6px, ;
       top:0;
       left:36px;
     }
+    .userCount.showingChildren {
+      border-radius:12px 12px 0 0;
+    }
     .permittedUsers {
       display:none;
-      border-radius: 0 0 16px 16px;
-      background-color:brown;
-      margin:auto 36px;
+      border-radius: 0px 12px 12px 12px;
+      background-color:$purple;
+      margin:auto auto auto 44px;
       div.permittedUser {
         position:relative;
         div.icon {

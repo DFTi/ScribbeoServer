@@ -41,7 +41,7 @@
       <% if user %>
         Welcome, <%= user.username %> <br>
         <%= a url('/logout/'), 'Logout' %> | 
-        <%= a '#', "Change Password", :id=>:changePassword %>
+        <%= a '#', "Change Password", :id=>:changePassword, 'data-url'=>url('/admin/user/change_password') %>
       <% end %>
     </div>
   </header>

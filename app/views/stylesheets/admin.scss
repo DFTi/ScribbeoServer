@@ -83,7 +83,7 @@ footer {
   border-radius: 5px;
   overflow: hidden;
 
-  padding-bottom: 20px;
+  padding-bottom: 5px;
   margin:30px auto;
   
   overflow:visible;
@@ -109,7 +109,6 @@ footer {
     text-align: center;
   }
   ul {
-    border: 1px solid rgba(255,255,255,0.35);
     margin: 5px 15px;
     list-style: none;
     padding: 0;
@@ -129,14 +128,6 @@ footer {
     }
     .submitButton:hover {
       background: #6E6100;
-    }
-    li {
-      text-align: center;
-      margin: 0;
-      line-height:2.4em;
-    }
-    li.entry:nth-child(odd) {
-      background-color: rgba(255,255,255,0.1);
     }
     @include dynamic-item-list;
   }

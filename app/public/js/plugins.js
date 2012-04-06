@@ -9,3 +9,11 @@ window.log = function f(){ log.history = log.history || []; log.history.push(arg
 
 // place any jQuery/helper plugins in here, instead of separate, slower script files.
 
+$.fn.animateHighlight = function(highlightColor, duration) {
+	var highlightBg = highlightColor || "#FFFF9C";
+	var animateMs = duration || 1500;
+	var originalBg = this.css("backgroundColor");
+	this.stop().css("background-color", highlightBg).animate({
+		backgroundColor: originalBg
+	}, animateMs);
+};
