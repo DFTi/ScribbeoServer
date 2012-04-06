@@ -2,9 +2,9 @@
   <%= div :class=>"icon" %>
   <%= div :class=>"deleteButton", 'data-url'=>url('/admin/folder/destroy') %>
   <%= folder.name %>
-  <div class="userCount"><%= folder.users.count %></div>
+  <div class="userCount folderUserInfo"><%= folder.users.count %></div>
   <% if folder.users.any? %>
-    <div class="permittedUsers">
+    <div class="permittedUsers folderUserInfo">
       <% folder.users.each do |u| %>
         <div data-type="permission" data-id="<%= u.id %>" class="permittedUser">
           <%= div :class=>"icon" %>

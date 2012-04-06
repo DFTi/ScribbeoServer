@@ -7,6 +7,7 @@ var flash = function(notError, message) {
     $("#flash .notice").html('');
     $("#flash .errors").html(message);
   }
+  $('#flash div').show();
   setTimeout(function () {
     $("#flash div").fadeOut('slow');
   }, 5000);
@@ -119,13 +120,14 @@ var bindFolderItem = function (folderItem) {
           if ($(folder).find('.permittedUsers').is(':visible')) {
             newFolderItem.find('.permittedUsers').
             show().css('display', 'block');
+            newFolderItem.find('.userCount').addClass('showingChildren');
           }
           folder.replaceWith(newFolderItem);
           bindFolderItem(newFolderItem);
-          newFolderItem.animateHighlight('green', 1000);
+          newFolderItem.find('.folderUserInfo').animateHighlight('green', 1000);
           flash(true, res["message"]);
         } else {
-          folder.animateHighlight('red', 1000);
+          folder.find('.folderUserInfo').animateHighlight('red', 1000);
           flash(false, res["errors"]);
         }
       });

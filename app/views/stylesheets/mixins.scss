@@ -1,4 +1,4 @@
-$purple: #6B3681;
+$userCountList: #6B3681;
 
 @mixin pointer-no-select {
   -webkit-touch-callout: none;
@@ -54,7 +54,7 @@ $purple: #6B3681;
     .userCount {
       @include pointer-no-select;
       @include icon("/img/users.png");
-      background-color:$purple;
+      background-color:$userCountList;
       border-radius:12px;
       font-size:0.8em;
       // margin:6px, ;
@@ -67,8 +67,8 @@ $purple: #6B3681;
     .permittedUsers {
       display:none;
       border-radius: 0px 12px 12px 12px;
-      background-color:$purple;
-      margin:auto auto auto 44px;
+      background-color:$userCountList;
+      margin:auto 44px;
       div.permittedUser {
         position:relative;
         div.icon {
