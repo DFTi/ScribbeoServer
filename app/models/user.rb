@@ -55,4 +55,9 @@ class User < ActiveRecord::Base
   def self.all_but_admin
     all.reject {|u| u.username=="admin"}
   end
+
+  def existent_folders
+    folders.reject { |f| !File.directory?(f.path) }
+  end
+
 end

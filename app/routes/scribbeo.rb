@@ -1,23 +1,114 @@
 class App < Sinatra::Base
 
-  # Implements the old (Scribbeo) API
-  # + awareness of user etc.
+  # Description
+  # ===========
+  # Implements the legacy (Scribbeo) API
+  # Extends it with user/folder stuff
+  # Stores monolith note archive in the DB
 
-  get '/list*' do
-    # authorize_user!
-    # user = User.new.with_password(params[:user])
-    # json({
-    #   "success"=>user.save,
-    #   "errors"=>errors_for(user),
-    #   "html"=>partial(:user, :user=>user)
-    # })
-    json({
-      "splat"=>params[:splat]
-    })
+  # Notes regarding database & filesystem
+  # =====================================
+  # Should actually just stay synchronized with the filesystem,
+  # detecting & saving changes to the database. This way,
+  # e.g. when timecode is generated, or a note is created,
+  # we can associate that new metadata with the db entry.
+  # It will also reduce filesystem burden & hasten response.
+  # We'll save this stuff for Cruzzeo's API implementation.
+
+  helpers do
+    def entry_hash_for(type, entry, relpath)
+      out = { 'name'=>entry }
+      if type == :file
+        if (ext = File.extname(entry)[1..-1]).nil?
+          raise "File without extension" # dont send any junk!
+        end
+        out['ext'] = ext
+        out['asset_url'] = File.join("", "asset", relpath)
+        out['live_transcode'] = "Not implemented" # TODO this.
+      elsif type == :folder
+        out['list_url'] = File.join("", "list", relpath)
+      end
+      out
+    end
+
+    def base_url?(splat)
+      splat.nil? || splat == '/' || splat == ''
+    end
   end
 
+  get '/list*' do
+    authorize_user!
+    relpath = params[:splat][0]
 
+    res = {"files"=>[], "folders"=>[]}
 
+    res['debug'] = {'relpath'=>relpath}
+    
+    if base_url?(relpath)
+      # send all virtual folders
+      user.existent_folders.each do |f|
+        res[:folders] = {
+          "name" => f.name,
+          "list_url" => File.join('', 'list', f.id.to_s)
+        }
+      end
+    else
+      # need to send REAL files and folders now.
+      path_parts = relpath.split('/').compact.reject(&:blank?)
+      virtual_folder_id = path_parts.delete_at(0)
+      res['debug']['path_parts'] = path_parts
+      res['debug']['virtual_folder_id'] = virtual_folder_id
+      virtual_folder = user.folders.find(virtual_folder_id)
+      virtual_folder.entries(path_parts).each do |entry|
+        if virtual_folder.has_folder?(entry)
+          res["folders"] << entry_hash_for(:folder, entry, relpath)
+        else
+          res["files"] << entry_hash_for(:file, entry, relpath) rescue next
+        end
+      end
+    end
 
+    json(res)
+  end
+
+  get '/fewafweafwe' do
+    authorize_user!
+    res = {"files"=>[], "folders"=>[]}
+    res["debug_params"] = params
+
+    user.existent_folders.each do |folder|
+      if folder.has_folder?(entry)
+        res["folders"] << hash_for(:folder, folder.name, relpath)
+      else
+        res["files"] << hash_for(:file, entry, relpath) rescue next
+      end
+    end
+
+    json(res)
+  end
+
+  # get '/list/*' do
+  #   authorize_user!
+  #   res = {"files"=>[], "folders"=>[]}
+  #   res["debug_params"] = params
+
+  #   user.existent_folders.each do |folder|
+  #     folder.entries.each do |entry|
+  #       relpath = File.join(params[:splat], entry)
+  #       puts "Relpath: #{relpath}"
+  #       if folder.has_folder?(entry)
+  #         res["folders"] << hash_for(:folder, entry, relpath)
+  #       else
+  #         res["files"] << hash_for(:file, entry, relpath) rescue next
+  #       end
+  #     end
+  #   end
+
+  #   json(res)
+  # end
+
+  get '/asset*' do
+    json params[:splat]
+  end
 
 end

@@ -32,4 +32,20 @@ class Folder < ActiveRecord::Base
        "errors"=>"Failed to remove #{user.username} from #{self.name}"}
     end
   end
+
+  def exists?
+    Dir.exists? path
+  end
+
+  def entries(path_parts = nil)
+    dir_path = path_parts.nil? ? path : File.join(path, path_parts)
+    Dir.entries(dir_path).reject do |entry|
+      ['..','.','Thumbs.db','.DS_Store'].include? entry
+    end
+  end
+
+  def has_folder?(entry)
+    File.directory?(File.join("", path, entry))
+  end
+
 end
