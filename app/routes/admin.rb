@@ -29,6 +29,13 @@ class App < Sinatra::Base
           "id"=>params[:id]
         })
       end
+
+      put '/change_password' do
+        user = User.find(params[:id])
+        json({
+          "success"=>(user.change_password(params[:user]))
+        })
+      end
     end
     
     namespace "/folder" do      

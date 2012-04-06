@@ -29,16 +29,17 @@ class User < ActiveRecord::Base
   
   # params = {
   #   "user":{
-  #     "current_password":"...",
+  #     "old_password":"...",
   #     "password":"...",
   #     "confirmation":"..."
   #   }
   # }
   def change_password(params)
-    out = {}
+    out = {"success"=>false}
     if User.authenticate(self.username, params[:old_password])
       out[:success] = self.with_password(params).save
       out[:errors] = self.errors.full_messages
+      out[:notice] = " The password for #{self.username} has been updated."
     else
       out[:errors] = "Current password was incorrect."
     end
