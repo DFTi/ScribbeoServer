@@ -5,6 +5,9 @@ class CreateUsers < ActiveRecord::Migration
       t.string :password_hash
       t.string :password_salt
     end
+
+    add_index :users, :username, :uniq => true
+
     User.create(:username=>"admin", :password=>"admin", :password_confirmation=>"admin")
   end
 

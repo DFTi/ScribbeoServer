@@ -4,6 +4,9 @@ class CreateFolders < ActiveRecord::Migration
       t.string :name
       t.string :path
     end
+
+    add_index :folders, :name, :uniq => true
+
   end
 
   def self.down
