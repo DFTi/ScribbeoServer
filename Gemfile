@@ -7,22 +7,21 @@ group :application do
     gem 'activerecord-jdbcsqlite3-adapter'
   else
     gem 'sqlite3'
+    gem 'unicorn'
   end
   gem 'json'
   gem 'sinatra'
-  gem 'warden'
-  gem 'bcrypt-ruby', :require => 'bcrypt'
+  gem 'sinatra-contrib'
   gem 'activerecord', :require => 'active_record'
+  gem 'bcrypt-ruby', :require => 'bcrypt'
+  gem 'warden'
   gem 'launchy'
 end
 
 group :development do
   if RUBY_PLATFORM == "java"
-    gem 'trinidad' # Can't stream--find a replacement, possibly jetpack for packaging https://github.com/square/jetpack
-  else
-    gem 'unicorn'
+    gem 'mizuno'
   end
-  gem 'sinatra-contrib'
   gem 'sass'
   gem 'sprockets'
 end
