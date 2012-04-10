@@ -4,6 +4,9 @@ def db_connect
     :database => 'db/db.sqlite3' 
   })
 end
+
 db_connect
+
+require_relative 'settings'
 require_relative 'user'
 require_relative 'folder'
