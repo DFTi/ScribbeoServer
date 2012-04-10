@@ -73,11 +73,9 @@ class App < Sinatra::Base
     virtual_folder = user.folders.find(virtual_folder_id)
     asset_path = File.join(virtual_folder.path, path_parts)
     if File.exists? asset_path
-      send_file(asset_path, {
-        :stream=>true,
-        :type=>'video/quicktime',
-        :disposition=>nil
-      })
+      send_file(asset_path)
+      # json({"asset_path"=>asset_path,
+      #       "streaming?"=>Sinatra::Streaming.inspect})
     else
       status 404
     end

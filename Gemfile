@@ -8,7 +8,6 @@ group :application do
   else
     gem 'sqlite3'
   end
-  # gem 'ahoy'
   gem 'json'
   gem 'sinatra'
   gem 'warden'
@@ -19,9 +18,9 @@ end
 
 group :development do
   if RUBY_PLATFORM == "java"
-    gem 'trinidad'
+    gem 'trinidad' # Can't stream--find a replacement, possibly jetpack for packaging https://github.com/square/jetpack
   else
-    gem 'thin'
+    gem 'unicorn'
   end
   gem 'sinatra-contrib'
   gem 'sass'
