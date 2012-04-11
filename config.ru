@@ -1,3 +1,6 @@
+#\ -p 3000
+# Currently the port is hardcoded above, 
+# for deploy though we'll want to use Settings.instance_port value
 require './init'
 
 if DEVELOPMENT

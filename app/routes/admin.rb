@@ -85,6 +85,31 @@ class App < Sinatra::Base
       end
     end
 
+    namespace '/settings' do 
+      post '/bonjour/?' do
+        checked = (params['checked'] == "true" ? true : false)
+        Settings.bonjour_enabled = checked
+        json({
+          "success"=>true, # <= return value of bonjour restart
+          "checked"=>checked
+        })
+      end
+
+      post '/instance_name/?' do
+        res = {}
+        value = params["value"]
+        if (value.size > 0)
+          Settings.instance_name = value
+          res["instance_name"] = value
+          res["success"] = true
+        else
+          res["instance_name"] = Settings.instance_name
+          res["success"] = false
+          res["errors"] = "Instance name can't be blank"
+        end
+        json(res)
+      end
+    end
 
   end
 

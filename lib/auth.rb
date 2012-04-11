@@ -1,5 +1,5 @@
 Warden::Manager.serialize_into_session{|user| user.id }
-Warden::Manager.serialize_from_session{|id| User.find(id) }
+Warden::Manager.serialize_from_session{|id| User.find_by_id(id) }
 
 Warden::Manager.before_failure do |env,opts|
   env['REQUEST_METHOD'] = "POST"

@@ -79,12 +79,13 @@ var bindUserItem = function (userItem) {
 // ----------------------
 
 var bindFolderItem = function (folderItem) {
-  if ($(folderItem).size() > 1) {// more than one item to bind
+  var itemCount = $(folderItem).size();
+  if (itemCount > 1) {// more than one item to bind
     $(folderItem).each(function(i){
       bindFolderItem($(folderItem)[i]);
     });
     return;
-  }
+  } else if (itemCount === 0) return;
   console.log("Binding Folder Item ID: "+$(folderItem).attr('data-id'));
   // user counter toggle
   userCounts = $(folderItem).find('.userCount');
@@ -145,6 +146,52 @@ var resetForm = function (element) {
   return element;
 };
 
+// ------------------ Apple switch
+
+var AppleSwitchToggle = function (input) {
+  var checked = input.is(':checked');
+  if (checked) {
+    input.prop('checked', false);
+    input.parent().removeClass('on');
+  } else {
+    input.prop('checked', true);
+    input.parent().addClass('on');
+  }
+  return !checked;
+};
+
+var AppleSwitchHandler = function () {
+  var checked = AppleSwitchToggle($(this).children('input'));
+  var url = $(this).attr('data-url');
+  if (typeof(url) != 'undefined') {
+    console.log('posting');
+    $.post(url, {'checked':checked}, function (res) {
+      if (res['success']) {
+        // console.log('it worked');
+        console.log(res['checked']);
+      } else {
+        // console.log('it failed, revert the button and display the error');
+      }
+    });
+  }
+};
+
+// -------------------- update button
+
+var SaveButtonHandler = function () {
+  var input = $(this).siblings('input');
+  var url = $(this).attr('data-url');
+  $.post(url, {'value':input.val()}, function (res) {
+    if (res['success']) {
+      console.log('it worked');
+    } else {
+      // display an error if necessary
+    }
+  });
+};
+
+// ---------------------
+
 //
 //  READY
 //
@@ -176,7 +223,7 @@ $(function () {
     }
     newEntry.fadeToggle('fast');
   });
-  
+
 // --------------------------
 
   $('.submitButton').click(function () {
@@ -224,6 +271,13 @@ $(function () {
   });
   bindUserItem('.entry.user');
   bindFolderItem('.entry.folder');
+
+  
+  // Server Settings Panel Bindings
+
+  $('.switch').click(AppleSwitchHandler);
+  $('button.save').click(SaveButtonHandler);
+
 });
 
 

@@ -35,6 +35,30 @@
 </div>
 
 <div style="clear:both"></div>
+
+<div id="instanceConfig" class="panel" style=>
+  <h1>Instance Configuration</h1>
+  <div>
+    <div class="padding" style="height:10px"></div>
+    <ul>
+      <li>
+        Instance Name <span class="warn">*requires restart*</span>
+        <div id="instance_name">
+          <input type="text" value="<%= Settings.instance_name %>">
+          <button class="save" data-url="<%= url('/admin/settings/instance_name') %>">Save</button>
+        </div>
+      </li>
+      <li>
+        Bonjour Announcement <% bonjour_enabled = Settings.bonjour_enabled %>
+        <div class="switch <%= 'on' if bonjour_enabled %>" data-url="<%= url('/admin/settings/bonjour') %>">
+          <span class="thumb"></span>
+          <input <%= 'checked="yes"' if bonjour_enabled %> type="checkbox" />
+        </div>
+      </li>
+    </ul>
+  </div>
+</div>
+
 <!-- 
 <div class="panel" style="float:left">
   <h1>Change Password</h1>

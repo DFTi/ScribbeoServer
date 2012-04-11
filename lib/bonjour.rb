@@ -23,16 +23,18 @@ class Bonjour
     @port = port
     @running = false
     @service = false
-    start unless invalid?
+    start
   end
 
   def start
     return false if invalid?
+    stop if @running
     if RUBY_PLATFORM == 'java'
       @service = DNSSD.register(@name, "_videoTree._tcp", @port.to_i, BonjourListener.new)
     else
       @service = DNSSD.register(@name, "_videoTree._tcp", nil, @port.to_i)
     end
+    @running = true
     return true
   end
   

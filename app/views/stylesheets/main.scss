@@ -1,4 +1,43 @@
 @import 'include/boilerplate';
+@import 'include/ios-style-switch';
+
+#instanceConfig {
+  span.warn {
+    color:red;
+    font-style:italic;
+    font-size:14px;
+  }
+  li {
+    background-color: #EBEAEA;
+    border-radius: 16px 16px 16px 16px;
+    color: black;
+    margin: 5px 20px;
+    padding: 0 4px 0 20px;
+    text-align: left;
+  }
+  label {
+    width:auto;
+  }
+  input {
+    width:auto;
+  }
+  input[type="text"] {
+    border: 1px solid black;
+    color: blue;
+    width: auto;
+  }
+  
+  div#instance_name {
+    input {
+      width:260px;
+    }
+    button {
+      height:26px;
+      width:64px;
+    }
+  }
+}
+
 
 // Variables
 $userCountList: #6B3681;
