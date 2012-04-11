@@ -1,9 +1,4 @@
 class CreateSettings < ActiveRecord::Migration
-  
-  def make_initial_settings
-
-  end
-
   def self.up
     create_table :settings, :force => true do |t|
       t.string :var, :null => false

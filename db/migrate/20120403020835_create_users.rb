@@ -8,7 +8,6 @@ class CreateUsers < ActiveRecord::Migration
 
     add_index :users, :username, :uniq => true
 
-    User.create(:username=>"admin", :password=>"admin", :password_confirmation=>"admin")
   end
 
   def self.down
