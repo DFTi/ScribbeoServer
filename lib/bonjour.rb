@@ -5,7 +5,7 @@ class Bonjour
   attr_accessor :name, :port
 
   if RUBY_PLATFORM == 'java'
-    import com.apple.dnssd.DNSSD # TODO find out what happens if we're on windows without bonjour available
+    import com.apple.dnssd.DNSSD
     class BonjourListener
       def serviceRegistered(*args)
         # warn args.inspect
