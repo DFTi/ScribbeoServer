@@ -18,3 +18,7 @@ require './lib/auth'
 require 'sinatra/json'
 require 'sinatra/namespace'
 require './app/app'
+
+class App
+  Bonjour = Bonjour.new(Settings.instance_name, Settings.instance_port)
+end

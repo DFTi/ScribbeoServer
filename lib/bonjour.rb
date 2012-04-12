@@ -2,7 +2,26 @@
 # On windows, we need to make sure this is available, hopefully bonjour for windows makes it available
 # https://developer.apple.com/library/mac/#documentation/Java/Reference/DNSServiceDiscovery_JavaRef/com/apple/dnssd/DNSSD.html
 class Bonjour
-  attr_accessor :name, :port
+  def name=(name="")
+    if name.size > 0
+      @name = name
+      announce
+      return true
+    else
+      return false
+    end
+  end
+
+  def port=(port=0)
+    port = port.to_i
+    if port > 0
+      @port = port
+      announce
+      return true
+    else
+      return false
+    end
+  end
 
   if RUBY_PLATFORM == 'java'
     import com.apple.dnssd.DNSSD
@@ -20,13 +39,13 @@ class Bonjour
 
   def initialize(name=nil, port=nil)
     @name = name
-    @port = port
+    @port = port.to_i
     @running = false
     @service = false
-    start
+    announce
   end
 
-  def start
+  def announce
     return false if invalid?
     stop if @running
     if RUBY_PLATFORM == 'java'

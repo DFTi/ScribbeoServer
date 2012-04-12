@@ -39,6 +39,6 @@ def db_seed
 
   # false to disable, true for offline conversion, :live for live transcoding
   Settings.transcode = false 
-  Settings.ffmbc_path = ""
+  Settings.ffmbc_path = "(stub)"
 
 end

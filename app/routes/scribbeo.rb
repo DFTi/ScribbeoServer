@@ -81,4 +81,28 @@ class App < Sinatra::Base
     end
   end
 
+  get '/timecode*' do
+
+  end
+
+  get '/notes*' do
+
+  end
+
+  get '/email/:name' do
+
+  end
+
+  get '/audio/:name' do
+
+  end
+  
+  get '/avid/:name' do
+
+  end
+  
+  get '/xml/:name' do
+
+  end
+  
 end
