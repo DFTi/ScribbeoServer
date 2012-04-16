@@ -1,7 +1,8 @@
 echo "Choose a ruby: "
-select rubies in "jruby" "ruby-1.9.3"; do
+select rubies in "jruby" "ruby-1.9.3" "rubinius"; do
   case $rubies in
     jruby ) rvm use jruby@scribbeoserver; break;;
     ruby-1.9.3 ) rvm use 1.9.3@scribbeoserver; break;;
+    rubinius ) rvm use rbx@scribbeoserver; break;;
   esac
 done

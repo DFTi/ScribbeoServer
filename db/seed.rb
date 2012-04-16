@@ -1,5 +1,3 @@
-require_relative '../lib/certgen'
-
 ## 
 # Seeds the database with initial values.
 # Gets executed after migrations are complete.
@@ -10,6 +8,9 @@ def db_seed
     :password=>"admin",
     :password_confirmation=>"admin"
   })
+
+  # Java settings
+  Settings.icon_path = "images/ruby.png"
 
   # General Settings
 
@@ -24,19 +25,11 @@ def db_seed
   Settings.bonjour_enabled = true
 
   # Security Settings
-
   Settings.ssl_enabled = true
-  ## Autogenerate default certs into database
-  certs = CertGen.new_credentials
-  Settings.ssl_cert = certs[0]
-  Settings.ssl_key = certs[1]
-  # We'll dump them to a file on first run if deploy server needs it that way.
-  Settings.use_db_cert = true # toggle to enable using the user cert paths below
-  Settings.user_cert_path = ""
-  Settings.user_key_path = ""
+  Settings.cert_path = File.join('ssl', 'default', 'cert')
+  Settings.key_path = File.join('ssl', 'default', 'pkey')
 
   # Timecode & Transcode settings
-
   # false to disable, true for offline conversion, :live for live transcoding
   Settings.transcode = false 
   Settings.ffmbc_path = "(stub)"

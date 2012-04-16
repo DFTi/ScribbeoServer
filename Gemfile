@@ -1,6 +1,7 @@
 source :rubygems
 
 group :application do
+
   gem 'sinatra'
   gem 'sinatra-contrib'
   gem 'activerecord', :require => 'active_record'
@@ -8,6 +9,7 @@ group :application do
   gem 'json'
   gem 'warden'
   gem 'launchy'
+
 
   if RUBY_PLATFORM == "java"
     gem 'jruby-rack'
@@ -24,6 +26,6 @@ group :development do
   if RUBY_PLATFORM == "java"
     gem 'mizuno'
   end
-
+  gem "warbler"
   gem 'sass'
 end

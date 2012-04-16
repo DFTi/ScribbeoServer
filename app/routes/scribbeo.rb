@@ -34,6 +34,7 @@ class App < Sinatra::Base
 
   get '/list*' do
     authorize_user!
+
     relpath = params[:splat][0]
     res = {"files"=>[], "folders"=>[]}
     # res['debug'] = {'relpath'=>relpath}
@@ -64,8 +65,7 @@ class App < Sinatra::Base
   end
 
   get '/asset*' do
-    #authorize_user!
-    user = User.find_by_username "Keyvan"
+    authorize_user!
 
     relpath = params[:splat][0]
     path_parts = relpath.split('/').compact.reject(&:blank?)
@@ -74,15 +74,13 @@ class App < Sinatra::Base
     asset_path = File.join(virtual_folder.path, path_parts)
     if File.exists? asset_path
       send_file(asset_path)
-      # json({"asset_path"=>asset_path,
-      #       "streaming?"=>Sinatra::Streaming.inspect})
     else
       status 404
     end
   end
 
   get '/timecode*' do
-
+    
   end
 
   get '/notes*' do

@@ -11,9 +11,10 @@ class TrayApplication
   attr_accessor :icon_filename
   attr_accessor :menu_items
 
-  def initialize(name = 'Tray Application')
+  def initialize(name = 'Tray Application', icon_path=nil)
     @menu_items = []
     @name = name
+    @icon_filename = icon_path if icon_path
   end
 
   def item(label, &block)
@@ -37,18 +38,3 @@ class TrayApplication
   end
 
 end
-
-SETTINGS = {
-  :name=>"ScribbeoServer",
-  :icon=>'images/ruby.png',
-  :url=>'http://localhost:9292/'
-}
-TRAY = TrayApplication.new(SETTINGS[:name])
-TRAY.icon_filename = SETTINGS[:icon]
-TRAY.item('Settings') do
-  Launchy.open SETTINGS[:url] # launch on load
-end
-TRAY.item('Shutdown') do
-  java.lang.System::exit(0)
-end
-TRAY.run

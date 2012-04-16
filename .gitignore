@@ -1,3 +1,5 @@
+*.war
+.rbx
 app/public/css/*
 *.cert
 *.key
