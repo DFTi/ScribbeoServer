@@ -30,6 +30,18 @@ class App < Sinatra::Base
       end
       out
     end
+
+    def path_from_splat(splat)
+      begin
+        relpath = splat[0]
+        path_parts = relpath.split('/').compact.reject(&:blank?)
+        virtual_folder_id = path_parts.delete_at(0)
+        virtual_folder = user.folders.find(virtual_folder_id)
+      rescue
+        return nil
+      end
+      return File.join(virtual_folder.path, path_parts)
+    end
   end
 
   get '/list*' do
@@ -67,12 +79,8 @@ class App < Sinatra::Base
   get '/asset*' do
     authorize_user!
 
-    relpath = params[:splat][0]
-    path_parts = relpath.split('/').compact.reject(&:blank?)
-    virtual_folder_id = path_parts.delete_at(0)
-    virtual_folder = user.folders.find(virtual_folder_id)
-    asset_path = File.join(virtual_folder.path, path_parts)
-    if File.exists? asset_path
+    asset_path = path_from_splat(params[:splat])
+    if asset_path && File.exists?(asset_path)
       send_file(asset_path)
     else
       status 404
@@ -80,7 +88,28 @@ class App < Sinatra::Base
   end
 
   get '/timecode*' do
+
+    asset_path = path_from_splat(params[:splat])
+
+    # FIXME Move FFMBC / Timecode stuff into module(s)
+    zeros = '00:00:00:00'
     
+    if asset_path && File.exists?(asset_path)
+      # FIXME Should perform caching in larger systems
+      details = Open3.popen3("#{Settings.ffmbc_path} -i '#{asset_path}'"){|i,o,e,t| p e.read.chomp }
+      
+      matches = details.match(/timecode: \d{2}:\d{2}:\d{2}:\d{2}/) # NDFTC
+      if matches.nil?
+        matches = details.match(/timecode: \d{2}:\d{2}:\d{2};\d{2}/) # DFTC
+        matches.nil? ? zeros : matches[0][10..-1].gsub(';', ':') # TODO make client support DFTC notation
+      else
+        matches[0][10..-1]
+      end
+    else
+      # Log the fact that we failed to get the asset path
+      zeros
+    end
+
   end
 
   get '/notes*' do
