@@ -31,40 +31,27 @@ class App < Sinatra::Base
     end
 
     def path_from_splat(splat)
-      begin
-        relpath = splat[0]
-        path_parts = relpath.split('/').compact.reject(&:blank?)
-        virtual_folder = Folder.find_by_name(path_parts.delete_at(0))
-      rescue
-        return nil
-      end
+      relpath = splat[0]
+      path_parts = relpath.split('/').compact.reject(&:blank?)
+      virtual_folder = Folder.find_by_name(path_parts.delete_at(0))
       return File.join(virtual_folder.path, path_parts)
     end
   end
 
   get '/list*' do
-    # authorize_user!
-    user = User.find_by_username("keyvan")
-
+    authorize_user!
     relpath = params[:splat][0]
     res = {"files"=>[], "folders"=>[]}
-    # res['debug'] = {'relpath'=>relpath}
-    if base_url?(relpath)
-      # send all virtual folders
+    if base_url?(relpath) # Send virtual folders
       user.existent_folders.each do |f|
         res['folders'] << {
           "name" => f.name,
           "list_url" => File.join('', 'list', f.name)
         }
       end
-    else
-      # need to send REAL files and folders now.
+    else # Send real files and folders
       path_parts = relpath.split('/').compact.reject(&:blank?)
-
       virtual_folder_id = Folder.find_by_name(path_parts.delete_at(0)).id
-
-      # res['debug']['path_parts'] = path_parts
-      # res['debug']['virtual_folder_id'] = virtual_folder_id
       virtual_folder = user.folders.find(virtual_folder_id)
       virtual_folder.entries(path_parts).each do |entry|
         if virtual_folder.has_folder?(entry)
@@ -78,9 +65,7 @@ class App < Sinatra::Base
   end
 
   get '/asset*' do
-    #authorize_user!
-    user = User.find_by_username("keyvan")
-
+    authorize_user!
     asset_path = path_from_splat(params[:splat])
     if asset_path && File.exists?(asset_path)
       send_file(asset_path)
@@ -89,17 +74,14 @@ class App < Sinatra::Base
     end
   end
 
-  get '/timecode*' do
+  get '/timecode/asset*' do
     authorize_user!
-
     asset_path = path_from_splat(params[:splat])
-
     # FIXME Move FFMBC / Timecode stuff into module(s)
     zeros = '00:00:00:00'    
     if asset_path && File.exists?(asset_path)
       # FIXME Should perform caching in larger systems
       details = Open3.popen3("#{Settings.ffmbc_path} -i '#{asset_path}'"){|i,o,e,t| p e.read.chomp }
-      
       matches = details.match(/timecode: \d{2}:\d{2}:\d{2}:\d{2}/) # NDFTC
       if matches.nil?
         matches = details.match(/timecode: \d{2}:\d{2}:\d{2};\d{2}/) # DFTC
@@ -108,22 +90,26 @@ class App < Sinatra::Base
         matches[0][10..-1]
       end
     else
-      # Log the fact that we failed to get the asset path
+      # Log the fact that we failed to get a timecode for bad asset path
       zeros
     end
   end
 
-  get '/notes*' do
-    json Upload.all_of_type("note").map(&:filename)
-    # Send an array with the relative URLs, like this:
-    # ["/note/+asset+Cuts+311 DC02 111011.mov.AAA", "/note/+asset+Cuts+311 DC02 111011.mov.WAX"]
+  get '/notes/asset*' do
+    authorize_user!
+    prefix = '+asset'+params[:splat][0].gsub('/', '+')
+    # Much BS here (+'s) is due to client originally targeting the filesystem
+    notes = []
+    Upload.all_of_type("note").each do |n|
+      if n.filename[0, prefix.length] == prefix
+        notes << "/note/#{n.filename}" 
+      end
+    end
+    json notes
   end
 
-# -- 
-
-  FAKE_FILE_IO_ROUTE = %r{^/(note|email|audio|avid|xml)/(.*)}
-
-  get FAKE_FILE_IO_ROUTE do
+  get(multi_io_route = %r{^/(note|email|audio|avid|xml)/(.*)}) do
+    authorize_user!
     if fakefile = Upload.find_by_filename(params[:captures][1])
       content_type 'application/x-binary' # may be optional
       fakefile.binary_data
@@ -132,12 +118,13 @@ class App < Sinatra::Base
     end
   end
 
-  post FAKE_FILE_IO_ROUTE do
+  post multi_io_route do
+    authorize_user!
     fakefile = user.uploads.find_by_filename(params[:captures][1])
     if fakefile.nil?
-      fakefile = user.uploads.new do |u|
-        u.filename = params[:captures][1]
-        u.content_type = params[:captures][0]
+      fakefile = user.uploads.new do |f|
+        f.filename = params[:captures][1]
+        f.content_type = params[:captures][0]
       end
     end
     fakefile.binary_data = request.body.read
