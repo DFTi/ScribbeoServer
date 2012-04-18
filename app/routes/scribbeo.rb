@@ -1,5 +1,4 @@
 class App < Sinatra::Base
-
   # Description
   # ===========
   # Implements the legacy (Scribbeo) API
@@ -45,7 +44,9 @@ class App < Sinatra::Base
   end
 
   get '/list*' do
-    authorize_user!
+    # authorize_user!
+
+    user = User.find_by_username("keyvan")
 
     relpath = params[:splat][0]
     res = {"files"=>[], "folders"=>[]}
@@ -53,7 +54,7 @@ class App < Sinatra::Base
     if base_url?(relpath)
       # send all virtual folders
       user.existent_folders.each do |f|
-        res[:folders] = {
+        res['folders'] << {
           "name" => f.name,
           "list_url" => File.join('', 'list', f.id.to_s)
         }
@@ -61,7 +62,9 @@ class App < Sinatra::Base
     else
       # need to send REAL files and folders now.
       path_parts = relpath.split('/').compact.reject(&:blank?)
-      virtual_folder_id = path_parts.delete_at(0)
+
+      virtual_folder_id = Folder.find_by_name(path_parts.delete_at(0)).id
+
       # res['debug']['path_parts'] = path_parts
       # res['debug']['virtual_folder_id'] = virtual_folder_id
       virtual_folder = user.folders.find(virtual_folder_id)
@@ -73,7 +76,7 @@ class App < Sinatra::Base
         end
       end
     end
-    json(res) # like a boss
+    json(res)
   end
 
   get '/asset*' do
@@ -88,12 +91,12 @@ class App < Sinatra::Base
   end
 
   get '/timecode*' do
+    authorize_user!
 
     asset_path = path_from_splat(params[:splat])
 
     # FIXME Move FFMBC / Timecode stuff into module(s)
-    zeros = '00:00:00:00'
-    
+    zeros = '00:00:00:00'    
     if asset_path && File.exists?(asset_path)
       # FIXME Should perform caching in larger systems
       details = Open3.popen3("#{Settings.ffmbc_path} -i '#{asset_path}'"){|i,o,e,t| p e.read.chomp }
@@ -109,10 +112,24 @@ class App < Sinatra::Base
       # Log the fact that we failed to get the asset path
       zeros
     end
-
   end
 
   get '/notes*' do
+    notes = Upload.find_by_content_type("scribbeo/notes/archive")
+    # Send an array with the relative URLs, like this:
+    # ["/note/+asset+Cuts+311 DC02 111011.mov.AAA", "/note/+asset+Cuts+311 DC02 111011.mov.WAX"]
+  end
+
+# -- 
+
+# FIXME I am not happy with how un-DRY the POSTs are
+# FIXME set up a before filter to authorize_user! on all these routes
+
+  get '/note/:name' do
+    # need this? content_type = 'application/x-binary'
+  end
+
+  post '/note/:name' do
 
   end
 
@@ -120,16 +137,60 @@ class App < Sinatra::Base
 
   end
 
-  get '/audio/:name' do
+  post '/email/:name' do
+    upload = user.uploads.new do |u|
+      u.filename = params[:name]
+      u.content_type = "scribbeo/notes/html"
+      u.binary_data = request.body.read
+    end
+    json :success => upload.save
+  end
 
+# --
+
+  get '/audio/:name' do
+  
   end
   
+  post '/audio/:name' do
+    upload = user.uploads.find_by_filename(params[:name])
+    if upload.nil?
+      upload = user.uploads.new
+      upload.filename = params[:name]
+      upload.content_type = "scribbeo/notes/audio"
+    end
+    upload.binary_data = request.body.read
+    json :success => upload.save
+  end
+
+# --
+
   get '/avid/:name' do
 
   end
   
+  post '/avid/:name' do
+    upload = user.uploads.new do |u|
+      u.filename = params[:name]
+      u.content_type = "scribbeo/markers/avid"
+      u.binary_data = request.body.read
+    end
+    json :success => upload.save
+  end
+  
+# --
+
   get '/xml/:name' do
 
   end
   
+  post '/xml/:name' do
+    upload = user.uploads.new do |u|
+      u.filename = params[:name]
+      u.content_type = "scribbeo/markers/xml"
+      u.binary_data = request.body.read
+    end
+    json :success => upload.save
+  end
+
 end
