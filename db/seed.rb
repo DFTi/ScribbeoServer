@@ -21,7 +21,7 @@ def db_seed
   end
 
   
-  Settings.instance_port = 9042
+  Settings.instance_port = 3000
   Settings.bonjour_enabled = true
 
   # Security Settings
@@ -32,6 +32,6 @@ def db_seed
   # Timecode & Transcode settings
   # false to disable, true for offline conversion, :live for live transcoding
   Settings.transcode = false 
-  Settings.ffmbc_path = "(stub)"
+  Settings.ffmbc_path = "/usr/local/bin/ffmbc"
 
 end

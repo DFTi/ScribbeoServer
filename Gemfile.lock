@@ -40,6 +40,9 @@ GEM
       rack
     rack-test (0.6.1)
       rack (>= 1.0)
+    racksh (0.9.11)
+      rack (>= 1.0)
+      rack-test (>= 0.5)
     raindrops (0.8.0)
     rake (0.9.2.2)
     rubyzip (0.9.7)
@@ -81,6 +84,7 @@ DEPENDENCIES
   dnssd
   json
   launchy
+  racksh
   sass
   sinatra
   sinatra-contrib

@@ -1,4 +1,4 @@
-DEVELOPMENT = false
+DEVELOPMENT = (ENV['RACK_ENV'] == 'development')
 require 'rubygems'
 require 'bundler/setup'
 Bundler.require(:application)
@@ -9,6 +9,7 @@ if DEVELOPMENT
   require 'sinatra/reloader'
 end
 
+require 'open3'
 
 require './lib/bonjour'
 require './lib/auth'
@@ -23,10 +24,11 @@ require './app/app'
 #   :url=>'http://localhost:9292/'
 # }
 
-if RUBY_PLATFORM == "java"
-  require './lib/tray_application'
-  class App
-    BONJOUR = Bonjour.new(Settings.instance_name, Settings.instance_port)
+class App
+  BONJOUR = Bonjour.new(Settings.instance_name, Settings.instance_port)
+  
+  if RUBY_PLATFORM == "java"
+    require './lib/tray_application'
     TRAY = TrayApplication.new(Settings.instance_name, Settings.icon_path)
     TRAY.item('Settings') do
       Settings.app_url ||= "http://localhost:3000/"
@@ -38,3 +40,4 @@ if RUBY_PLATFORM == "java"
     TRAY.run
   end
 end
+

@@ -1,4 +1,6 @@
 class User < ActiveRecord::Base
+  has_many :uploads
+  has_many :note_archive_files
   has_and_belongs_to_many :folders
   
   attr_accessible :username, :password, :password_confirmation

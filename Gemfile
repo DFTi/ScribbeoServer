@@ -26,6 +26,7 @@ group :development do
   if RUBY_PLATFORM == "java"
     gem 'mizuno'
   end
+  gem 'racksh'
   gem "warbler"
   gem 'sass'
 end

@@ -34,8 +34,7 @@ class App < Sinatra::Base
       begin
         relpath = splat[0]
         path_parts = relpath.split('/').compact.reject(&:blank?)
-        virtual_folder_id = path_parts.delete_at(0)
-        virtual_folder = user.folders.find(virtual_folder_id)
+        virtual_folder = Folder.find_by_name(path_parts.delete_at(0))
       rescue
         return nil
       end
@@ -45,7 +44,6 @@ class App < Sinatra::Base
 
   get '/list*' do
     # authorize_user!
-
     user = User.find_by_username("keyvan")
 
     relpath = params[:splat][0]
@@ -56,7 +54,7 @@ class App < Sinatra::Base
       user.existent_folders.each do |f|
         res['folders'] << {
           "name" => f.name,
-          "list_url" => File.join('', 'list', f.id.to_s)
+          "list_url" => File.join('', 'list', f.name)
         }
       end
     else
@@ -80,7 +78,8 @@ class App < Sinatra::Base
   end
 
   get '/asset*' do
-    authorize_user!
+    #authorize_user!
+    user = User.find_by_username("keyvan")
 
     asset_path = path_from_splat(params[:splat])
     if asset_path && File.exists?(asset_path)
@@ -115,82 +114,34 @@ class App < Sinatra::Base
   end
 
   get '/notes*' do
-    notes = Upload.find_by_content_type("scribbeo/notes/archive")
+    json Upload.all_of_type("note").map(&:filename)
     # Send an array with the relative URLs, like this:
     # ["/note/+asset+Cuts+311 DC02 111011.mov.AAA", "/note/+asset+Cuts+311 DC02 111011.mov.WAX"]
   end
 
 # -- 
 
-# FIXME I am not happy with how un-DRY the POSTs are
-# FIXME set up a before filter to authorize_user! on all these routes
+  FAKE_FILE_IO_ROUTE = %r{^/(note|email|audio|avid|xml)/(.*)}
 
-  get '/note/:name' do
-    # need this? content_type = 'application/x-binary'
-  end
-
-  post '/note/:name' do
-
-  end
-
-  get '/email/:name' do
-
-  end
-
-  post '/email/:name' do
-    upload = user.uploads.new do |u|
-      u.filename = params[:name]
-      u.content_type = "scribbeo/notes/html"
-      u.binary_data = request.body.read
+  get FAKE_FILE_IO_ROUTE do
+    if fakefile = Upload.find_by_filename(params[:captures][1])
+      content_type 'application/x-binary' # may be optional
+      fakefile.binary_data
+    else
+      status 404
     end
-    json :success => upload.save
   end
 
-# --
-
-  get '/audio/:name' do
-  
-  end
-  
-  post '/audio/:name' do
-    upload = user.uploads.find_by_filename(params[:name])
-    if upload.nil?
-      upload = user.uploads.new
-      upload.filename = params[:name]
-      upload.content_type = "scribbeo/notes/audio"
+  post FAKE_FILE_IO_ROUTE do
+    fakefile = user.uploads.find_by_filename(params[:captures][1])
+    if fakefile.nil?
+      fakefile = user.uploads.new do |u|
+        u.filename = params[:captures][1]
+        u.content_type = params[:captures][0]
+      end
     end
-    upload.binary_data = request.body.read
-    json :success => upload.save
-  end
-
-# --
-
-  get '/avid/:name' do
-
-  end
-  
-  post '/avid/:name' do
-    upload = user.uploads.new do |u|
-      u.filename = params[:name]
-      u.content_type = "scribbeo/markers/avid"
-      u.binary_data = request.body.read
-    end
-    json :success => upload.save
-  end
-  
-# --
-
-  get '/xml/:name' do
-
-  end
-  
-  post '/xml/:name' do
-    upload = user.uploads.new do |u|
-      u.filename = params[:name]
-      u.content_type = "scribbeo/markers/xml"
-      u.binary_data = request.body.read
-    end
-    json :success => upload.save
+    fakefile.binary_data = request.body.read
+    json :success => fakefile.save
   end
 
 end

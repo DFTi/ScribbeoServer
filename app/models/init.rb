@@ -10,3 +10,4 @@ db_connect
 require_relative 'settings'
 require_relative 'user'
 require_relative 'folder'
+require_relative 'upload'
