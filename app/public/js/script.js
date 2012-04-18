@@ -86,7 +86,6 @@ var bindFolderItem = function (folderItem) {
     });
     return;
   } else if (itemCount === 0) return;
-  console.log("Binding Folder Item ID: "+$(folderItem).attr('data-id'));
   // user counter toggle
   userCounts = $(folderItem).find('.userCount');
   userCounts.click(function () {

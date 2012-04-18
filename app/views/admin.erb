@@ -37,47 +37,7 @@
 <div style="clear:both"></div>
 
 <div id="instanceConfig" class="panel" style=>
-  <h1>Configuration</h1>
-  <div>
-    <div class="padding" style="height:10px"></div>
-    <ul>
-      <li>
-        Enable SSL (stubbed / restart ni) <% ssl_enabled = Settings.ssl_enabled %>
-        <div class="switch <%= 'on' if ssl_enabled %>" data-url="<%= url('/admin/settings/ssl') %>">
-          <span class="thumb"></span>
-          <input <%= 'checked="yes"' if ssl_enabled %> type="checkbox" />
-        </div>
-      </li>
-      <li>
-        Enable Bonjour Announcement<% bonjour_enabled = Settings.bonjour_enabled %>
-        <div class="switch <%= 'on' if bonjour_enabled %>" data-url="<%= url('/admin/settings/bonjour') %>">
-          <span class="thumb"></span>
-          <input <%= 'checked="yes"' if bonjour_enabled %> type="checkbox" />
-        </div>
-      </li>
-      <li>
-        Server Name
-        <div id="instance_name">
-          <input type="text" value="<%= Settings.instance_name %>">
-          <button class="save" data-url="<%= url('/admin/settings/instance_name') %>">Save</button>
-        </div>
-      </li>
-      <li>
-        Server Port (stubbed / restart not implemented)
-        <div id="instance_port">
-          <input type="text" value="<%= request.port %>">
-          <button class="restart" data-url="<%= url('/admin/settings/instance_port') %>">Restart</button>
-        </div>
-      </li>
-      <li>
-        FFMBC Binary Path (stubbed)
-        <div id="ffmbc_path">
-          <input type="text" value="<%= Settings.ffmbc_path %>">
-          <button class="restart" data-url="<%= url('/admin/settings/ffmbc_path') %>">Restart</button>
-        </div>
-      </li>
-    </ul>
-  </div>
+  <%= partial(:instance_config) %>
 </div>
 
 <!-- 

@@ -87,12 +87,12 @@ class App < Sinatra::Base
 
     namespace '/settings' do 
       post '/bonjour/?' do
-        checked = (params['checked'] == "true" ? true : false)
-        Settings.bonjour_enabled = checked
-        json({
-          "success"=>true, # <= return value of bonjour restart
-          "checked"=>checked
-        })
+        if params['checked'] == "true" # on
+          BONJOUR.announce
+        else
+          BONJOUR.stop
+        end
+        Settings.bonjour_enabled = BONJOUR.running?
       end
 
       post '/instance_name/?' do
@@ -100,13 +100,36 @@ class App < Sinatra::Base
         value = params["value"]
         if (value.size > 0)
           Settings.instance_name = value
-          res["instance_name"] = value
+          BONJOUR.name = value
           res["success"] = true
         else
-          res["instance_name"] = Settings.instance_name
           res["success"] = false
           res["errors"] = "Instance name can't be blank"
         end
+        res["instance_name"] = Settings.instance_name
+        json(res)
+      end
+
+      post '/instance_port/?' do
+        res = {}
+        value = params["value"]
+        if (port_open?(value))
+          Settings.instance_port = value
+
+          # Restart required for changes to take effect, so not setting bonjour
+          # On restart we will start rack & bonjour with Settings.instance_port
+
+          res["success"] = true
+          res["notice"] = "Change will take effect after restart"
+
+          # FIXME perhaps we can initiate a redirect to the new port after binding
+          # lets look into server restarting, e.g. rack server control from sinatra (or java)
+
+        else
+          res["success"] = false
+          res["errors"] = "Could not bind on port #{value}."
+        end
+        res["instance_port"] = Settings.instance_port
         json(res)
       end
     end

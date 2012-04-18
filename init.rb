@@ -10,6 +10,8 @@ if DEVELOPMENT
 end
 
 require 'open3'
+require 'socket'
+require 'timeout'
 
 require './lib/bonjour'
 require './lib/auth'

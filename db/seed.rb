@@ -5,9 +5,17 @@ def db_seed
   
   User.create({
     :username=>"admin",
+    # :admin=>true,
     :password=>"admin",
     :password_confirmation=>"admin"
   })
+
+  # Let's think about this.
+  # Log.create({
+  #   :title=>"entry"
+  #   :log_level=>"info"
+  #   :event=>"Seeded the database with default values."
+  #   })
 
   # Java settings
   Settings.icon_path = "images/ruby.png"

@@ -5,7 +5,7 @@ class Bonjour
   def name=(name="")
     if name.size > 0
       @name = name
-      announce
+      announce if @running
       return true
     else
       return false
@@ -16,7 +16,7 @@ class Bonjour
     port = port.to_i
     if port > 0
       @port = port
-      announce
+      announce if @running
       return true
     else
       return false
@@ -66,6 +66,10 @@ class Bonjour
     @service.stop
     @running = false
     return true
+  end
+
+  def running?
+    @running
   end
 
 end

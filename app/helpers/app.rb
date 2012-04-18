@@ -38,4 +38,29 @@ module AppHelper
   def base_url?(splat)
     splat.nil? || splat == '/' || splat == ''
   end
+
+  def ios_toggle_button(opts)
+    %{<div class="switch #{'on' if opts[:on_if]}" data-url="#{opts[:url]}">
+        <span class="thumb"></span>
+        <input #{'checked="yes"' if opts[:on_if]} type="checkbox" />
+      </div>
+      <div class="padding" style="height:20px"></div>}
+  end
+
+  def save_edit(opts)
+    %{<input type="text" value="#{opts[:text]}">
+      <button class="save" data-url="#{opts[:url]}">Save</button>}
+  end
+
+  def port_open?(port)
+    s = Socket.new(Socket::AF_INET, Socket::SOCK_STREAM, 0)
+    begin
+      in_addr = Socket.pack_sockaddr_in(port.to_i, "0.0.0.0")
+      s.bind(in_addr)
+      s.close
+      true
+    rescue
+      false
+    end
+  end
 end

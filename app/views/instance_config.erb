@@ -1,0 +1,42 @@
+<h1>Configuration</h1>
+<div>
+  <div class="padding" style="height:10px"></div>
+  <ul>
+    <li>
+      Enable SSL (stubbed / restart ni)  
+      <%= ios_toggle_button(:url=>url('/admin/settings/ssl'),
+                            :on_if=>Settings.ssl_enabled) %>
+    </li>
+    <li>
+      Enable Bonjour Announcement
+      <%= ios_toggle_button(:url=>url('/admin/settings/bonjour'),
+                            :on_if=>Settings.bonjour_enabled) %>
+    </li>
+    <li>
+      Server Name
+      <div id="instance_name">
+        <%= save_edit(:url=>url('/admin/settings/instance_name'), :text=>Settings.instance_name) %>
+      </div>
+    </li>
+    <li>
+      Server Port (stubbed / restart not implemented)
+      <div id="instance_port">
+        <%= save_edit(:url=>url('/admin/settings/instance_port'), :text=>Settings.instance_port) %>
+        <button class="restart" data-url="<%= url('/admin/restart') %>">Restart</button>
+      </div>
+    </li>
+    <li>
+      FFMBC Binary Path <br>
+      <small>
+        <a target="_blank" href="http://code.google.com/p/ffmbc">FFMBC</a> is required for transcoding & providing metadata such as timecode.
+        <br>
+        If you know where FFMBC is installed on this machine, enter the path and hit "Save". If not, click "Download" to automatically download & install the correct binary.
+      </small>
+      <div id="ffmbc_path">
+        <%= save_edit(:url=>url('/admin/settings/ffmbc_path'), :text=>Settings.ffmbc_path) %>
+        <button class="download" data-url="<%= url('/admin/settings/ffmbc_installer') %>">Download</button>
+        <!-- a "test" button might be nice -->
+      </div>
+    </li>
+  </ul>
+</div>
