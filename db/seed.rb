@@ -18,18 +18,13 @@ def db_seed
   #   })
 
   # Java settings
-  Settings.icon_path = "images/ruby.png"
+  Settings.icon_path = File.join("images","ruby.png")
 
   # General Settings
 
-  if ((system_user = ENV["USER"]) && system_user.size > 1)
-    Settings.instance_name = "#{system_user}'s Scribbeo Server"
-  else
-    Settings.instance_name = "My Scribbeo Server"
-  end
-
+  Settings.instance_name = "My Scribbeo Server"
   
-  Settings.instance_port = 3000
+  Settings.instance_port = 9292
   Settings.bonjour_enabled = true
 
   # Security Settings
@@ -41,5 +36,8 @@ def db_seed
   # false to disable, true for offline conversion, :live for live transcoding
   Settings.transcode = false 
   Settings.ffmbc_path = "/usr/local/bin/ffmbc"
+
+  # Misc
+  Settings.show_admin_password_hint = true
 
 end

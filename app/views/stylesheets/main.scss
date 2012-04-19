@@ -1,6 +1,18 @@
 @import 'include/boilerplate';
 @import 'include/ios-style-switch';
 
+#loginForm {
+  .error {
+    color: #F86A6A;
+    padding-top: 8px;
+    text-align: center;
+  }
+  .loginSubmit {
+    margin-left: 287px;
+    width: 110px;
+  }
+}
+
 #instanceConfig {
   span.warn {
     color:red;
@@ -291,4 +303,8 @@ footer {
     border-top: 1px solid rgba(255,255,255,0.35);
     margin: 10px 15px;
   }
+}
+
+a#hide_admin_password_hint {
+  color:#AEA4FC;
 }

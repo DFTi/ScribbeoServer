@@ -19,4 +19,10 @@ class App < Sinatra::Base
     @error = "Invalid credentials."
     erb :login
   end
+
+  get '/hide_admin_password_hint' do
+    Settings.show_admin_password_hint = false
+    redirect '/login'
+  end
+
 end

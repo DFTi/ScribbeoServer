@@ -1,17 +1,22 @@
-<div class="panel">
+<div id="loginForm" class="panel">
   <h1>Login</h1>
   <% unless @error.nil? %>
     <div class="error"><%= @error %></div>
   <% end %>
-  <form id="addUserForm" action="/login" method="post">
+  <form action="/login" method="post">
     <div class="padding" style="height:10px"></div>
     <label style="width:100px">Username:</label><input name="username" value="" type="text" />
     <div class="padding" style="height:10px"></div>
     <label style="width:100px">Password:</label><input name="password" value="" type="password" />
     <div class="padding" style="height:10px"></div>
 
-    <input class="addUser" type="submit" value="Submit" />
+    <input class="loginSubmit" type="submit" value="Login" />
   </form>
 </div>
 
-<footer>Default username and password: admin / admin<br><br></footer>
+<footer>
+  <% if Settings.show_admin_password_hint %>
+    Default username and password: admin / admin
+    <a id="hide_admin_password_hint" title="Never show" href="<%= url('/hide_admin_password_hint') %>">x</a>
+  <% end %>
+</footer>

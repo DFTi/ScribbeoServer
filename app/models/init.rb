@@ -1,7 +1,7 @@
 def db_connect
   ActiveRecord::Base.establish_connection({
     :adapter => (RUBY_PLATFORM == "java" ? 'jdbcsqlite3' : 'sqlite3'),
-    :database => 'db/db.sqlite3' 
+    :database => (DEVELOPMENT ? 'db/development.sqlite3' : 'db/production.sqlite3')
   })
 end
 

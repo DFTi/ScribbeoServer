@@ -2,6 +2,8 @@ require 'rubygems'
 require 'bundler/setup'
 Bundler.require(:application)
 
+puts "Env: #{ENV['RACK_ENV']}"
+
 DEVELOPMENT = (ENV['RACK_ENV'] == 'development')
 if DEVELOPMENT
   Bundler.require(:development)

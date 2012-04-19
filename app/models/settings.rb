@@ -21,6 +21,10 @@ class Settings < ActiveRecord::Base
       self[method_name]
       
     end
+  
+  rescue ActiveRecord::StatementInvalid=>e
+    # Table doesn't exist yet, fail gracefully as we might be migrating
+    puts e.message
   end
   
   #destroy the specified settings record
