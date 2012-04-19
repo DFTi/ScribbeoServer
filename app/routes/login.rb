@@ -15,7 +15,7 @@ class App < Sinatra::Base
   end
 
   post '/unauthenticated/?' do
-    status 410
+    status 401
     @error = "Invalid credentials."
     erb :login
   end
