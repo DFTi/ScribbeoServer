@@ -3,7 +3,7 @@
   <div class="padding" style="height:10px"></div>
   <ul>
     <li>
-      Enable SSL (stubbed / restart ni)  
+      Enable SSL (stubbed)  
       <%= ios_toggle_button(:url=>url('/admin/settings/ssl'),
                             :on_if=>Settings.ssl_enabled) %>
     </li>
@@ -19,7 +19,7 @@
       </div>
     </li>
     <li>
-      Server Port (stubbed / restart not implemented)
+      Server Port
       <div id="instance_port">
         <%= save_edit(:url=>url('/admin/settings/instance_port'), :text=>Settings.instance_port) %>
         <button class="restart" data-url="<%= url('/admin/restart') %>">Restart</button>

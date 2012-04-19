@@ -11,6 +11,7 @@ if DEVELOPMENT
   use Sass::Plugin::Rack
 end
 
+use ActiveRecord::ConnectionAdapters::ConnectionManagement
 use Rack::Session::Cookie, :secret => 'scribbeo_cookie'
 use Rack::MethodOverride
 
