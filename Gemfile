@@ -9,7 +9,7 @@ group :application do
   gem 'json'
   gem 'warden'
   gem 'launchy'
-
+  gem 'puma'
 
   if RUBY_PLATFORM == "java"
     gem 'jruby-rack'
@@ -18,14 +18,10 @@ group :application do
   else
     gem 'dnssd'
     gem 'sqlite3'
-    gem 'unicorn'
   end
 end
 
 group :development do
-  if RUBY_PLATFORM == "java"
-    gem 'mizuno'
-  end
   gem 'racksh'
   gem "warbler"
   gem 'sass'
