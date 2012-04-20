@@ -16,8 +16,10 @@ group :application do
     gem 'jruby-openssl'
     gem 'activerecord-jdbcsqlite3-adapter'
   else
-    gem 'dnssd'
-    gem 'sqlite3'
+    group :warbler_ignore do
+      gem 'dnssd'
+      gem 'sqlite3'
+    end
   end
 end
 

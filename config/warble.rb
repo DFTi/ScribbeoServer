@@ -1,3 +1,6 @@
+# Note: works, although it seems some (all?) of the code gets exec'd twice.
+# Symptoms: 2 rubies in the taskbar--why is that happening?
+
 # Disable Rake-environment-task framework detection by uncommenting/setting to false
 # Warbler.framework_detection = false
 
@@ -17,7 +20,7 @@ Warbler::Config.new do |config|
   config.includes = FileList["init.rb", "config.ru"]
 
   # Additional files/directories to exclude
-  # config.excludes = FileList["lib/tasks/*"]
+  config.excludes = FileList["config/warble.rb"]
 
   # Additional Java .jar files to include.  Note that if .jar files are placed
   # in lib (and not otherwise excluded) then they need not be mentioned here.
@@ -42,7 +45,7 @@ Warbler::Config.new do |config|
 
   # An array of Bundler groups to avoid including in the war file.
   # Defaults to ["development", "test"].
-  # config.bundle_without = []
+  config.bundle_without = ["warbler_ignore"]
 
   # Other gems to be included. If you don't use Bundler or a gemspec
   # file, you need to tell Warbler which gems your application needs
@@ -104,7 +107,7 @@ Warbler::Config.new do |config|
 
   # Files to be included in the root of the webapp.  Note that files in public
   # will have the leading 'public/' part of the path stripped during staging.
-  # config.public_html = FileList["public/**/*", "doc/**/*"]
+  # config.public_html = FileList["app/public/**/*"]
 
   # Pathmaps for controlling how public HTML files are copied into the .war
   # config.pathmaps.public_html = ["%{public/,}p"]
@@ -113,7 +116,7 @@ Warbler::Config.new do |config|
   # config.webxml.rails.env = ENV['RAILS_ENV'] || 'production'
 
   # Application booter to use, one of :rack, :rails, or :merb (autodetected by default)
-  # config.webxml.booter = :rails
+  # config.webxml.booter = :rack
 
   # Set JRuby to run in 1.9 mode.
   # config.webxml.jruby.compat.version = "1.9"
