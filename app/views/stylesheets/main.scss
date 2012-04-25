@@ -110,6 +110,9 @@ $userCountList: #6B3681;
       @include pointer-no-select;
       @include icon("/img/folder.png");  
     }
+    a.add_files {
+      color:red;
+    }
     .userCount {
       @include pointer-no-select;
       @include icon("/img/users.png");

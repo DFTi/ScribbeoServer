@@ -63,6 +63,26 @@ class App < Sinatra::Base
           "id"=>params[:id]
         })
       end
+
+      # -- File upload utility
+
+      post '/upload' do
+        unless params[:file] &&
+          (tmpfile = params[:file][:tempfile]) &&
+          (name = params[:file][:filename])
+          @error = "No file selected"
+          return "No file selected"
+        end
+        STDERR.puts "Uploading file, original name #{name.inspect}"
+        while blk = tmpfile.read(65536)
+          # here you would write it to its final location
+          puts "--"
+          STDERR.puts blk.inspect
+        end
+        "Upload complete"
+      end
+
+
     end
     
     namespace '/permission' do

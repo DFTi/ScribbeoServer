@@ -10,7 +10,7 @@ class Folder < ActiveRecord::Base
   validates :name, :uniqueness=>true, :presence=>true
   validates :path, :uniqueness=>true, :presence=>true
   include ActiveModel::Validations
-  #validates_with FolderValidator
+  validates_with FolderValidator
   before_destroy { users.clear }
 
   def add_user(user)
