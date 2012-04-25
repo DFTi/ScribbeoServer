@@ -78,6 +78,9 @@ $userCountList: #6B3681;
 }
 
 @mixin dynamic-item-list {
+  a {
+    color:red;
+  }
   li {
     text-align: center;
     margin: 0;
@@ -109,9 +112,6 @@ $userCountList: #6B3681;
     .icon {
       @include pointer-no-select;
       @include icon("/img/folder.png");  
-    }
-    a.add_files {
-      color:red;
     }
     .userCount {
       @include pointer-no-select;

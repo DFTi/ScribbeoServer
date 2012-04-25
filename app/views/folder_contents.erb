@@ -1,0 +1,19 @@
+<div class="panel">
+  <h1><%= @folder.name %> (<%= @folder.entries.count %>)</h1>
+  <div>
+    <span style="color:green"><%= @notice unless @notice.nil? %></span>
+    <div class="padding" style="height:10px"></div>
+    <form action="<%= url("/admin/folder/#{@folder.id}/upload") %>" method="post" enctype='multipart/form-data'>
+      Upload file: <input name="file" type="file"/>
+      <input type="submit" value="Upload">
+    </form>
+    <hr>
+    <ul>
+      <% @folder.entries.each do |e| %>
+        <li>
+          <%= e %>
+        </li>
+      <% end %>
+    </ul>
+  </div>
+</div>

@@ -64,22 +64,28 @@ class App < Sinatra::Base
         })
       end
 
-      # -- File upload utility
+      get '/:id/contents' do
+        @folder = Folder.find(params[:id])
+        erb(:folder_contents)
+      end
 
-      post '/upload' do
+      post '/:id/upload' do
         unless params[:file] &&
           (tmpfile = params[:file][:tempfile]) &&
           (name = params[:file][:filename])
           @error = "No file selected"
           return "No file selected"
         end
+        @folder = Folder.find(params[:id])
         STDERR.puts "Uploading file, original name #{name.inspect}"
-        while blk = tmpfile.read(65536)
-          # here you would write it to its final location
-          puts "--"
-          STDERR.puts blk.inspect
+        path = File.join(@folder.path, name)
+        File.open(path, "w") do |f|
+          while blk = tmpfile.read(65536)
+            f.write(blk)
+          end
         end
-        "Upload complete"
+        @notice="Uploaded!"
+        erb(:folder_contents)
       end
 
 
