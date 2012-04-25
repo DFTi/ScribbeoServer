@@ -21,7 +21,8 @@ dir/*
 *.pyc
 ScribbeoServer-*.exe
 .sass-cache
-db/db.sqlite3
+db/*.sqlite3
+config/ssl/*
 work/
 log/
 tmp/

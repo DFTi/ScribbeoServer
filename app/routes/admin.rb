@@ -4,6 +4,7 @@ class App < Sinatra::Base
     before do
       @title = "Admin"
       authorize_user!
+      request.instance_eval { def secure?; true; end } if PRODUCTION
     end
     
     get "/dashboard" do
@@ -66,7 +67,11 @@ class App < Sinatra::Base
 
       get '/:id/contents' do
         @folder = Folder.find(params[:id])
-        erb(:folder_contents)
+        if @folder && @folder.exists?
+          erb(:folder_contents)
+        else
+          "Folder does not exist on the filesystem"
+        end
       end
 
       post '/:id/upload' do

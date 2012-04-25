@@ -10,6 +10,7 @@ group :application do
   gem 'warden'
   gem 'launchy'
   gem 'puma'
+  gem 'rack-ssl'
 
   if RUBY_PLATFORM == "java"
     gem 'jruby-rack'
@@ -28,3 +29,4 @@ group :development do
   gem "warbler"
   gem 'sass'
 end
+

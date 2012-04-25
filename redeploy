@@ -1,0 +1,5 @@
+#!/bin/bash
+git pull origin master
+bundle install
+RACK_ENV=production rake db:migrate
+RACK_ENV=production puma

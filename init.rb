@@ -2,9 +2,13 @@ require 'rubygems'
 require 'bundler/setup'
 Bundler.require(:application)
 
-puts "Env: #{ENV['RACK_ENV']}"
 
 DEVELOPMENT = (ENV['RACK_ENV'] == 'development')
+PRODUCTION = DEVELOPMENT ? false : true
+
+puts "Env: #{PRODUCTION ? 'production' : 'development'}"
+
+
 if DEVELOPMENT
   Bundler.require(:development)
   require 'sinatra/base'
