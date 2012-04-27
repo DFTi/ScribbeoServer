@@ -12,8 +12,15 @@ module AppHelper
     %{<img src="#{url('/img/')}#{filepath}" #{options}/>}
   end
   
-  def authorize_user!
-    redirect '/login' if user.nil? 
+  def authorize_user!(redirect=false)
+    if user.nil? 
+      if redirect
+        status 401
+        redirect '/login' 
+      else
+        throw :halt, [ 401, 'Authorization Required' ]
+      end
+    end
   end
   
   def partial(sym, locals={})
