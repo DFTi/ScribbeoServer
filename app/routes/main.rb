@@ -1,6 +1,10 @@
 class App < Sinatra::Base
   get "/" do
-    redirect '/admin/dashboard'
+    if user
+      redirect '/admin/dashboard'
+    else  
+      redirect '/login'
+    end
   end
 
   if DEVELOPMENT
