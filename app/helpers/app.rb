@@ -14,12 +14,7 @@ module AppHelper
   
   def authorize_user!(redirect=false)
     if user.nil? 
-      if redirect
-        status 401
-        redirect '/login' 
-      else
-        throw :halt, [ 401, 'Authorization Required' ]
-      end
+      throw :halt, [ 401, 'Authorization Required' ]
     end
   end
   

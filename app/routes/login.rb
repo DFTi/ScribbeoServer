@@ -17,7 +17,6 @@ class App < Sinatra::Base
   post '/unauthenticated/?' do
     status 401
     @error = "Invalid credentials."
-    erb :login
   end
 
   get '/hide_admin_password_hint' do
