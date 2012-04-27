@@ -3,7 +3,7 @@ class App < Sinatra::Base
   namespace '/admin' do 
     before do
       @title = "Admin"
-      authorize_user!(:redirect_on_failure)
+      authorize_user!
       request.instance_eval { def secure?; true; end } if PRODUCTION
     end
     
