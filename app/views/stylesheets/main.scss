@@ -1,6 +1,10 @@
 @import 'include/boilerplate';
 @import 'include/ios-style-switch';
 
+.main_title {
+  cursor:pointer;
+}
+
 #loginForm {
   .error {
     color: #F86A6A;
