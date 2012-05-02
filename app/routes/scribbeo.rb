@@ -58,7 +58,7 @@ class App < Sinatra::Base
         file_path = File.join(virtual_folder.path, path_parts)
         if File.directory?(file_path)
           res["folders"] << entry_hash_for(:folder, entry, relpath)
-        elsif File.exists?(file_path)
+        else
           res["files"] << entry_hash_for(:file, entry, relpath) rescue next
         end
       end
