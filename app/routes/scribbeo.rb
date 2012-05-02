@@ -41,6 +41,7 @@ class App < Sinatra::Base
   get '/list*' do
     authorize_user!
     relpath = params[:splat][0]
+    puts relpath.inspect
     res = {"files"=>[], "folders"=>[]}
     if base_url?(relpath) # Send virtual folders
       user.existent_folders.each do |f|
@@ -50,15 +51,17 @@ class App < Sinatra::Base
         }
       end
     else # Send real files and folders
+      #binding.pry
       path_parts = relpath.split('/').compact.reject(&:blank?)
       virtual_folder_id = Folder.find_by_name(path_parts.delete_at(0)).id
       virtual_folder = user.folders.find(virtual_folder_id)
       virtual_folder.entries(path_parts).each do |entry|
-        if virtual_folder.has_folder?(entry)
+        if virtual_folder.has_folder?(path_parts)
           res["folders"] << entry_hash_for(:folder, entry, relpath)
         else
           res["files"] << entry_hash_for(:file, entry, relpath) rescue next
         end
+        binding.pry
       end
     end
     json(res)

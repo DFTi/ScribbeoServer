@@ -39,13 +39,17 @@ class Folder < ActiveRecord::Base
 
   def entries(path_parts = nil)
     dir_path = path_parts.nil? ? path : File.join(path, path_parts)
-    Dir.entries(dir_path).reject do |entry|
-      ['..','.','Thumbs.db','.DS_Store'].include? entry
+    if File.directory? dir_path
+      Dir.entries(dir_path).reject do |entry|
+        ['..','.','Thumbs.db','.DS_Store'].include? entry
+      end
+    else
+      Array.new # Return an empty array if there are no entries.
     end
   end
 
-  def has_folder?(entry)
-    File.directory?(File.join("", path, entry))
+  def has_folder?(relpath)
+    File.directory?(File.join("", path, relpath))
   end
 
 end
