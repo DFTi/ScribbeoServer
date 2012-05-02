@@ -55,14 +55,16 @@ class App < Sinatra::Base
       virtual_folder_id = Folder.find_by_name(path_parts.delete_at(0)).id
       virtual_folder = user.folders.find(virtual_folder_id)
       virtual_folder.entries(path_parts).each do |entry|
-        file_path = File.join(virtual_folder.path, path_parts)
+        file_path = File.join(virtual_folder.path, path_parts, entry)
         if File.directory?(file_path)
           res["folders"] << entry_hash_for(:folder, entry, relpath)
         else
           res["files"] << entry_hash_for(:file, entry, relpath) rescue next
         end
+        # binding.pry
       end
     end
+    # binding.pry
     json(res)
   end
 
