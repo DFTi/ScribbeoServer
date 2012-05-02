@@ -36,6 +36,12 @@ class App < Sinatra::Base
       virtual_folder = Folder.find_by_name(path_parts.delete_at(0))
       return File.join(virtual_folder.path, path_parts)
     end
+
+    def image?(extname)
+      puts extname
+      ['.jpg', '.jpeg', '.png', '.tiff',
+       '.tif', '.raw', '.gif', '.bmp'].include?(extname)
+    end
   end
 
   get '/list*' do
@@ -61,10 +67,8 @@ class App < Sinatra::Base
         else
           res["files"] << entry_hash_for(:file, entry, relpath) rescue next
         end
-        # binding.pry
       end
     end
-    # binding.pry
     json(res)
   end
 
@@ -83,6 +87,7 @@ class App < Sinatra::Base
     asset_path = path_from_splat(params[:splat])
     # FIXME Move FFMBC / Timecode stuff into module(s)
     zeros = '00:00:00:00'    
+    return zeros if image?(File.extname(params[:splat].last))
     if asset_path && File.exists?(asset_path)
       # FIXME Should perform caching in larger systems
       details = Open3.popen3("#{Settings.ffmbc_path} -i '#{asset_path}'"){|i,o,e,t| p e.read.chomp }
