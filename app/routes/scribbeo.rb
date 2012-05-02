@@ -51,17 +51,16 @@ class App < Sinatra::Base
         }
       end
     else # Send real files and folders
-      #binding.pry
       path_parts = relpath.split('/').compact.reject(&:blank?)
       virtual_folder_id = Folder.find_by_name(path_parts.delete_at(0)).id
       virtual_folder = user.folders.find(virtual_folder_id)
       virtual_folder.entries(path_parts).each do |entry|
-        if virtual_folder.has_folder?(path_parts)
+        file_path = File.join(virtual_folder.path, path_parts)
+        if File.directory?(file_path)
           res["folders"] << entry_hash_for(:folder, entry, relpath)
-        else
+        elsif File.exists?(file_path)
           res["files"] << entry_hash_for(:file, entry, relpath) rescue next
         end
-        binding.pry
       end
     end
     json(res)
