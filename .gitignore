@@ -3,9 +3,6 @@ ffmbc/*
 *.war
 .rbx
 app/public/css/*
-*.cert
-*.key
-certs/
 live_segmenter
 live_segmenter.dSYM/
 dist/
@@ -22,7 +19,6 @@ dir/*
 ScribbeoServer-*.exe
 .sass-cache
 db/*.sqlite3
-config/ssl/*
 work/
 log/
 tmp/
