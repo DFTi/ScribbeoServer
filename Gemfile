@@ -25,6 +25,7 @@ group :application do
 end
 
 group :development do
+  gem 'pry'
   gem 'racksh'
   gem "warbler"
   gem 'sass'
