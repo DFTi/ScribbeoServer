@@ -190,16 +190,43 @@ var SaveButtonHandler = function () {
 };
 
 // ---------------------
+// Change password
+function bind_change_password() {
+  $('a#changePassword').click(function () {
+    $('#changePass').toggle();
+    return false;
+  });
+
+  $('#changePass #cancel').click(function () {
+    $('#changePass input').val('');
+    $('#changePass').hide();
+  });
+
+  $('#changePass #submit').click(function () {
+    var data = {
+      "user":{
+        "old_password":$(this).siblings('#curPass').val(),
+        "password":$(this).siblings('#newPass').val(),
+        "confirmation":$(this).siblings('#newPassConf').val()
+      }
+    };
+    $.post($(this).attr('data-url'), data, function(res) {
+      if(typeof(res['success'] != 'undefined')){
+        alert(res['success']);
+        $('#changePass').fadeOut('slow');
+      } else {
+        alert(res['errors']);
+      }
+    });
+  });
+}
 
 //
 //  READY
 //
 
 $(function () {
-  $('a#changePassword').click(function () {
-    alert('Not yet implemented. You\'re stuck with it for now.');
-    return false;
-  });
+  bind_change_password();
 
   // Admin ---------------- Dashboard & Panels
   

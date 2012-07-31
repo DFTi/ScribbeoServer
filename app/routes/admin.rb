@@ -31,12 +31,11 @@ class App < Sinatra::Base
         })
       end
 
-      put '/change_password' do
+      post '/change_password' do
         # Users should not have to be admins to do this.
         # Right now there are no roles (users are "admins")
-        user = User.find(params[:id])
         json({
-          "success"=>(user.change_password(params[:user]))
+          "success"=>(env['warden'].user.change_password(params[:user]))
         })
       end
     end

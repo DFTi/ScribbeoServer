@@ -36,6 +36,9 @@ class User < ActiveRecord::Base
   # }
   def change_password(params)
     out = {"success"=>false}
+    if params[:password] != params[:confirmation]
+      return out[:errors] = "Password does not match confirmation!"
+    end
     if User.authenticate(self.username, params[:old_password])
       out[:success] = self.with_password(params).save
       out[:errors] = self.errors.full_messages
