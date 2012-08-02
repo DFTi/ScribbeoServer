@@ -91,8 +91,6 @@ class App < Sinatra::Base
         @notice="Uploaded!"
         erb(:folder_contents)
       end
-
-
     end
     
     namespace '/permission' do

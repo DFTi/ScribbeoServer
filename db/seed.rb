@@ -21,7 +21,7 @@ def db_seed
   Settings.icon_path = File.join("images","ruby.png")
 
   # General Settings
-
+  Settings.root_directory = "/home/curator"
   Settings.instance_name = "My Scribbeo Server"
   
   Settings.instance_port = 9292

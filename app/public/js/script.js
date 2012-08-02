@@ -61,7 +61,15 @@ var deleteResponseHandler = function (res) {
 
 var bindDeleteButtonPost = function (type, div) {
   $(div).click(function () {
-    if (!confirm("Are you sure you want to delete this "+type+"? You cannot undo this action.")) return;
+
+    var message;
+    if (type=="folder") {
+      message = "Are you sure you want to remove this folder? Permissions will be lost, however the folder is not removed from disk. You may always add it again later."
+    } else {
+      message = "Are you sure you want to remove this "+type+"? You cannot undo this action.";
+    }
+
+    if (!confirm(message)) return;
     var data = {
       "id":$(this).parent().attr('data-id')
     };
