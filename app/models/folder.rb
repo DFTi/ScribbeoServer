@@ -1,23 +1,29 @@
 class Folder < ActiveRecord::Base
+  has_and_belongs_to_many :users
+
+  before_validation { self.path = File.join(Settings.root_directory, self.path) }
+  before_destroy { users.clear }
+  
   class FolderValidator < ActiveModel::Validator
     def validate(record)
       if record.path.split('/').include?('..')
         record.errors[:path] << "is invalid."
       elsif !File.directory?(record.path)
-        record.errors[:path] << "does not exist on disk."
+        begin
+          Dir.mkdir(record.path, 0755)
+        rescue
+          record.errors[:path] << "could not be created on disk (#{record.path})."
+        end
       end
     end
   end
-  has_and_belongs_to_many :users
+  
+  include ActiveModel::Validations
   validates :name, :uniqueness=>true, :presence=>true
   validates :path, :uniqueness=>true, :presence=>true
-  include ActiveModel::Validations
-  before_destroy { users.clear }
   validates_with FolderValidator
-  before_validation do
-    self.path = File.join(Settings.root_directory, self.path) 
-  end
   
+
   def add_user(user)
     if self.users.include? user
       {"success"=>false,
@@ -41,8 +47,6 @@ class Folder < ActiveRecord::Base
   def exists?
     Dir.exists? path
   end
-
-
 
   def entries(path_parts = nil)
     dir_path = path_parts.nil? ? path : File.join(path, path_parts)
