@@ -1,4 +1,5 @@
 class App < Sinatra::Base
+  
   # Description
   # ===========
   # Implements the legacy (Scribbeo) API
