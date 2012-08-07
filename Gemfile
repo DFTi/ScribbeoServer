@@ -11,7 +11,6 @@ group :application do
   gem 'launchy'
   gem 'puma'
   gem 'rack-ssl'
-  gem 'plist'
 
   if RUBY_PLATFORM == "java"
     gem 'jruby-rack'
