@@ -1,0 +1,18 @@
+<% if @ios_request %>
+<div id='device'>
+  <div id='header'> 
+    <h1 id='title'><a href="#">Enroll Device</a></h1>
+  </div>
+  <div id='content'>
+    <ol class="instructions">
+      <li>Tap Start to begin process</li>
+      <li>Press "Install" to allow access to device UDID</li>
+      <li>Enter your email on the following page to complete the process.</li>
+    </ol>
+    <br/>
+    <div class="button"><a href="/enroll/mobileconfig">Start</a></div>
+  </div>
+</div>
+<% else %>
+<p style="color:black;text-align:center">Please return to this page with your iOS device</p>
+<% end %>
