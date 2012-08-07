@@ -1,12 +1,12 @@
 class App < Sinatra::Base
 
-  namespace '/admin' do 
+  namespace '/admin' do
     before do
       authorize_admin!
       @title = "Admin"
       request.instance_eval { def secure?; true; end } if PRODUCTION
     end
-    
+
     get "/dashboard" do
       @users = User.all_but_admin
       @folders = Folder.all
@@ -23,7 +23,7 @@ class App < Sinatra::Base
           "html"=>partial(:user, :user=>user)
         })
       end
-    
+
       post '/destroy' do
         json({
           "success"=>(User.destroy(params[:id]) ? true : false),
@@ -39,9 +39,9 @@ class App < Sinatra::Base
         })
       end
     end
-    
-    namespace "/folder" do      
-      get '/index.html.json' do 
+
+    namespace "/folder" do
+      get '/index.html.json' do
         folders = Folder.all
         json({
           "html"=>partial(:folders, :folders=>folders)
@@ -56,7 +56,7 @@ class App < Sinatra::Base
           "html"=>partial(:folder, :folder=>folder)
         })
       end
-    
+
       post '/destroy' do
         json({
           "success"=>(Folder.destroy(params[:id]) ? true : false),
@@ -92,7 +92,7 @@ class App < Sinatra::Base
         erb(:folder_contents)
       end
     end
-    
+
     namespace '/permission' do
       post '/set' do
         u = User.find(params[:user_id])
@@ -110,55 +110,6 @@ class App < Sinatra::Base
           'id'=>f.id,
           'user_id'=>u.id
         }))
-      end
-    end
-
-    namespace '/settings' do 
-      post '/bonjour/?' do
-        if params['checked'] == "true" # on
-          BONJOUR.announce
-        else
-          BONJOUR.stop
-        end
-        Settings.bonjour_enabled = BONJOUR.running?
-      end
-
-      post '/instance_name/?' do
-        res = {}
-        value = params["value"]
-        if (value.size > 0)
-          Settings.instance_name = value
-          BONJOUR.name = value
-          res["success"] = true
-        else
-          res["success"] = false
-          res["errors"] = "Instance name can't be blank"
-        end
-        res["instance_name"] = Settings.instance_name
-        json(res)
-      end
-
-      post '/instance_port/?' do
-        res = {}
-        value = params["value"]
-        if (port_open?(value))
-          Settings.instance_port = value
-
-          # Restart required for changes to take effect, so not setting bonjour
-          # On restart we will start rack & bonjour with Settings.instance_port
-
-          res["success"] = true
-          res["notice"] = "Change will take effect after restart"
-
-          # FIXME perhaps we can initiate a redirect to the new port after binding
-          # lets look into server restarting, e.g. rack server control from sinatra (or java)
-
-        else
-          res["success"] = false
-          res["errors"] = "Could not bind on port #{value}."
-        end
-        res["instance_port"] = Settings.instance_port
-        json(res)
       end
     end
 

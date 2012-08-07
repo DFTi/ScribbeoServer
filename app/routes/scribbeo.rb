@@ -39,7 +39,6 @@ class App < Sinatra::Base
     end
 
     def image?(extname)
-      puts extname
       ['.jpg', '.jpeg', '.png', '.tiff',
        '.tif', '.raw', '.gif', '.bmp'].include?(extname)
     end
