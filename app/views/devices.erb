@@ -1,0 +1,18 @@
+<div id="devices">
+<p>
+  To gather UDIDs with this tool, tell your users to go here with their iOS device: <a href="<%= @enroll_url %>"><%= @enroll_url %></a>
+</p>
+<h1>Device List</h1>
+  <div class="padding" style="height:10px"></div>
+    <% if @devices.empty? %>
+      <li class="placeholder">
+        <em>No devices enrolled.</em>
+      </li>
+    <% else @devices.each do |f| %>
+      <p>
+        <span>Name: <%= f.name %></span><br>
+        <span>Email: <%= f.email %></span><br>
+        <span>UDID: <%= f.udid %></span>
+      </p>
+    <% end end %>
+</div>

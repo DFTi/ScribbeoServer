@@ -1,1 +1,24 @@
-<%= @udid %>
+<div id='device'>
+  <div id='header'> 
+    <h1 id='title'><a href="#">Enroll Device</a></h1>
+  </div>
+  <div id='content'>
+    <form action="/devices/save" method="post">
+      <div class="field">
+        <label for="device_name">Your Name</label><br />
+        <input id="device_name" name="device[name]" size="30" type="text" />
+      </div>
+      <div class="field">
+        <label for="device_email">Your Email Address</label><br />
+        <input id="device_email" name="device[email]" size="30" type="email" />
+      </div>
+      <div class="field">
+        <label for="device_udid">Your Device UDID</label><br />
+          <input id="device_udid" name="device[udid]" value="<%= @udid %>" size="30" type="text" />
+      </div><br />
+      <div class="actions">
+        <input name="commit" type="submit" value="Save" />
+      </div>
+    </form>
+  </div>
+</div>

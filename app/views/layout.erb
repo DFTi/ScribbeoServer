@@ -48,6 +48,9 @@
           <label>Confirmation</label><input type="password" id="newPassConf"/><br>
           <button id="submit" data-url="<%= url('/admin/user/change_password') %>">Submit</button><button id="cancel">Cancel</button>
         </div>
+        <% if user.admin? %>
+          | <a href="<%= url('/devices') %>">Devices</a>
+        <% end %>
       <% end %>
     </div>
   </header>

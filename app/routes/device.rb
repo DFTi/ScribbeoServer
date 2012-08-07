@@ -1,18 +1,5 @@
 class App < Sinatra::Base
-
-  MOBILECONF = {
-    :mime_type => "application/x-apple-aspen-config; charset=utf-8",
-    :template => File.join(App.root, '..', "/lib/iOS/Profile.mobileconfig"),
-    :outfile => File.join(App.root, '..', "/tmp/Profile.mobileconfig")
-  }
-
-  MANIFEST = {
-    :template => File.join(App.root, '..', "/lib/iOS/manifest.plist"),
-    :url_prefix => "itms-services://?action=download-manifest&url=",
-    :ipa_url => "[IPAURL]"
-  }
-
-  get '/enroll' do
+  get '/devices/enroll' do
     @ios_request = (request.user_agent =~ /(Mobile\/.+Safari)/)
     erb :enroll
   end
@@ -34,19 +21,34 @@ class App < Sinatra::Base
   end
 
   get '/enroll/mobileconfig/parse/store' do
-    @device = Device.new
     @udid = params["udid"]
     erb :new_device
   end
 
+  post '/devices/save' do
+    @device = Device.new(params[:device])
+    if @device.save
+      "Your device information has been saved."
+    else
+      "Could not save, try hitting the back button and checking the form."
+    end
+  end
+
+  get '/devices' do
+    authorize_admin!
+    @devices = Device.all
+    @enroll_url = request.url+"/enroll"
+    erb :devices
+  end
+
+
   get "/install" do
     if File.exists? Settings.ipa_path
       "Build installer"
+      send_file build.manifest_path
     else
       "A build has not been created yet."
     end
   end
-
-
 
 end

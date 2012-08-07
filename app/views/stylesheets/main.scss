@@ -189,6 +189,10 @@ header {
   margin: 0 auto;
 }
 
+#devices {
+  color:black;
+}
+
 footer {
   text-align: center;
   color: #CCC;
@@ -324,6 +328,13 @@ a#hide_admin_password_hint {
 }
 
 #device {
+  form .field {
+    margin-left:20px;
+    margin-top:20px;
+  }
+  form label {
+    color:black;
+  }
   ol.instructions {
     margin: 20px auto;
   }

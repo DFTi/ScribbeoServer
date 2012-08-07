@@ -20,6 +20,9 @@ def db_seed
   # Java settings
   Settings.icon_path = File.join("images","ruby.png")
 
+  # iOS Build
+  Settings.ipa_path = ""
+
   # General Settings
   Settings.root_directory = "/home/curator/media"
   Settings.instance_name = "My Scribbeo Server"

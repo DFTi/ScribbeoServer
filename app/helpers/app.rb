@@ -2,7 +2,7 @@ module AppHelper
   def user
     env['warden'].user
   end
-  
+
   def errors_for(r)
     r.errors.full_messages.join('<br>')
   end
@@ -14,6 +14,12 @@ module AppHelper
   
   def authorize_user!(redirect=false)
     if user.nil? 
+      throw :halt, [ 401, 'Authorization Required' ]
+    end
+  end
+
+  def authorize_admin!(redirect=false)
+    if user.nil? || !user.admin?
       throw :halt, [ 401, 'Authorization Required' ]
     end
   end

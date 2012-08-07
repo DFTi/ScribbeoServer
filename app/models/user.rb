@@ -57,6 +57,10 @@ class User < ActiveRecord::Base
     end
   end
   
+  def admin?
+    self.username == 'admin'
+  end
+
   def self.all_but_admin
     all.reject {|u| u.username=="admin"}
   end
