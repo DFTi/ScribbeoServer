@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+require './init.rb'
+
+puts "\nListing #{Device.count} enrolled devices"
+puts "="*50
+puts "Email\t\t\t\t\tUDID"
+puts "="*50
+Device.all.each do |d|
+  puts "#{d.email}\t\t\t\t#{d.udid}"
+end
