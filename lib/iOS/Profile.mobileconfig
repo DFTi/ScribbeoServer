@@ -26,7 +26,7 @@
 	<key>PayloadIdentifier</key>
 	<string>com.digitalfilmtree.getudid</string>
 	<key>PayloadDescription</key>
-	<string>This temporary profile will be used to get your UDID and device type.</string>
+	<string>This temporary profile will be used to get your device UDID.</string>
 	<key>PayloadType</key>
 	<string>Profile Service</string>
 </dict>

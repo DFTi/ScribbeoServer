@@ -1,0 +1,9 @@
+<div style="margin:30px;color:black">
+<% unless request.user_agent =~ /(Mobile\/.+Safari)/ %>
+  Please log in with your iPad to enroll your device and download Scribbeo.
+<% else %>
+  <p>Use the link above to enroll your device, necessary for the next step.</p>
+  <p>Wait for your device to be provisioned and authorized. You will be notified by email.</p>
+  <p>Use the install link to download and install Scribbeo over the web.</p>
+<% end %>
+</div>

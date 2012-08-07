@@ -6,11 +6,13 @@ class App < Sinatra::Base
   }
 
   get '/devices/enroll' do
+    authorize_user!
     @ios_request = (request.user_agent =~ /(Mobile\/.+Safari)/)
     erb :enroll
   end
 
   get '/enroll/mobileconfig' do
+    authorize_user!
     plist_parse_route = request.url+"/parse"
     File.open(MOBILECONF[:outfile], "w") do |out|
       File.open(MOBILECONF[:template], "r") do |tmpl|
@@ -27,16 +29,18 @@ class App < Sinatra::Base
   end
 
   get '/enroll/mobileconfig/parse/new_enrollment' do
+    authorize_user!
     @udid = params["udid"]
     erb :new_device
   end
 
   post '/devices/save' do
+    authorize_user!
     @device = Device.new(params[:device])
     if @device.save
-      "Your device information has been saved."
+      redirect to('/')
     else
-      "Could not save, try hitting the back button and checking the form."
+      redirect back
     end
   end
 
@@ -49,6 +53,7 @@ class App < Sinatra::Base
 
 
   get '/install' do
+    authorize_user!
     erb :install
   end
 

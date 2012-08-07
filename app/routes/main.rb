@@ -1,8 +1,10 @@
 class App < Sinatra::Base
   get "/" do
-    if user
+    if user && user.admin?
       redirect '/admin/dashboard'
-    else  
+    elsif user
+      erb :home
+    else
       redirect '/login'
     end
   end

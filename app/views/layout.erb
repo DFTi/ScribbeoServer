@@ -51,6 +51,11 @@
         <% if user.admin? %>
           | <a href="<%= url('/devices') %>">Devices</a>
         <% end %>
+        <% if (request.user_agent =~ /(Mobile\/.+Safari)/) %>
+          | <a href="<%= url('/devices/enroll') %>">Enroll Device</a>
+          | <a href="<%= url('/install') %>">Install Scribbeo</a>
+        <% end %>
+        
       <% end %>
     </div>
   </header>
