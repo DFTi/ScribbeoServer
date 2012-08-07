@@ -1,0 +1,2 @@
+#!/bin/bash
+git pull origin lean_vm && sudo bundle install && rake db:migrate && sudo service apache2 restart
