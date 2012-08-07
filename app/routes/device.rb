@@ -43,12 +43,16 @@ class App < Sinatra::Base
 
 
   get "/install" do
-    if File.exists? Settings.ipa_path
-      "Build installer"
-      send_file build.manifest_path
-    else
-      "A build has not been created yet."
-    end
+    "Not yet implemented"
+    # if File.exists? Settings.ipa_path
+    #   manifest_path = "#{Rails.root}/tmp/manifest.plist"
+    #   File.open(manifest_path, "w") do |f|
+    #     f.write self.app.manifest.gsub('[NextURL]', ipa_app_build_url(self.app, self, :host=>HOST, :port=>PORT))
+    #   end
+    #   send_file manifest_path
+    # else
+    #   "A build has not been created yet."
+    # end
   end
 
 end
