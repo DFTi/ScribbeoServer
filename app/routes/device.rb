@@ -1,4 +1,10 @@
 class App < Sinatra::Base
+  MOBILECONF = {
+    :mime_type => "application/x-apple-aspen-config; charset=utf-8",
+    :template => File.join(App.root, '..', "/lib/iOS/Profile.mobileconfig"),
+    :outfile => File.join(App.root, '..', "/tmp/Profile.mobileconfig")
+  }
+
   get '/devices/enroll' do
     @ios_request = (request.user_agent =~ /(Mobile\/.+Safari)/)
     erb :enroll
@@ -16,11 +22,11 @@ class App < Sinatra::Base
 
   post '/enroll/mobileconfig/parse' do
     udid = request.body.read.match(/<string>([a-zA-Z0-9]+)<\/string>/)[1]
-    udid_store_route = request.url+"/store?udid=#{udid}"
+    udid_store_route = request.url+"/new_enrollment?udid=#{udid}"
     redirect to(udid_store_route), 301
   end
 
-  get '/enroll/mobileconfig/parse/store' do
+  get '/enroll/mobileconfig/parse/new_enrollment' do
     @udid = params["udid"]
     erb :new_device
   end
@@ -42,17 +48,19 @@ class App < Sinatra::Base
   end
 
 
-  get "/install" do
-    "Not yet implemented"
-    # if File.exists? Settings.ipa_path
-    #   manifest_path = "#{Rails.root}/tmp/manifest.plist"
-    #   File.open(manifest_path, "w") do |f|
-    #     f.write self.app.manifest.gsub('[NextURL]', ipa_app_build_url(self.app, self, :host=>HOST, :port=>PORT))
-    #   end
-    #   send_file manifest_path
-    # else
-    #   "A build has not been created yet."
-    # end
+  get '/install' do
+    erb :install
+  end
+
+  get "/install/manifest.plist" do
+    Build.write_manifest(request)
+    send_file Build.manifest_path
+  end
+  
+  
+  get '/install/manifest.plist/Scribbeo.ipa' do
+    Settings.ipa_installs += 1
+    send_file Settings.ipa_path, :type=>'application/octet-stream ipa'
   end
 
 end

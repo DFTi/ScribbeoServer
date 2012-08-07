@@ -21,7 +21,9 @@ def db_seed
   Settings.icon_path = File.join("images","ruby.png")
 
   # iOS Build
-  Settings.ipa_path = ""
+  Settings.ipa_path = "#{App.root}/../lib/iOS/scribbeo/Scribbeo.ipa"
+  Settings.ipa_needs_manifest = true
+  Settings.ipa_installs = 0
 
   # General Settings
   Settings.root_directory = "/home/curator/media"

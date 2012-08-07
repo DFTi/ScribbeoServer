@@ -17,13 +17,13 @@
 			<key>metadata</key>
 			<dict>
 				<key>bundle-identifier</key>
-				<string>com.digitalfilmtree.videotree</string>
+				<string>com.dfti.scribbeo.lite</string>
 				<key>bundle-version</key>
-				<string>1</string>
+				<string>1.4</string>
 				<key>kind</key>
 				<string>software</string>
 				<key>title</key>
-				<string>VideoTree</string>
+				<string>Scribbeo</string>
 			</dict>
 		</dict>
 	</array>
