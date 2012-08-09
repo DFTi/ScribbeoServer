@@ -26,14 +26,14 @@ function vmscp {
   VM_PORT=`ruby -e "puts '$1'.to_i+52200"`
   VM_SEND_FILE=$2
   echo "Sending $VM_SEND_FILE to $VM_USER@$VM_HOST:$VM_PORT:$VM_SEND_FILE"
-  scp $VM_SEND_FILE scribbeo@$VM_ROOT$VM_INT:~/$VM_SEND_FILE
+  scp -P $VM_PORT $VM_SEND_FILE $VM_USER@$VM_HOST:~/$VM_SEND_FILE
 }
 
 function vmscp-data {
   VM_PORT=`ruby -e "puts '$1'.to_i+52200"`
   VM_SEND_FILE=$2
   echo "Sending $VM_SEND_FILE to $VM_USER@$VM_HOST:$VM_PORT:$VM_SEND_FILE"
-  scp $VM_SEND_FILE scribbeo@$VM_ROOT$VM_INT:/home/curator/media/$VM_SEND_FILE
+  scp -P $VM_PORT $VM_SEND_FILE $VM_USER@$VM_HOST:/home/curator/media/$VM_SEND_FILE
 }
 
 function vmdevices {
