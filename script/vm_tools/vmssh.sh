@@ -7,7 +7,7 @@ HIVE_WAN_SSH_PORT=55218
 HIVE_USER="hive"
 
 function hive {
-  ruby /Users/keyvan/Dropbox/DFT/Hive/Scripts/hive/secure_vnc_tunnel.rb $LOCAL_VNC_PORT $HIVE_IP $HIVE_LOCAL_VNC_PORT $HIVE_WAN_SSH_PORT $HIVE_USER
+  ruby /Users/keyvan/Projects/ScribbeoServer/script/vm_tools/secure_vnc_tunnel.rb $LOCAL_VNC_PORT $HIVE_IP $HIVE_LOCAL_VNC_PORT $HIVE_WAN_SSH_PORT $HIVE_USER
   echo "Entering SSH session ($HIVE_IP:$HIVE_WAN_SSH_PORT)"
   ssh -p $HIVE_WAN_SSH_PORT $HIVE_USER@$HIVE_IP
 }
@@ -20,6 +20,13 @@ function vmssh {
   VM_PORT=`ruby -e "puts '$1'.to_i+52200"`
   echo "Connecting to $VM_USER@$VM_HOST:$VM_PORT"
   ssh -p $VM_PORT $VM_USER@$VM_HOST
+}
+
+function vmconsole {
+  VM_REMOTE_CMD='cd /opt/ScribbeoServer && RACK_ENV=production racksh'
+  VM_PORT=`ruby -e "puts '$1'.to_i+52200"`
+  echo "Connecting to $VM_USER@$VM_HOST:$VM_PORT"
+  ssh -t -p $VM_PORT $VM_USER@$VM_HOST $VM_REMOTE_CMD
 }
 
 function vmscp {
@@ -49,4 +56,12 @@ function vmredeploy {
   echo "Updating source code & redeploying on  VM $1"
   ssh -t -p $VM_PORT $VM_USER@$VM_HOST $VM_REMOTE_CMD
   echo "Redeploy is complete!"
+}
+
+function vmbuilddeploy {
+  VM_REMOTE_CMD="cd /opt/ScribbeoServer && script/build_deploy $2"
+  VM_PORT=`ruby -e "puts '$1'.to_i+52200"`
+  echo "Updating source code & redeploying on VM $1"
+  ssh -t -p $VM_PORT $VM_USER@$VM_HOST $VM_REMOTE_CMD
+  echo "Redeploy is complete!" 
 }
