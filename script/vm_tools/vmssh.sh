@@ -53,15 +53,13 @@ function vmdevices {
 function vmredeploy {
   VM_REMOTE_CMD='cd /opt/ScribbeoServer && script/redeploy'
   VM_PORT=`ruby -e "puts '$1'.to_i+52200"`
-  echo "Updating source code & redeploying on  VM $1"
+  echo "Updating source code & redeploying on VM $1"
   ssh -t -p $VM_PORT $VM_USER@$VM_HOST $VM_REMOTE_CMD
   echo "Redeploy is complete!"
 }
 
-function vmbuilddeploy {
-  VM_REMOTE_CMD="cd /opt/ScribbeoServer && script/build_deploy $2"
+function vmipaversion {
+  VM_REMOTE_CMD="cd /opt/ScribbeoServer && script/ipaversion $2"
   VM_PORT=`ruby -e "puts '$1'.to_i+52200"`
-  echo "Updating source code & redeploying on VM $1"
   ssh -t -p $VM_PORT $VM_USER@$VM_HOST $VM_REMOTE_CMD
-  echo "Redeploy is complete!" 
 }
