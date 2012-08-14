@@ -11,7 +11,7 @@ if DEVELOPMENT
   require 'sinatra/reloader'
 end
 
-require 'FileUtils'
+require 'fileutils'
 require 'open3'
 require 'socket'
 require 'timeout'
