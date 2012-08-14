@@ -5,6 +5,12 @@ class App < Sinatra::Base
     :outfile => File.join(App.root, '..', "/tmp/Profile.mobileconfig")
   }
 
+  get '/current_version' do
+    json({
+      'ipa_version'=>Settings.ipa_version
+    })
+  end
+
   get '/devices/enroll' do
     authorize_user!
     @ios_request = (request.user_agent =~ /(Mobile\/.+Safari)/)
