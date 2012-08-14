@@ -38,11 +38,7 @@ class App < Sinatra::Base
     authorize_user!
     @device = Device.new(params[:device])
     if @device.save
-      if user.admin?
-        redirect to('/devices')
-      else
-        redirect to('/')
-      end
+      redirect to('/')
     else
       redirect back
     end
