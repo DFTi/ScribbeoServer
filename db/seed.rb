@@ -24,9 +24,11 @@ def db_seed
   Settings.ipa_path = "#{App.root}/../lib/iOS/scribbeo/Scribbeo.ipa"
   Settings.ipa_needs_manifest = true
   Settings.ipa_installs = 0
+  Settings.ipa_version = ""
 
   # General Settings
   Settings.root_directory = "/home/curator/media"
+  # Settings.root_directory = "/Users/keyvan/Movies"
   Settings.instance_name = "My Scribbeo Server"
   
   Settings.instance_port = 9292
