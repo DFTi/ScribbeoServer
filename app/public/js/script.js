@@ -34,18 +34,18 @@ var deleteResponseHandler = function (res) {
   var type = listItem.attr('data-type');
   var toBeRemoved = listItem;
   if (res["success"]) {
-    if (typeof(res["count"])!="undefined") { // type: permission
+    if (typeof(res["file_deletion"])!="undefined") { // file deletion
+      toBeRemoved = $('li.fileItem[data-itemid="'+res['id']+'"]');
+    } else if (typeof(res["count"])!="undefined") { // type: permission
       console.log('deleted a permission');
       $(listItem).find('.userCount').text(res["count"]);
       if (listItem.children('.permittedUsers').children().size() == 1)
         toBeRemoved = listItem.children('.permittedUsers');
       else
         toBeRemoved = listItem.find('.permittedUser[data-id="'+res['user_id']+'"]');
-    } else
-    if (type == "folder") {
+    } else if (type == "folder") {
       console.log('deleted a folder');
-    } else
-    if (type == "user") {
+    } else if (type == "user") {
       console.log('deleted a user');
       refetchFolderPanel();
     }
@@ -65,6 +65,8 @@ var bindDeleteButtonPost = function (type, div) {
     var message;
     if (type=="folder") {
       message = "Are you sure you want to remove this folder? Permissions will be lost, however the folder is not removed from disk. You may always add it again later."
+    } else if (type=="file") {
+      message = "Are you sure you want to DELETE this file? There is no undo!"
     } else {
       message = "Are you sure you want to remove this "+type+"? You cannot undo this action.";
     }
@@ -110,7 +112,6 @@ var bindFolderItem = function (folderItem) {
   
   bindDeleteButtonPost('folder', $(folderItem).find(' .deleteButton'));
   bindDeleteButtonPost('permission', $(folderItem).find(' .revokeButton'));
-
 
   $(folderItem).droppable({
     drop: function( event, ui ) {
@@ -234,6 +235,9 @@ function bind_change_password() {
 //
 
 $(function () {
+  // Manage Contents Page
+  bindDeleteButtonPost('file', $('.fileItem .deleteButton'));  
+
   bind_change_password();
 
   // Admin ---------------- Dashboard & Panels

@@ -9,9 +9,15 @@
     </form>
     <hr>
     <ul>
-      <% @folder.entries.each do |e| %>
-        <li>
-          <%= e %>
+      <% @folder.entries.each_with_index do |e, i| %>
+        <% folder = File.directory? File.join(@folder.path, e) %>
+        <li class="entry fileItem <%= 'folder' if folder %>" data-itemid="<%= i %>">
+          <span><%= e %></span>
+          <% if folder %>
+            <%= div :class=>"icon", :style=>'top:0px' %>
+          <% else %>
+            <%= div :class=>"deleteButton", "data-url"=>url("/admin/folder/1/contents/#{i}/destroy") %>
+          <% end %>
         </li>
       <% end %>
     </ul>

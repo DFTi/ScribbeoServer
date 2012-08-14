@@ -15,7 +15,6 @@ class App < Sinatra::Base
 
     namespace '/user' do
       post '/create' do
-        authorize_user!
         user = User.new.with_password(params[:user])
         json({
           "success"=>user.save,
@@ -71,6 +70,18 @@ class App < Sinatra::Base
         else
           "Folder does not exist on the filesystem"
         end
+      end
+
+      # Delete files through web interface
+      post '/:id/contents/:array_index/destroy' do
+        folder = Folder.find(params[:id])
+        file = folder.entries[params[:array_index].to_i]
+        res = File.basename(FileUtils.rm(File.join(folder.path, file))[0]) rescue false
+        json({
+          "success"=>res ? true : false,
+          "id"=>params[:array_index],
+          "file_deletion"=>true
+        })
       end
 
       post '/:id/upload' do

@@ -42,12 +42,6 @@
         Welcome, <%= user.username %> <br>
         <%= a url('/logout/'), 'Logout' %> | 
         <%= a '#', "Change Password", :id=>:changePassword %>
-        <div id="changePass">
-          <label>Current Password</label><input type="password" id="curPass"/><br>
-          <label>New Password</label><input type="password" id="newPass"/><br>
-          <label>Confirmation</label><input type="password" id="newPassConf"/><br>
-          <button id="submit" data-url="<%= url('/admin/user/change_password') %>">Submit</button><button id="cancel">Cancel</button>
-        </div>
         <% if user.admin? %>
           | <a href="<%= url('/devices') %>">Devices</a>
         <% end %>
@@ -55,7 +49,12 @@
           | <a href="<%= url('/devices/enroll') %>">Enroll Device</a>
           | <a href="<%= url('/install') %>">Install Scribbeo</a>
         <% end %>
-        
+        <div id="changePass">
+          <label>Current Password</label><input type="password" id="curPass"/><br>
+          <label>New Password</label><input type="password" id="newPass"/><br>
+          <label>Confirmation</label><input type="password" id="newPassConf"/><br>
+          <button id="submit" data-url="<%= url('/admin/user/change_password') %>">Submit</button><button id="cancel">Cancel</button>
+        </div>
       <% end %>
     </div>
   </header>
