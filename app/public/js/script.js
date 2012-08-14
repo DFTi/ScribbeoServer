@@ -35,7 +35,7 @@ var deleteResponseHandler = function (res) {
   var toBeRemoved = listItem;
   if (res["success"]) {
     if (typeof(res["file_deletion"])!="undefined") { // file deletion
-      toBeRemoved = $('li.fileItem[data-itemid="'+res['id']+'"]');
+      toBeRemoved = $('li.fileItem[data-filename="'+res['filename']+'"]');
     } else if (typeof(res["count"])!="undefined") { // type: permission
       console.log('deleted a permission');
       $(listItem).find('.userCount').text(res["count"]);
@@ -61,14 +61,13 @@ var deleteResponseHandler = function (res) {
 
 var bindDeleteButtonPost = function (type, div) {
   $(div).click(function () {
-
     var message;
     if (type=="folder") {
       message = "Are you sure you want to remove this folder? Permissions will be lost, however the folder is not removed from disk. You may always add it again later."
     } else if (type=="file") {
-      message = "Are you sure you want to DELETE this file? There is no undo!"
+      message = "Are you sure you want to DELETE '"+$(this).siblings('span').text()+"'? There is no undo!"
     } else {
-      message = "Are you sure you want to remove this "+type+"? You cannot undo this action.";
+      message = "Are you sure you want to remove this "+type+"?";
     }
 
     if (!confirm(message)) return;

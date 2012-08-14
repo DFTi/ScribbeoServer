@@ -11,12 +11,12 @@
     <ul>
       <% @folder.entries.each_with_index do |e, i| %>
         <% folder = File.directory? File.join(@folder.path, e) %>
-        <li class="entry fileItem <%= 'folder' if folder %>" data-itemid="<%= i %>">
+        <li class="entry fileItem <%= 'folder' if folder %>" data-filename="<%= e %>">
           <span><%= e %></span>
           <% if folder %>
             <%= div :class=>"icon", :style=>'top:0px' %>
           <% else %>
-            <%= div :class=>"deleteButton", "data-url"=>url("/admin/folder/1/contents/#{i}/destroy") %>
+            <%= div :class=>"deleteButton", "data-url"=>url("/admin/folder/#{@folder.id}/contents/#{e}/delete") %>
           <% end %>
         </li>
       <% end %>

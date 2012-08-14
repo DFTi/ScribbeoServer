@@ -73,13 +73,12 @@ class App < Sinatra::Base
       end
 
       # Delete files through web interface
-      post '/:id/contents/:array_index/destroy' do
+      post '/:id/contents/:filename/delete' do
         folder = Folder.find(params[:id])
-        file = folder.entries[params[:array_index].to_i]
-        res = File.basename(FileUtils.rm(File.join(folder.path, file))[0]) rescue false
+        res = File.basename(FileUtils.rm(File.join(folder.path, params[:filename]))[0]) rescue false
         json({
           "success"=>res ? true : false,
-          "id"=>params[:array_index],
+          "filename"=>params[:filename],
           "file_deletion"=>true
         })
       end
