@@ -1,7 +1,8 @@
 #!/usr/bin/env ruby
 require './init.rb'
 
-if version = ARGV[0] && !version.empty?
+puts ARGV[0]
+if version = ARGV[0]
   puts "Updating IPA version from #{Settings.ipa_version} to #{version}"
   Settings.ipa_version = version
 else
