@@ -15,4 +15,25 @@
         <span>UDID: <%= f.udid %></span>
       </p>
     <% end end %>
+    <b style="font-size:1.5em;padding-top:20px;">Add Device</b>
+    <div id='content'>
+      <em>All fields are required</em><br><br>
+      <form action="/devices/save" method="post">
+        <div class="field">
+          <label for="device_name">Owner's Name</label><br />
+          <input id="device_name" name="device[name]" size="30" type="text" />
+        </div>
+        <div class="field">
+          <label for="device_email">Owner's Email Address</label><br />
+          <input id="device_email" name="device[email]" size="30" type="email" />
+        </div>
+        <div class="field">
+          <label for="device_udid">Owner's Device UDID</label><br />
+            <input id="device_udid" name="device[udid]" value="<%= @udid %>" size="30" type="text" />
+        </div><br />
+        <div class="actions">
+          <input name="commit" type="submit" value="Save" />
+        </div>
+      </form>
+    </div>
 </div>
