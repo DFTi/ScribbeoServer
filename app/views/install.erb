@@ -3,14 +3,14 @@
   <a href="<%= Build.install_link(request) %>">Tap to install Scribbeo <%= Settings.ipa_version %></a>
   <div style="color:black">
     <p>After installing, open Scribbeo and tap Settings at the top.</p>
-    <p>Now find the section headed "Server Settings" at the bottom.</p>
+    <p>Now find the section headed "Server Settings" towards the end, configure as such:</p>
     <ul>
       <li>Switch on Network Mode</li>
       <li>Switch off Auto Discover</li>
       <li>For the IP Address, enter: <%= request.host %></li>
       <li>For the Port, enter: <%= request.port %></li>
     </ul>
-    <p>Tap Done and a login window should appear shortly.</p>
-    <p>If the login window does not appear, restart the app once with the new settings.</p>
+    <p>Enter your username and password (provided by your administrator)</p>
+    <p>Tap Done. If your internet connection is working, Scribbeo will connect and display the folders for which the administrator has given you access and you may now use the app.</p>
   </div>
 </div>
