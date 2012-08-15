@@ -40,6 +40,7 @@
     <div id="user_nav">
       <% if user %>
         Welcome, <%= user.username %> <br>
+        <%= a url('/'), "Home" %> | 
         <%= a url('/logout/'), 'Logout' %> | 
         <%= a '#', "Change Password", :id=>:changePassword %>
         <% if user.admin? %>
