@@ -5,8 +5,7 @@
       <li class="addButton">Add</li>
       <li data-type="folder" class="folder entryForm" style="display:none">
         <div class="errors"></div>
-        <label>Custom Name</label><input type="text" id="folderName"/>
-        <label>System Path</label><input type="text" id="folderPath"/>
+        <label>Name</label><input type="text" id="folderName"/>
         <div class="submitButton" data-url="<%= url('/admin/folder/create') %>">Create</div>
       </li>
       <% if folders.empty? %>

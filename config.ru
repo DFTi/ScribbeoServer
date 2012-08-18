@@ -1,5 +1,3 @@
-#\ -s puma -p 9292
-
 require './init'
 
 if DEVELOPMENT

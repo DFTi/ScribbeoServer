@@ -1,4 +1,8 @@
 // ---------------- Global
+var sanitize_fs_name = function(input) {
+  return input.replace(/[\W]/g, '-');
+}
+
 var flash = function(notError, message) {
   if (notError) {
     $("#flash .errors").html('');
@@ -272,7 +276,7 @@ $(function () {
         'name':
           newEntry.find('input#folderName').val(),
         'path':
-          newEntry.find('input#folderPath').val()
+          sanitize_fs_name(newEntry.find('input#folderName').val()),
       };
     } else
     if (type == 'user') {

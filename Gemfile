@@ -9,7 +9,6 @@ group :application do
   gem 'json'
   gem 'warden'
   gem 'launchy'
-  gem 'puma'
   gem 'rack-ssl'
 
   if RUBY_PLATFORM == "java"
