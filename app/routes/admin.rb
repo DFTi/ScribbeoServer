@@ -98,6 +98,7 @@ class App < Sinatra::Base
             f.write(blk)
           end
         end
+        tmpfile.close!
         @notice="Uploaded!"
         erb(:folder_contents)
       end
