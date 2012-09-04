@@ -10,7 +10,7 @@ class Folder < ActiveRecord::Base
         record.errors[:path] << "is invalid."
       elsif !File.directory?(record.path)
         begin
-          Dir.mkdir(record.path, 0775)
+          Dir.mkdir(record.path, 0777)
         rescue
           record.errors[:path] << "could not be created on disk (#{record.path})."
         end
