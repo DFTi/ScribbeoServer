@@ -6,6 +6,8 @@ HOST_LOCAL_TUNNEL_PORT = ARGV[2]
 HOST_WAN_SSH_PORT = ARGV[3]
 HOST_USER = ARGV[4]
 
+HTTP_TUNNEL_PORT = 10000
+
 def recently_ran?(secs)
   File.open(__FILE__, "r+") {|f| @timestamp = f.mtime }
   (Time.now - @timestamp) < secs
@@ -15,14 +17,24 @@ if recently_ran?(5)
   exit
 else
   `touch #{__FILE__}`
-  puts "Killing port-stealing stale sessions"
+
+  puts "Killing port-stealing ssh sessions... "
   `ps aux | grep "ssh -L #{LOCAL_TUNNEL_PORT}" | awk '{print $2}'`.split.each do |pid|
     `kill -9 #{pid} > /dev/null 2>&1`
-    puts "Killed stale process #{pid}"
+    print "l"
   end
-  puts "Ports cleared (hopefully). Attempting to create a secure VNC tunnel."
+  `ps aux | grep "ssh -D #{HTTP_TUNNEL_PORT}" | awk '{print $2}'`.split.each do |pid|
+    `kill -9 #{pid} > /dev/null 2>&1`
+    print "d"
+  end
+  puts "\nPorts cleared (hopefully)."
   fork {
+    puts "Creating vnc tunnel on localhost:#{HOST_LOCAL_TUNNEL_PORT}"
     `ssh -L #{LOCAL_TUNNEL_PORT}:localhost:#{HOST_LOCAL_TUNNEL_PORT} -p #{HOST_WAN_SSH_PORT} -N -f -l #{HOST_USER} #{HOST_IP}`  
+  }
+  fork {
+    puts "Creating socks proxy on localhost:#{HTTP_TUNNEL_PORT} for HTTP"
+    `ssh -D #{HTTP_TUNNEL_PORT} #{HOST_USER}@#{HOST_IP}`
   }
   puts "Secure VNC tunnel to #{HOST_IP}:#{HOST_LOCAL_TUNNEL_PORT} constructed on localhost:#{LOCAL_TUNNEL_PORT}."
   print "Launching VNC"

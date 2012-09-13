@@ -1,3 +1,4 @@
+SECURE_TUNNEL_RUBYSCRIPT="/Users/keyvan/Dropbox/DFT/Projects/ScribbeoServer/script/vm_tools/secure_tunnel.rb"
 VM_HOST="app.scribbeo.com"
 VM_USER="scribbeo"
 HIVE_IP="app.scribbeo.com"
@@ -7,7 +8,7 @@ HIVE_WAN_SSH_PORT=55218
 HIVE_USER="hive"
 
 function hive {
-  ruby /Users/keyvan/Projects/ScribbeoServer/script/vm_tools/secure_vnc_tunnel.rb $LOCAL_VNC_PORT $HIVE_IP $HIVE_LOCAL_VNC_PORT $HIVE_WAN_SSH_PORT $HIVE_USER
+  ruby $SECURE_TUNNEL_RUBYSCRIPT $LOCAL_VNC_PORT $HIVE_IP $HIVE_LOCAL_VNC_PORT $HIVE_WAN_SSH_PORT $HIVE_USER
   echo "Entering SSH session ($HIVE_IP:$HIVE_WAN_SSH_PORT)"
   ssh -p $HIVE_WAN_SSH_PORT $HIVE_USER@$HIVE_IP
 }
