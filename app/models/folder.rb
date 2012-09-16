@@ -9,10 +9,13 @@ class Folder < ActiveRecord::Base
       if record.path.split('/').include?('..')
         record.errors[:path] << "is invalid."
       elsif !File.directory?(record.path)
+        old_umask = File::umask(0)
         begin
-          Dir.mkdir(record.path, 0775)
+          Dir.mkdir(record.path, 0777)
         rescue
           record.errors[:path] << "could not be created on disk (#{record.path})."
+        ensure
+          File::umask(old_umask)
         end
       end
     end
