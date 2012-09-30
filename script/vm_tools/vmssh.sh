@@ -9,20 +9,50 @@ HIVE_WAN_SSH_PORT=55218
 HIVE_USER="hive"
 
 LOCAL_TURNER_VNC_PORT=15952
+local_GITLAB_VNC_PORT=15953
+remote_kvm_GITLAB_VNC_PORT=5904
+
+local_WINDOWS_SERVER_VNC_PORT=15954
+remote_kvm_WINDOWS_VNC_PORT=5905
 
 HIVE_TURNER_PROXY_KVM_VNC_PORT=5904
 HIVE_TURNER_PROXY_SSH_PORT=36641
-LOCAL_SOCKS_PORT_TO_TURNER_PROXY=10001
 
-function turner_proxy {
-  ruby $SECURE_TUNNEL_RUBYSCRIPT $LOCAL_TURNER_VNC_PORT
-  ssh -L $LOCAL_TURNER_VNC_PORT\:localhost\:$HIVE_TURNER_PROXY_KVM_VNC_PORT -p $HIVE_WAN_SSH_PORT -N -f -l $HIVE_USER $HIVE_IP
-  # open vnc://localhost:$LOCAL_TURNER_VNC_PORT
-  echo "Use chicken of the vnc to connect to localhost:$LOCAL_TURNER_VNC_PORT"
-  ssh -D $LOCAL_SOCKS_PORT_TO_TURNER_PROXY keyvan@$HIVE_IP -p $HIVE_TURNER_PROXY_SSH_PORT
+function chicken_vnc_connect {
+  osascript -e "tell application \"Chicken of the VNC\" to activate
+  tell application \"System Events\"
+    keystroke \"n\" using {command down}
+    keystroke \"localhost:$1\"
+    keystroke return
+  end tell"
 }
 
-function hive {
+alias turner_proxy="cd ~/Code/autovpn/ && ./start.sh"
+
+function turner_vnc {
+  ruby $SECURE_TUNNEL_RUBYSCRIPT $LOCAL_TURNER_VNC_PORT
+  ssh -L $LOCAL_TURNER_VNC_PORT\:localhost\:5900 -N -f -l dftmacmini 10.185.49.2
+  open vnc://localhost:$LOCAL_TURNER_VNC_PORT
+}
+
+function gitlab_vnc {
+  ruby $SECURE_TUNNEL_RUBYSCRIPT $local_GITLAB_VNC_PORT
+  ssh -L $local_GITLAB_VNC_PORT\:localhost\:$remote_kvm_GITLAB_VNC_PORT -p $HIVE_WAN_SSH_PORT -N -f -l $HIVE_USER $HIVE_IP
+  chicken_vnc_connect $local_GITLAB_VNC_PORT
+}
+
+function gitlab_ssh {
+  echo "Opening SSH connection to GITLAB VM on HIVE hypervisor"
+  ssh keyvan@$HIVE_IP -p 36641
+}
+
+function windows_server_vnc {
+  ruby $SECURE_TUNNEL_RUBYSCRIPT $local_WINDOWS_SERVER_VNC_PORT
+  ssh -L $local_WINDOWS_SERVER_VNC_PORT\:localhost\:$remote_kvm_WINDOWS_VNC_PORT -p $HIVE_WAN_SSH_PORT -N -f -l $HIVE_USER $HIVE_IP
+  chicken_vnc_connect $local_WINDOWS_SERVER_VNC_PORT
+}
+
+function hive_vnc {
   ruby $SECURE_TUNNEL_RUBYSCRIPT $LOCAL_VNC_PORT
   echo "Establishing VNC tunnel ($HIVE_IP:$HIVE_WAN_SSH_PORT)"  
   ssh -L $LOCAL_VNC_PORT\:localhost\:$HIVE_LOCAL_VNC_PORT -p $HIVE_WAN_SSH_PORT -N -f -l $HIVE_USER $HIVE_IP
@@ -32,6 +62,13 @@ function hive {
   echo "Opening SSH connection with HTTP SOCKS proxy on $LOCAL_SOCKS_PORT"
   ssh -D $LOCAL_SOCKS_PORT $HIVE_USER@$HIVE_IP -p $HIVE_WAN_SSH_PORT
 }
+
+function hive_ssh {
+  ruby $SECURE_TUNNEL_RUBYSCRIPT $HIVE_WAN_SSH_PORT
+  echo "Opening SSH connection to HIVE hypervisor on $HIVE_WAN_SSH_PORT"
+  ssh $HIVE_USER@$HIVE_IP -p $HIVE_WAN_SSH_PORT
+}
+
 
 function hive_x11 {
   ssh -X -p $HIVE_WAN_SSH_PORT $HIVE_USER@$HIVE_IP
