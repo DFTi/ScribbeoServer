@@ -1,21 +1,39 @@
 <div class="panel">
-  <h1><%= @folder.name %> (<%= @folder.entries.count %>)</h1>
+  <h1><%= @folder.root_relative_path %></h1>
   <div>
     <span style="color:green"><%= @notice unless @notice.nil? %></span>
     <div class="padding" style="height:10px"></div>
     <form action="<%= url("/admin/folder/#{@folder.id}/upload") %>" method="post" enctype='multipart/form-data'>
-      Upload file: <input name="file" type="file"/>
-      <input type="submit" value="Upload">
+      <p style="margin:0 1em">
+        <label>New Upload:</label> <input name="file" type="file" style="width:4em"/><br>
+        <div style="text-align:right; margin-right:2em;">
+          <input type="submit" value="Upload">
+        </div>
+      </p>
     </form>
     <hr>
+
+    <form action="<%= url("/admin/folder/#{@folder.id}/subfolder/create") %>" method="post" enctype='multipart/form-data'>
+      <p style="margin:0 1em">
+        <label>New Subfolder:</label> <input name="subfolder" type="text" style="width:11em"/>
+        <input type="submit" value="Create" style="width:5em">
+      </p>
+    </form>
+
+    <hr>
+    
     <ul>
       <% @folder.entries.each_with_index do |e, i| %>
         <% folder = File.directory? File.join(@folder.path, e) %>
         <li class="entry fileItem <%= 'folder' if folder %>" data-filename="<%= e %>">
-          <span><%= e %></span>
-          <% if folder %>
+          <% if folder && (f = Folder.find_by_name(e)) %>
             <%= div :class=>"icon", :style=>'top:0px' %>
-          <% else %>
+            <span><%= a url("/admin/folder/#{f.id}/contents"), f.root_relative_path %></span>
+            <div class="subfolderDeleteButton">
+              <%= a url("/admin/folder/subfolder/#{f.id}/destroy"), "<img src='/img/minus.png'/>" %>
+            </div>
+          <% elsif !folder %>
+            <span><%= e %></span>
             <%= div :class=>"deleteButton", "data-url"=>url("/admin/folder/#{@folder.id}/contents/#{e}/delete") %>
           <% end %>
         </li>

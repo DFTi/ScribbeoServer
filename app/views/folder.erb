@@ -1,8 +1,7 @@
 <li data-id="<%= folder.id %>" data-type="folder" class="entry folder">
   <%= div :class=>"icon" %>
   <%= div :class=>"deleteButton", 'data-url'=>url('/admin/folder/destroy') %>
-  <%= folder.name %><br>
-  <%= a url("/admin/folder/#{folder.id}/contents"), 'Manage Contents' %>
+  <%= a url("/admin/folder/#{folder.id}/contents"), folder.root_relative_path %>
   <div class="userCount folderUserInfo"><%= folder.users.count %></div>
   <% if folder.users.any? %>
     <div class="permittedUsers folderUserInfo">

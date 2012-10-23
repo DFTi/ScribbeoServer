@@ -27,8 +27,12 @@ def db_seed
   Settings.ipa_version ||= ""
 
   # General Settings
-  Settings.root_directory = "/home/curator/media"
-  # Settings.root_directory = "/Users/keyvan/Movies"
+  if DEVELOPMENT
+    Settings.root_directory = "/Users/keyvan/Movies"
+  else
+    Settings.root_directory = "/home/curator/media"
+  end
+  
   Settings.instance_name = "My Scribbeo Server"
   
   Settings.instance_port = 9292

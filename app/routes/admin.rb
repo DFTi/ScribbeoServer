@@ -56,6 +56,25 @@ class App < Sinatra::Base
         })
       end
 
+      # Subfolders...
+      # They inherit permissions of parent
+      post '/:id/subfolder/create' do
+        parent = Folder.find(params[:id])
+        @folder = parent.folders.new
+        @folder.path = File.join(parent.root_relative_path, params[:subfolder])
+        @folder.name = params[:subfolder]
+        binding.pry
+        @folder.save
+        redirect "admin/folder/#{@folder.id}/contents"
+      end
+
+      get '/subfolder/:id/destroy' do
+        target = Folder.find(params[:id])
+        @folder = target.folder # get parent
+        target.destroy
+        redirect "admin/folder/#{@folder.id}/contents"
+      end
+
       post '/destroy' do
         json({
           "success"=>(Folder.destroy(params[:id]) ? true : false),

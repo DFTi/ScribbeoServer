@@ -19,7 +19,7 @@ HIVE_TURNER_PROXY_KVM_VNC_PORT=5904
 HIVE_TURNER_PROXY_SSH_PORT=36641
 
 function chicken_vnc_connect {
-  osascript -e "tell application \"Chicken of the VNC\" to activate
+  osascript -e "tell application \"Chicken\" to activate
   tell application \"System Events\"
     keystroke \"n\" using {command down}
     keystroke \"localhost:$1\"

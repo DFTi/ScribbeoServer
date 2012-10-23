@@ -1,5 +1,7 @@
 class Folder < ActiveRecord::Base
   has_and_belongs_to_many :users
+  has_many :folders
+  belongs_to :folder
 
   before_validation { self.path = File.join(Settings.root_directory, self.path) }
   before_destroy { users.clear }
@@ -45,6 +47,10 @@ class Folder < ActiveRecord::Base
       {"success"=>false,
        "errors"=>"Failed to remove #{user.username} from #{self.name}"}
     end
+  end
+
+  def root_relative_path
+    self.path.gsub(Settings.root_directory, '')
   end
 
   def exists?
