@@ -67,7 +67,7 @@ var bindDeleteButtonPost = function (type, div) {
   $(div).click(function () {
     var message;
     if (type=="folder") {
-      message = "Are you sure you want to remove this folder? Permissions will be lost, however the folder is not removed from disk. You may always add it again later."
+      message = "Are you sure you want to remove this folder? Permissions, contents, and subfolders will be permanently deleted."
     } else if (type=="file") {
       message = "Are you sure you want to DELETE '"+$(this).siblings('span').text()+"'? There is no undo!"
     } else {

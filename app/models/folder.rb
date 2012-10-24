@@ -4,7 +4,12 @@ class Folder < ActiveRecord::Base
   belongs_to :folder
 
   before_validation { self.path = File.join(Settings.root_directory, self.path) }
-  before_destroy { users.clear }
+  
+  before_destroy do
+    users.clear
+    folders.each {|f| f.destroy }
+    FileUtils.rm_rf self.path
+  end
   
   class FolderValidator < ActiveModel::Validator
     def validate(record)
@@ -22,6 +27,7 @@ class Folder < ActiveRecord::Base
       end
     end
   end
+
   
   include ActiveModel::Validations
   validates :name, :uniqueness=>true, :presence=>true

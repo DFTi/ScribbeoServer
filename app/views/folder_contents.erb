@@ -1,5 +1,14 @@
 <div class="panel">
-  <h1><%= @folder.root_relative_path %></h1>
+  <h1>
+    <%# if parent = @folder.folder %>
+        <%#= a url("/admin/folder/#{parent.id}/contents"), "Back" %>
+    <%# end %>
+    <% if parent = @folder.folder %>
+      <%= @folder.root_relative_path.gsub(parent.name, a(url("/admin/folder/#{parent.id}/contents"), parent.name)) %>
+    <% else %>
+      <%= @folder.root_relative_path %>
+    <% end %>
+  </h1>
   <div>
     <span style="color:green"><%= @notice unless @notice.nil? %></span>
     <div class="padding" style="height:10px"></div>
@@ -23,16 +32,16 @@
     <hr>
     
     <ul>
+      <% @folder.folders.each do |folder| %>
+        <li data-id="<%= folder.id %>" data-type="folder" class="entry folder">
+          <%= div :class=>"icon", :style=>'top:0px' %>
+          <span><%= a url("/admin/folder/#{folder.id}/contents"), folder.root_relative_path %></span>
+          <%= div :class=>"deleteButton", "data-url"=>url("/admin/folder/destroy") %>
+        </li>
+      <% end %>
       <% @folder.entries.each_with_index do |e, i| %>
-        <% folder = File.directory? File.join(@folder.path, e) %>
-        <li class="entry fileItem <%= 'folder' if folder %>" data-filename="<%= e %>">
-          <% if folder && (f = Folder.find_by_name(e)) %>
-            <%= div :class=>"icon", :style=>'top:0px' %>
-            <span><%= a url("/admin/folder/#{f.id}/contents"), f.root_relative_path %></span>
-            <div class="subfolderDeleteButton">
-              <%= a url("/admin/folder/subfolder/#{f.id}/destroy"), "<img src='/img/minus.png'/>" %>
-            </div>
-          <% elsif !folder %>
+        <li class="entry fileItem" data-filename="<%= e %>">
+          <% unless File.directory?(File.join(@folder.path, e)) %>
             <span><%= e %></span>
             <%= div :class=>"deleteButton", "data-url"=>url("/admin/folder/#{@folder.id}/contents/#{e}/delete") %>
           <% end %>

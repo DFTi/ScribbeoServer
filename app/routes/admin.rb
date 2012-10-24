@@ -63,9 +63,7 @@ class App < Sinatra::Base
         @folder = parent.folders.new
         @folder.path = File.join(parent.root_relative_path, params[:subfolder])
         @folder.name = params[:subfolder]
-        binding.pry
-        @folder.save
-        redirect "admin/folder/#{@folder.id}/contents"
+        redirect "admin/folder/#{(@folder.save ? @folder : parent).id}/contents"
       end
 
       get '/subfolder/:id/destroy' do
