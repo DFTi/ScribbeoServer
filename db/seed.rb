@@ -3,13 +3,14 @@
 # Gets executed after migrations are complete.
 def db_seed
   
-  User.create({
+  admin = User.create({
     :username=>"admin",
-    # :admin=>true,
     :password=>"admin",
     :password_confirmation=>"admin"
   })
-
+  admin.admin = true
+  admin.save
+  
   # Let's think about this.
   # Log.create({
   #   :title=>"entry"

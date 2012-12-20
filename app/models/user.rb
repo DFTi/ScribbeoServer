@@ -58,7 +58,7 @@ class User < ActiveRecord::Base
   end
   
   def admin?
-    self.username == 'admin'
+    !!self.admin
   end
 
   def self.all_but_admin
