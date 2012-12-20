@@ -34,6 +34,17 @@ class Folder < ActiveRecord::Base
   validates :path, :uniqueness=>true, :presence=>true
   validates_with FolderValidator
   
+  def root
+    top = self
+    while top.is_a? Folder
+      if top.folder.nil?
+        return top 
+      else
+        top = top.folder
+      end
+    end
+    return top
+  end
 
   def add_user(user)
     if self.users.include? user

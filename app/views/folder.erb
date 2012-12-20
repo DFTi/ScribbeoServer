@@ -1,17 +1,21 @@
 <li data-id="<%= folder.id %>" data-type="folder" class="entry folder">
   <%= div :class=>"icon" %>
-  <%= div :class=>"deleteButton", 'data-url'=>url('/admin/folder/destroy') %>
-  <%= a url("/admin/folder/#{folder.id}/contents"), folder.root_relative_path %>
-  <div class="userCount folderUserInfo"><%= folder.users.count %></div>
-  <% if folder.users.any? %>
-    <div class="permittedUsers folderUserInfo">
-      <% folder.users.each do |u| %>
-        <div data-type="permission" data-id="<%= u.id %>" class="permittedUser">
-          <%= div :class=>"icon" %>
-          <%= u.username %>
-          <%= div :class=>"revokeButton", "data-url"=>url("/admin/permission/unset") %>
-        </div>
-      <% end %>
-    </div>
+  <% if user.admin? %>
+    <%= div :class=>"deleteButton", 'data-url'=>url('/admin/folder/destroy') %>
+    <%= a url("/admin/folder/#{folder.id}/contents"), folder.root_relative_path %>
+    <div class="userCount folderUserInfo"><%= folder.users.count %></div>
+    <% if folder.users.any? %>
+      <div class="permittedUsers folderUserInfo">
+        <% folder.users.each do |u| %>
+          <div data-type="permission" data-id="<%= u.id %>" class="permittedUser">
+            <%= div :class=>"icon" %>
+            <%= u.username %>
+            <%= div :class=>"revokeButton", "data-url"=>url("/admin/permission/unset") %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  <% else %>
+    <%= a url("/folder/#{folder.id}/contents"), folder.root_relative_path %>
   <% end %>
 </li>

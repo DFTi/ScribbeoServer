@@ -1,6 +1,13 @@
 <div style="margin:30px;color:black">
 <% unless request.user_agent =~ /(Mobile\/.+Safari)/ %>
-  Please log in with your iPad to enroll your device and download Scribbeo.
+  To download Scribbeo, come back to this page with your provisioned iOS device.
+  <% if user.folders.any? %>
+    <div id="folders" class="panel" 
+      data-url="<%= url('/admin/folder/index.html.json') %>">
+      <%= partial(:folders, :folders=>user.folders) %>
+    </div>
+    <div style="clear:both">
+  <% end %>
 <% else %>
   <p>Use the link above to enroll your device so that it may be authorized to install Scribbeo.</p>
   <p>Wait for your device to be provisioned and authorized. You will be notified by your administrator when this process is completed.</p>

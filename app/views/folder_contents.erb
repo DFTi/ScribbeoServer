@@ -1,10 +1,8 @@
+<% prefix = user.admin? ? '/admin' : '' %>
 <div class="panel">
   <h1>
-    <%# if parent = @folder.folder %>
-        <%#= a url("/admin/folder/#{parent.id}/contents"), "Back" %>
-    <%# end %>
     <% if parent = @folder.folder %>
-      <%= @folder.root_relative_path.gsub(parent.name, a(url("/admin/folder/#{parent.id}/contents"), parent.name)) %>
+      <%= @folder.root_relative_path.gsub(parent.name, a(url("#{prefix}/folder/#{parent.id}/contents"), parent.name)) %>
     <% else %>
       <%= @folder.root_relative_path %>
     <% end %>
@@ -12,7 +10,7 @@
   <div>
     <span style="color:green"><%= @notice unless @notice.nil? %></span>
     <div class="padding" style="height:10px"></div>
-    <form action="<%= url("/admin/folder/#{@folder.id}/upload") %>" method="post" enctype='multipart/form-data'>
+    <form action="<%= url("#{prefix}/folder/#{@folder.id}/upload") %>" method="post" enctype='multipart/form-data'>
       <p style="margin:0 1em">
         <label>New Upload:</label> <input name="file" type="file" style="width:4em"/><br>
         <div style="text-align:right; margin-right:2em;">
@@ -22,7 +20,7 @@
     </form>
     <hr>
 
-    <form action="<%= url("/admin/folder/#{@folder.id}/subfolder/create") %>" method="post" enctype='multipart/form-data'>
+    <form action="<%= url("#{prefix}/folder/#{@folder.id}/subfolder/create") %>" method="post" enctype='multipart/form-data'>
       <p style="margin:0 1em">
         <label>New Subfolder:</label> <input name="subfolder" type="text" style="width:11em"/>
         <input type="submit" value="Create" style="width:5em">
@@ -35,15 +33,15 @@
       <% @folder.folders.each do |folder| %>
         <li data-id="<%= folder.id %>" data-type="folder" class="entry folder">
           <%= div :class=>"icon", :style=>'top:0px' %>
-          <span><%= a url("/admin/folder/#{folder.id}/contents"), folder.root_relative_path %></span>
-          <%= div :class=>"deleteButton", "data-url"=>url("/admin/folder/destroy") %>
+          <span><%= a url("#{prefix}/folder/#{folder.id}/contents"), folder.root_relative_path %></span>
+          <%= div :class=>"deleteButton", "data-url"=>url("#{prefix}/folder/destroy") if user.admin? %>
         </li>
       <% end %>
       <% @folder.entries.each_with_index do |e, i| %>
         <li class="entry fileItem" data-filename="<%= e %>">
           <% unless File.directory?(File.join(@folder.path, e)) %>
             <span><%= e %></span>
-            <%= div :class=>"deleteButton", "data-url"=>url("/admin/folder/#{@folder.id}/contents/#{e}/delete") %>
+            <%= div :class=>"deleteButton", "data-url"=>url("#{prefix}/folder/#{@folder.id}/contents/#{e}/delete") %>
           <% end %>
         </li>
       <% end %>
