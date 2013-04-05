@@ -1,8 +1,18 @@
 def db_connect
-  ActiveRecord::Base.establish_connection({
-    :adapter => (RUBY_PLATFORM == "java" ? 'jdbcsqlite3' : 'sqlite3'),
-    :database => (DEVELOPMENT ? 'db/development.sqlite3' : 'db/production.sqlite3')
-  })
+  if defined? POSTGRES
+    ActiveRecord::Base.establish_connection(
+      :adapter  => "postgresql",
+      :host     => "localhost",
+      :username => "scribbeo",
+      :password => "KM492hsbA",
+      :database => "scribbeo"
+    )
+  else
+    ActiveRecord::Base.establish_connection({
+      :adapter => (RUBY_PLATFORM == "java" ? 'jdbcsqlite3' : 'sqlite3'),
+      :database => (DEVELOPMENT ? 'db/development.sqlite3' : 'db/production.sqlite3')
+    })
+  end
 end
 
 db_connect
