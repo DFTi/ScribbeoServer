@@ -12,5 +12,6 @@ namespace :db do
 end
 
 task :ip do
-  User.all.map{|u| {u.username=>u.ip_addresses.map(&:address)}}
+  data = User.all.map{|u| {u.username=>u.ip_addresses.map(&:address)}}
+  ap data
 end

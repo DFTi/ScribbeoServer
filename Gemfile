@@ -11,6 +11,7 @@ group :application do
   gem 'launchy'
   gem 'rack-ssl'
   gem 'macaddr' # Used to set the cookie secret in rackup
+  gem 'awesome_print'
 
   if RUBY_PLATFORM == "java"
     gem 'jruby-rack'
