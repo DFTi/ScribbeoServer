@@ -13,5 +13,5 @@ end
 
 task :ip do
   data = User.all.map{|u| {u.username=>u.ip_addresses.map(&:address)}}
-  ap data
+  ap data, index:false
 end
