@@ -12,3 +12,4 @@ db/*.sqlite3
 log/
 tmp/
 .DS_Store
+lib/iOS/scribbeo/Scribbeo.ipa
