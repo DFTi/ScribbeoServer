@@ -16,7 +16,7 @@ class App < Sinatra::Base
 
   post '/unauthenticated/?' do
     status 401
-    @error = "Invalid credentials."
+    @error = "Invalid credentials. <a href='/'>Try again?</a>"
   end
 
   get '/hide_admin_password_hint' do

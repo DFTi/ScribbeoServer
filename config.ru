@@ -8,7 +8,7 @@ if DEVELOPMENT
 end
 
 use ActiveRecord::ConnectionAdapters::ConnectionManagement
-use Rack::Session::Cookie, :secret => 'scribbeo_cookie'
+use Rack::Session::Cookie, :secret => Mac.addr.gsub(':', rand(255).to_s)
 use Rack::MethodOverride
 
 use Warden::Manager do |manager|

@@ -17,6 +17,7 @@ def db_seed
   #   :log_level=>"info"
   #   :event=>"Seeded the database with default values."
   #   })
+  # I See you. I will use GoAccess & request-log-analyzer and just keep track of Users' IP addresses so they may later be mapped into the outputs of these programs
 
   # Java settings
   Settings.icon_path = File.join("images","ruby.png")

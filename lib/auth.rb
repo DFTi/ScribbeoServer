@@ -11,7 +11,11 @@ Warden::Strategies.add(:password) do
   end 
 
   def authenticate!
-    u = User.authenticate(params["username"], params["password"])
-    u.nil? ? fail!("Could not log in") : success!(u)
+    if u = User.authenticate(params["username"], params["password"])
+      u.track request
+      success!(u)
+    else
+      fail!("Could not log in")
+    end
   end 
 end

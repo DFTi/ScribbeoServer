@@ -3,8 +3,7 @@ class App < Sinatra::Base
     register Sinatra::Reloader if DEVELOPMENT
     register Sinatra::Namespace
   end
-  before { @title = "ScribbeoServer"}
-  
+  before { @title = "ScribbeoServer"}  
 end
 
 require_relative 'models/init'

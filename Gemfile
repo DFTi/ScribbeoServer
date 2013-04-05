@@ -10,6 +10,7 @@ group :application do
   gem 'warden'
   gem 'launchy'
   gem 'rack-ssl'
+  gem 'macaddr' # Used to set the cookie secret in rackup
 
   if RUBY_PLATFORM == "java"
     gem 'jruby-rack'
@@ -18,7 +19,6 @@ group :application do
   else
     group :warbler_ignore do
       gem 'dnssd'
-      gem 'sqlite3'
       gem 'pg'
     end
   end
@@ -29,5 +29,5 @@ group :development do
   gem 'racksh'
   gem "warbler"
   gem 'sass'
+  gem 'sqlite3'
 end
-

@@ -1,6 +1,7 @@
 class User < ActiveRecord::Base
   has_many :uploads
   has_many :note_archive_files
+  has_many :ip_addresses
   has_and_belongs_to_many :folders
   
   attr_accessible :username, :password, :password_confirmation
@@ -27,13 +28,6 @@ class User < ActiveRecord::Base
     self
   end
   
-  # params = {
-  #   "user":{
-  #     "old_password":"...",
-  #     "password":"...",
-  #     "confirmation":"..."
-  #   }
-  # }
   def change_password(params)
     out = {"success"=>false}
     if params[:password] != params[:confirmation]
@@ -46,6 +40,10 @@ class User < ActiveRecord::Base
     else
       out[:errors] = "Current password was incorrect."
     end
+  end
+
+  def set_password!(new_password)
+    self.with_password({:password => password}).save!
   end
   
   def self.authenticate(username, password)
@@ -69,4 +67,7 @@ class User < ActiveRecord::Base
     folders.reject { |f| !File.directory?(f.path) }
   end
 
+  def track request
+    self.ip_addresses.find_or_create_by_address request.ip
+  end
 end

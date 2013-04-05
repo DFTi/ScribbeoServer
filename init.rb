@@ -11,6 +11,21 @@ if DEVELOPMENT
   require 'sinatra/reloader'
 end
 
+if PRODUCTION
+  PG_CONNECTION_SETTINGS = {
+      :adapter  => "postgresql",
+      :host     => "localhost",
+      :username => "scribbeo",
+      :password => "KM492hsbA",
+      :database => "scribbeo"    
+  }
+else
+  SQLITE_CONNECTION_SETTINGS = {
+    :adapter => (RUBY_PLATFORM == "java" ? 'jdbcsqlite3' : 'sqlite3'),
+    :database => (DEVELOPMENT ? 'db/development.sqlite3' : 'db/production.sqlite3')
+  }
+end
+
 require 'fileutils'
 require 'open3'
 require 'socket'
