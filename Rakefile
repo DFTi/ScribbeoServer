@@ -10,3 +10,7 @@ namespace :db do
     db_seed
   end
 end
+
+task :ip do
+  User.all.map{|u| {u.username=>u.ip_addresses.map(&:address)}}
+end
