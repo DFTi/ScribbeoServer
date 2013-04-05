@@ -1,4 +1,4 @@
-source :rubygems
+source 'https://rubygems.org'
 
 group :application do
 
@@ -19,6 +19,7 @@ group :application do
     group :warbler_ignore do
       gem 'dnssd'
       gem 'sqlite3'
+      gem 'pg'
     end
   end
 end
