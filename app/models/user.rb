@@ -68,6 +68,8 @@ class User < ActiveRecord::Base
   end
 
   def track request
-    self.ip_addresses.find_or_create_by_address request.ip
+    remote_ip = request.env['HTTP_X_FORWARDED_FOR'] || request.env['REMOTE_ADDR']
+    remote_ip = remote_ip.scan(/[\d.]+/).first
+    self.ip_addresses.find_or_create_by_address remote_ip
   end
 end
